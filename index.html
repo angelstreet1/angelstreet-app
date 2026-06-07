@@ -1131,7 +1131,7 @@ var ORDER=['All-day','Opening','Morning','Afternoon','Closing'];days.forEach(fun
 +'<div style="font-size:11px;color:#888;font-weight:600;min-width:70px;padding-top:2px">'+rec.fields.ShiftType+'</div>'
 +'<div style="display:flex;flex-wrap:wrap;gap:4px">';workers.forEach(function(w){h+='<span style="background:#ca309220;color:#ca3092;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">'+w.l+'</span>';});h+='</div></div>';});card.innerHTML=h;card.onclick=function(){SP('schedule');};hc.appendChild(card);});}catch(e){console.warn('Who is working error:',e.message);}}
 setTimeout(function(){document.querySelectorAll('#logo-img,#home-logo-img').forEach(function(img){img.src=LOGO_B64;});},100);setInterval(function(){var a=document.querySelector('.page.active');if(a&&a.id==='schedule')loadSched();},60000);if(IS_ADM){CU=USERS.find(function(u){return u.r==='admin';});if(CU)buildHome();SP('admin-panel');var ind=document.createElement('div');ind.style.cssText='position:fixed;bottom:16px;right:16px;background:#ca3092;color:#fff;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;z-index:9999;';ind.textContent='🔑 Admin Mode';document.body.appendChild(ind);}
-else{initLogin();SP('login');}
+else{initLogin();SP('landing');}
 async function loadInvoice(){
 var cont=document.getElementById('inv-content');
 if(!cont)return;
