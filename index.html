@@ -586,6 +586,7 @@ var CARDS={
     {id:'groupassignments',ic:'👥',lb:'Group Assignments',ds:'Assign Young Creatives',cl:'bl'},
     {id:'lead',ic:'🎤',lb:'Lead',ds:'Harambe & Closing sign-ups',cl:'pk'},
     {id:'emergency',ic:'🚨',lb:'Emergency',ds:'Contacts & protocols',cl:'pk'},
+    {id:'invoiceadmin',ic:'🧾',lb:'All Invoices',ds:'Review & email to accountant',cl:'tl'},
     {id:'shiftchecklist',ic:'✅',lb:'Shift Checklist',ds:'Your tasks for today',cl:'gn'}
   ],
   ta:[
@@ -1369,21 +1370,47 @@ var recs=await AF('Invoices');
 listDiv.innerHTML='';
 if(!recs.length){listDiv.innerHTML='<div style="color:#555;text-align:center;padding:30px;font-size:14px">No invoices submitted yet.</div>';return;}
 var sorted=recs.slice().sort(function(a,b){return new Date(b.createdTime)-new Date(a.createdTime);});
+// Email selected invoices button
+var selectedInvs=[];
+var emailBar=document.createElement('div');
+emailBar.style.cssText='background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;';
+emailBar.innerHTML='<div style="font-size:12px;color:#aaa;"><span id="inv-sel-count">0</span> selected</div>';
+var emailBtn=document.createElement('button');
+emailBtn.style.cssText='padding:8px 16px;background:#66cccc;color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;';
+emailBtn.textContent='📧 Email to Brooke';
+emailBtn.onclick=function(){emailInvoicesToBrooke(selectedInvs,sorted);};
+emailBar.appendChild(emailBtn);
+listDiv.appendChild(emailBar);
+
 sorted.forEach(function(rec){
 var f=rec.fields;
 var card=document.createElement('div');
-card.style.cssText='background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:10px;';
-card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
-+'<div><div style="font-size:15px;font-weight:700;color:#fff">'+f.Name+'</div>'
+card.style.cssText='background:#1a1a1a;border:2px solid #333;border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;';
+var topRow=document.createElement('div');
+topRow.style.cssText='display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;';
+var cb=document.createElement('input');cb.type='checkbox';cb.style.cssText='width:18px;height:18px;flex-shrink:0;margin-top:3px;accent-color:#ca3092;cursor:pointer;';
+var info=document.createElement('div');info.style.cssText='flex:1;';
+info.innerHTML='<div style="font-size:15px;font-weight:700;color:#fff">'+(f.LegalName||f.Name)+'</div>'
 +'<div style="font-size:12px;color:#aaa">'+f.WeekLabel+'</div>'
 +(f.LineItems?'<div style="font-size:11px;color:#666;margin-top:4px">'+f.LineItems+'</div>':'')
-+'<div style="font-size:11px;color:#555;margin-top:2px">Submitted: '+f.SubmittedDate+'</div>'
-+'</div><div style="font-size:24px;font-weight:900;color:#66cccc">$'+f.Total+'</div></div>';
++'<div style="font-size:11px;color:#555;margin-top:2px">Submitted: '+f.SubmittedDate+'</div>';
+var total=document.createElement('div');total.style.cssText='font-size:24px;font-weight:900;color:#66cccc;';total.textContent='$'+f.Total;
+topRow.appendChild(cb);topRow.appendChild(info);topRow.appendChild(total);
+card.appendChild(topRow);
 var dlBtn=document.createElement('button');
 dlBtn.style.cssText='width:100%;padding:10px;background:#ca3092;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;';
 dlBtn.textContent='📥 Download PDF';
-(function(r){dlBtn.onclick=function(){downloadInvoicePDF(r);};})(rec);
+(function(r){dlBtn.onclick=function(e){e.stopPropagation();downloadInvoicePDF(r);};})(rec);
 card.appendChild(dlBtn);
+// Checkbox toggle
+(function(r,checkbox,c){
+  checkbox.onchange=function(){
+    if(checkbox.checked){selectedInvs.push(r);c.style.borderColor='#ca3092';}
+    else{selectedInvs=selectedInvs.filter(function(x){return x.id!==r.id;});c.style.borderColor='#333';}
+    document.getElementById('inv-sel-count').textContent=selectedInvs.length;
+  };
+  c.onclick=function(e){if(e.target!==checkbox&&e.target!==dlBtn){checkbox.checked=!checkbox.checked;checkbox.onchange();}};
+})(rec,cb,card);
 listDiv.appendChild(card);
 });
 }catch(e){cont.innerHTML='<div class="msg me">⚠️ '+e.message+'</div>';}
@@ -2376,6 +2403,28 @@ if(role!=='admin'){
 }
 buildHome();SP('home');
 }
+
+function emailInvoicesToBrooke(selected,all){
+  if(!selected||!selected.length){
+    // If none selected, use all
+    if(confirm('No invoices selected. Email all '+all.length+' invoices?')){
+      selected=all;
+    }else{return;}
+  }
+  var subject='AngelStreet Creative Arts Camp 2026 — Teaching Artist Invoices';
+  var body='Hi Brooke,\n\nPlease find the following Teaching Artist invoices for AngelStreet Creative Arts Camp 2026:\n\n';
+  selected.forEach(function(rec,i){
+    var f=rec.fields;
+    body+=(i+1)+'. '+(f.LegalName||f.Name)+' — '+f.WeekLabel+' — $'+f.Total+'\n';
+    if(f.LineItems)body+='   Services: '+f.LineItems+'\n';
+    body+='   Submitted: '+f.SubmittedDate+'\n\n';
+  });
+  body+='Total Amount: $'+selected.reduce(function(sum,r){return sum+(parseFloat(r.fields.Total)||0);},0).toFixed(0)+'\n\n';
+  body+='Please download the individual PDF invoices from the AngelStreet Camp App.\n\nThank you,\nAngelStreet Memphis';
+  var mailto='mailto:vbrookeking@gmail.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  window.open(mailto);
+}
+
 </script>
 </body>
 </html>
