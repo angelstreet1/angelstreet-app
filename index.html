@@ -629,6 +629,7 @@ async function AD(t,id){var r=await fetch(AU(t)+'/'+id,{method:'DELETE',headers:
 function SM(h){var m=document.getElementById('modal');m.innerHTML='<div class="mbg">'+h+'</div>';m.style.display='block';}
 function CM(){var m=document.getElementById('modal');m.style.display='none';m.innerHTML='';var anyActive=document.querySelector('.page.active');if(!anyActive||anyActive.id==='parentupdate')SP('home');}
 function SP(id){
+if(id==='home'&&!CU){id='landing';}
 if(id==='landing'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var lp=document.getElementById('landing');if(lp)lp.classList.add('active');window.scrollTo(0,0);return;}
 document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='schedule')loadSched();else if(id==='timeclock')initTC();else if(id==='checkin'){loadCI();setTimeout(function(){loadPickupNotifications();setInterval(loadPickupNotifications,30000);},1000);}else if(id==='communication')loadComm();else if(id==='campschedule-page')loadCS();else if(id==='updates')loadUpd();else if(id==='groups')loadGrp();else if(id==='admin-panel')loadAdm();else if(id==='emergency')loadEmergency();else if(id==='activities')loadActivities();
 else if(id==='lead')loadLead();
