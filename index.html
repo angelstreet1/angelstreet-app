@@ -676,7 +676,30 @@ var ICON_MAP={'schedule':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3
 +'<div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:6px">'+dateStr+'</div>'
 +'<div style="font-size:11px;color:rgba(255,255,255,.85);line-height:1.7">'+daySched+'</div>';}else{infoHtml='<div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:6px">'+dateStr+'</div>'
 +'<div style="font-size:12px;color:rgba(255,255,255,.75)">Creative Arts Camp · Jun 8 – Jul 3, 2026</div>';}
-infoHtml+='<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:6px">Tap to view full schedule →</div>';tc.innerHTML=infoHtml;tc.onclick=function(){SP('campschedule-page');};hc.appendChild(tc);var todaySpirit=getTodaySpirit();var upcomingSpirit=getUpcomingSpirit();if(todaySpirit){var sb=document.createElement('div');sb.style.cssText='background:linear-gradient(135deg,#fbbf24,#d97706);border-radius:12px;padding:12px 16px;margin-bottom:10px;cursor:pointer;';sb.innerHTML='<div style="font-size:11px;font-weight:600;color:rgba(0,0,0,.6);margin-bottom:2px">✨ TODAY&#39;S SPIRIT DAY</div>'
+infoHtml+='<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:6px">Tap to view full schedule →</div>';tc.innerHTML=infoHtml;tc.onclick=function(){SP('campschedule-page');};hc.appendChild(tc);var rotationData={Monday:{Block1:{'Group 1':'Guitar · Music Room','Group 2':'DJ Lab','Group 3':'Graphic Design · Camo Room','Group 4':'Makeup · Gym'},Block2:{'Group 1':'Graphic Design · Camo Room','Group 2':'Guitar · Music Room','Group 3':'Makeup · Gym','Group 4':'DJ Lab'}},Tuesday:{Block1:{},Block2:{}},Wednesday:{Block1:{'Group 1':'Makeup · Gym','Group 2':'Dance & Step','Group 3':'Hair Braiding · DJ Lab','Group 4':'Outdoor Games'},Block2:{'Group 1':'Dance & Step','Group 2':'Outdoor Games','Group 3':'Makeup · Gym','Group 4':'Hair Braiding · DJ Lab'}},Thursday:{Block1:{'Group 1':'DJ Lab','Group 2':'Graphic Design · Camo Room','Group 3':'Guitar · Music Room','Group 4':'Visual Arts'},Block2:{'Group 1':'Visual Arts','Group 2':'Guitar · Music Room','Group 3':'DJ Lab','Group 4':'Graphic Design · Camo Room'}},Friday:{Block1:{'Group 1':'Dance & Step','Group 2':'Hair Braiding · DJ Lab','Group 3':'Visual Arts','Group 4':'Outdoor Games'},Block2:{'Group 1':'Outdoor Games','Group 2':'Visual Arts','Group 3':'Dance & Step','Group 4':'Hair Braiding · DJ Lab'}}};
+var todayDayName=dayNms[now.getDay()];
+var todayRots=rotationData[todayDayName];
+if(todayRots&&inCamp&&todayDayName!=='Tuesday'){
+var rc=document.createElement('div');
+rc.style.cssText='background:#111;border:1px solid #333;border-radius:14px;padding:14px 16px;margin-bottom:10px;';
+rc.innerHTML='<div style="font-size:11px;font-weight:700;color:#ca3092;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">📋 Today's Rotations</div>';
+['Block1','Block2'].forEach(function(bk,bi){
+var bDiv=document.createElement('div');
+bDiv.style.cssText='margin-bottom:'+(bi===0?'10px':'0')+';';
+bDiv.innerHTML='<div style="font-size:10px;font-weight:700;color:#66cccc;text-transform:uppercase;margin-bottom:6px">'+(bi===0?'Block 1 · 10:00 AM':'Block 2 · 11:20 AM')+'</div>';
+var rows=Object.entries(todayRots[bk]||{});
+rows.forEach(function(row){
+var g=row[0];var cls=row[1];
+var item=document.createElement('div');
+item.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#1a1a1a;border-radius:8px;margin-bottom:4px;';
+item.innerHTML='<div style="font-size:12px;font-weight:700;color:#fff">'+g+'</div><div style="font-size:12px;color:#aaa">'+cls+'</div>';
+bDiv.appendChild(item);
+});
+rc.appendChild(bDiv);
+});
+hc.appendChild(rc);
+}
+var todaySpirit=getTodaySpirit();var upcomingSpirit=getUpcomingSpirit();if(todaySpirit){var sb=document.createElement('div');sb.style.cssText='background:linear-gradient(135deg,#fbbf24,#d97706);border-radius:12px;padding:12px 16px;margin-bottom:10px;cursor:pointer;';sb.innerHTML='<div style="font-size:11px;font-weight:600;color:rgba(0,0,0,.6);margin-bottom:2px">✨ TODAY&#39;S SPIRIT DAY</div>'
 +'<div style="font-size:15px;font-weight:700;color:#000">'+todaySpirit.emoji+' '+todaySpirit.name+'</div>'
 +'<div style="font-size:11px;color:rgba(0,0,0,.7);margin-top:3px;line-height:1.5">'+todaySpirit.desc+'</div>';sb.onclick=function(){SP('campschedule-page');};hc.appendChild(sb);}else if(upcomingSpirit){var dayWord=upcomingSpirit.daysAway===1?'Tomorrow':'In '+upcomingSpirit.daysAway+' days';var sb=document.createElement('div');sb.style.cssText='background:#1a1a1a;border:1px solid #fbbf24;border-radius:12px;padding:12px 16px;margin-bottom:10px;cursor:pointer;';sb.innerHTML='<div style="font-size:11px;font-weight:600;color:#fbbf24;margin-bottom:2px">⏰ COMING UP · '+dayWord.toUpperCase()+'</div>'
 +'<div style="font-size:15px;font-weight:700;color:#fff">'+upcomingSpirit.spirit.emoji+' '+upcomingSpirit.spirit.name+'</div>'
@@ -924,8 +947,8 @@ var GA_RECS=[];var CAN_ASSIGN=["Sa'Sha",'Ruth Abigail','Hermekia','Miah',"Test U
 else{renderGrp(isAdmin);}}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
 function renderTAGroups(){var grid=document.getElementById('grp-grid');grid.innerHTML='';var other=document.getElementById('grp-other');other.innerHTML='';document.getElementById('grp-save').style.display='none';var subject=CU.subject||'';var week=getCampWeek();var rotations={
 Monday:{
-Block1:{'DJ Lab':'1','Graphic Design':'2','Guitar':'3','Makeup':'4'},
-Block2:{'DJ Lab':'3','Graphic Design':'4','Guitar':'1','Makeup':'2'}
+Block1:{'Guitar':'1','Graphic Design':'2','DJ Lab':'3','Makeup':'4'},
+Block2:{'Makeup':'1','Guitar':'2','Graphic Design':'3','DJ Lab':'4'}
 },
 Tuesday:{Block1:{},Block2:{}},
 Wednesday:{
