@@ -2874,18 +2874,61 @@ function emailInvoicesToBrooke(selected,all){
   sendBtn.textContent='✉️ Send to Brooke';
   sendBtn.style.cssText='flex:2;padding:12px;background:#ca3092;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;';
   sendBtn.onclick=async function(){
-    sendBtn.textContent='Sending...';
+    sendBtn.textContent='Generating PDFs...';
     sendBtn.disabled=true;
     try{
+      // Load html2pdf if not already loaded
+      await loadHtml2Pdf();
+
+      // Generate a PDF for each invoice
+      var pdfAttachments=[];
+      for(var i=0;i<selected.length;i++){
+        var inv=selected[i];
+        var f=inv.fields;
+        var name=(f.LegalName||f.Name||'Invoice').replace(/[^a-z0-9]/gi,'_');
+        var week=(f.WeekLabel||'Week').replace(/[^a-z0-9]/gi,'_');
+        var filename=name+'_'+week+'_Invoice.pdf';
+
+        // Build invoice HTML for PDF (white background, print-friendly)
+        var lines=(f.LineItems||'').split(',').map(function(l){return l.trim();}).filter(Boolean);
+        var invoiceEl=document.createElement('div');
+        invoiceEl.style.cssText='font-family:Arial,sans-serif;padding:32px;background:#fff;color:#000;width:600px;';
+        invoiceEl.innerHTML='<div style="border-bottom:4px solid #ca3092;padding-bottom:12px;margin-bottom:20px;">'          +'<div style="font-size:32px;font-weight:900;color:#ca3092;letter-spacing:2px;">INVOICE</div>'          +'<div style="font-size:12px;color:#888;margin-top:4px;">AngelStreet Memphis Creative Arts Camp 2026</div>'          +'</div>'          +'<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">'          +'<tr><td style="color:#888;padding:8px 4px;font-size:13px;border-bottom:1px solid #eee;width:140px;">Teaching Artist</td><td style="font-weight:700;padding:8px 4px;font-size:13px;border-bottom:1px solid #eee;">'+(f.LegalName||f.Name||'—')+'</td></tr>'          +'<tr><td style="color:#888;padding:8px 4px;font-size:13px;border-bottom:1px solid #eee;">Period</td><td style="font-weight:700;padding:8px 4px;font-size:13px;border-bottom:1px solid #eee;">'+(f.WeekLabel||'—')+'</td></tr>'          +'<tr><td style="color:#888;padding:8px 4px;font-size:13px;border-bottom:1px solid #eee;">Submitted</td><td style="font-weight:700;padding:8px 4px;font-size:13px;border-bottom:1px solid #eee;">'+(f.SubmittedDate||'—')+'</td></tr>'          +'</table>'          +'<div style="background:#f9f9f9;border-radius:8px;padding:14px;margin-bottom:20px;">'          +'<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Services Rendered</div>'          +(lines.length?lines.map(function(l){return '<div style="font-size:13px;color:#333;padding:4px 0;border-bottom:1px solid #eee;">'+l+'</div>';}).join(''):'<div style="font-size:13px;color:#333;">See invoice details</div>')
+          +'</div>'          +'<div style="background:#ca3092;color:#fff;border-radius:8px;padding:16px;display:flex;justify-content:space-between;align-items:center;">'          +'<span style="font-size:15px;font-weight:700;">TOTAL DUE</span>'          +'<span style="font-size:30px;font-weight:900;">$'+f.Total+'</span>'          +'</div>'          +'<div style="margin-top:20px;font-size:11px;color:#aaa;text-align:center;">AngelStreet Memphis · 686 N 7th St, Memphis, TN 38107</div>';
+        document.body.appendChild(invoiceEl);
+
+        // Generate PDF blob
+        var pdfBlob=await html2pdf().set({
+          margin:8,
+          filename:filename,
+          image:{type:'jpeg',quality:.98},
+          html2canvas:{scale:2,backgroundColor:'#ffffff'},
+          jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+        }).from(invoiceEl).outputPdf('blob');
+
+        document.body.removeChild(invoiceEl);
+
+        // Convert blob to base64
+        var b64=await new Promise(function(resolve){
+          var reader=new FileReader();
+          reader.onloadend=function(){resolve(reader.result.split(',')[1]);};
+          reader.readAsDataURL(pdfBlob);
+        });
+
+        pdfAttachments.push({filename:filename,content:b64,type:'application/pdf',disposition:'attachment'});
+        sendBtn.textContent='Generating PDFs ('+(i+1)+'/'+selected.length+')...';
+      }
+
+      sendBtn.textContent='Sending...';
       var res=await fetch('/.netlify/functions/send-invoices',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({invoices:selected,senderName:senderName,senderEmail:senderEmail})
+        body:JSON.stringify({invoices:selected,senderName:senderName,senderEmail:senderEmail,attachments:pdfAttachments})
       });
       var data=await res.json();
       CM();
       if(data.success){
-        alert('✅ '+data.count+' invoice'+(data.count>1?'s':'')+' sent to Brooke! A copy was CC\'d to '+senderEmail+'.');
+        alert('✅ '+data.count+' invoice'+(data.count>1?'s':'')+' sent to Brooke as PDFs! A copy was CC\'d to '+senderEmail+'.');
       }else{
         alert('❌ Error sending: '+(data.error||'Unknown error')+(data.detail?' — '+data.detail:''));
       }
