@@ -1318,11 +1318,45 @@ function renderInvoiceForm(existing,cont,forceWeek){
 var week=getInvoiceWeek(forceWeek);
 var isOrientation=week==='orientation';
 window._dayClasses={};
+
+// Week selector
+var weekOptions=[
+  {val:'orientation',label:'Orientation Week (Jun 1-5)'},
+  {val:'Week1',label:'Week 1 (Jun 8-12)'},
+  {val:'Week2',label:'Week 2 (Jun 15-18)'},
+  {val:'Week3',label:'Week 3 (Jun 22-26)'},
+  {val:'Week4',label:'Week 4 (Jun 29-Jul 3)'}
+];
+var wselCard=document.createElement('div');
+wselCard.style.cssText='background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;';
+wselCard.innerHTML='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Submitting For</div>';
+var wsel=document.createElement('select');
+wsel.id='inv-week-sel';
+wsel.style.cssText='width:100%;padding:10px;border:1px solid #444;border-radius:8px;background:#111;color:#fff;font-size:14px;box-sizing:border-box;';
+weekOptions.forEach(function(o){
+  var opt=document.createElement('option');
+  opt.value=o.val;
+  opt.textContent=o.label;
+  if(o.val===week)opt.selected=true;
+  wsel.appendChild(opt);
+});
+wsel.onchange=function(){
+  cont.innerHTML='';
+  renderInvoiceForm(null,cont,wsel.value);
+};
+wselCard.appendChild(wsel);
+cont.appendChild(wselCard);
+
+// Re-read week from selector if present
+var selEl=document.getElementById('inv-week-sel');
+if(selEl&&!forceWeek)week=selEl.value;
+isOrientation=week==='orientation';
+
 var hdr=document.createElement('div');
 hdr.style.cssText='background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;';
 hdr.innerHTML='<div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:1px;margin-bottom:4px">INVOICE</div>'
 +'<div style="font-size:13px;color:#66cccc;font-weight:600">'+CU.n+'</div>'
-+'<div style="font-size:12px;color:#aaa">'+getInvoiceWeekLabel()+'</div>';
++'<div style="font-size:12px;color:#aaa">'+(weekOptions.find(function(o){return o.val===week;})||{label:week}).label+'</div>';
 cont.appendChild(hdr);
 var legalCard=document.createElement('div');
 legalCard.style.cssText='background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;';
@@ -1398,8 +1432,10 @@ var totalEl=document.getElementById('inv-total');
 var total=parseInt((totalEl?totalEl.textContent:'0').replace('$',''))||0;
 if(total===0){alert('Please select at least one item.');return;}
 if(!confirm('Submit invoice for $'+total+' as '+CU.n+'? This cannot be edited after submission.'))return;
-var week=getInvoiceWeek();
-var weekLabel=getInvoiceWeekLabel();
+var weekSelEl=document.getElementById('inv-week-sel');
+var week=weekSelEl?weekSelEl.value:getInvoiceWeek();
+var weekLabels={orientation:'Orientation Week (Jun 1-5)',Week1:'Week 1 (Jun 8-12)',Week2:'Week 2 (Jun 15-18)',Week3:'Week 3 (Jun 22-26)',Week4:'Week 4 (Jun 29-Jul 3)'};
+var weekLabel=weekLabels[week]||getInvoiceWeekLabel();
 if(!week||!weekLabel||week==='undefined'){alert('Error: could not determine week. Please try again.');return;}
 var legalNameEl=document.getElementById('inv-legal-name');
 var legalName=legalNameEl?legalNameEl.value.trim():'';
@@ -1521,7 +1557,21 @@ try{
 var recs=await AF('Invoices');
 listDiv.innerHTML='';
 if(!recs.length){listDiv.innerHTML='<div style="color:#555;text-align:center;padding:30px;font-size:14px">No invoices submitted yet.</div>';return;}
-var sorted=recs.slice().sort(function(a,b){return new Date(b.createdTime)-new Date(a.createdTime);});
+var allSorted=recs.slice().sort(function(a,b){return new Date(b.createdTime)-new Date(a.createdTime);});
+
+// Week filter dropdown
+var weekFilterBar=document.createElement('div');
+weekFilterBar.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:14px;';
+weekFilterBar.innerHTML='<label style="font-size:13px;color:#aaa;font-weight:600;white-space:nowrap;">Filter by week:</label>';
+var wfSel=document.createElement('select');
+wfSel.style.cssText='flex:1;padding:8px 12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:13px;';
+[{val:'all',label:'All Weeks'},{val:'orientation',label:'Orientation Week'},{val:'Week1',label:'Week 1 (Jun 8-12)'},{val:'Week2',label:'Week 2 (Jun 15-18)'},{val:'Week3',label:'Week 3 (Jun 22-26)'},{val:'Week4',label:'Week 4 (Jun 29-Jul 3)'}].forEach(function(o){
+  var opt=document.createElement('option');opt.value=o.val;opt.textContent=o.label;wfSel.appendChild(opt);
+});
+wfSel.value=getCampWeek();
+weekFilterBar.appendChild(wfSel);
+listDiv.appendChild(weekFilterBar);
+
 // Email selected invoices button
 var selectedInvs=[];
 var emailBar=document.createElement('div');
@@ -1530,41 +1580,73 @@ emailBar.innerHTML='<div style="font-size:12px;color:#aaa;"><span id="inv-sel-co
 var emailBtn=document.createElement('button');
 emailBtn.style.cssText='padding:8px 16px;background:#66cccc;color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;';
 emailBtn.textContent='📧 Email to Brooke';
-emailBtn.onclick=function(){emailInvoicesToBrooke(selectedInvs,sorted);};
+emailBtn.onclick=function(){emailInvoicesToBrooke(selectedInvs,filtered);};
 emailBar.appendChild(emailBtn);
 listDiv.appendChild(emailBar);
 
-sorted.forEach(function(rec){
-var f=rec.fields;
-var card=document.createElement('div');
-card.style.cssText='background:#1a1a1a;border:2px solid #333;border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;';
-var topRow=document.createElement('div');
-topRow.style.cssText='display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;';
-var cb=document.createElement('input');cb.type='checkbox';cb.style.cssText='width:18px;height:18px;flex-shrink:0;margin-top:3px;accent-color:#ca3092;cursor:pointer;';
-var info=document.createElement('div');info.style.cssText='flex:1;';
-info.innerHTML='<div style="font-size:15px;font-weight:700;color:#fff">'+(f.LegalName||f.Name)+'</div>'
-+'<div style="font-size:12px;color:#aaa">'+f.WeekLabel+'</div>'
-+(f.LineItems?'<div style="font-size:11px;color:#666;margin-top:4px">'+f.LineItems+'</div>':'')
-+'<div style="font-size:11px;color:#555;margin-top:2px">Submitted: '+f.SubmittedDate+'</div>';
-var total=document.createElement('div');total.style.cssText='font-size:24px;font-weight:900;color:#66cccc;';total.textContent='$'+f.Total;
-topRow.appendChild(cb);topRow.appendChild(info);topRow.appendChild(total);
-card.appendChild(topRow);
-var dlBtn=document.createElement('button');
-dlBtn.style.cssText='width:100%;padding:10px;background:#ca3092;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;';
-dlBtn.textContent='📥 Download PDF';
-(function(r){dlBtn.onclick=function(e){e.stopPropagation();downloadInvoicePDF(r);};})(rec);
-card.appendChild(dlBtn);
-// Checkbox toggle
-(function(r,checkbox,c){
-  checkbox.onchange=function(){
-    if(checkbox.checked){selectedInvs.push(r);c.style.borderColor='#ca3092';}
-    else{selectedInvs=selectedInvs.filter(function(x){return x.id!==r.id;});c.style.borderColor='#333';}
-    document.getElementById('inv-sel-count').textContent=selectedInvs.length;
-  };
-  c.onclick=function(e){if(e.target!==checkbox&&e.target!==dlBtn){checkbox.checked=!checkbox.checked;checkbox.onchange();}};
-})(rec,cb,card);
-listDiv.appendChild(card);
-});
+var cardsDiv=document.createElement('div');cardsDiv.id='inv-cards-div';
+listDiv.appendChild(cardsDiv);
+
+function renderInvoiceCards(){
+  var wf=wfSel.value;
+  var filtered=wf==='all'?allSorted:allSorted.filter(function(r){return r.fields.Week===wf;});
+  selectedInvs=[];
+  document.getElementById('inv-sel-count').textContent='0';
+  cardsDiv.innerHTML='';
+  if(!filtered.length){cardsDiv.innerHTML='<div style="color:#555;text-align:center;padding:20px;font-size:13px;">No invoices for this week.</div>';return;}
+  var weekTotal=filtered.reduce(function(sum,r){return sum+(parseFloat(r.fields.Total)||0);},0);
+  var weekSummary=document.createElement('div');
+  weekSummary.style.cssText='background:rgba(102,204,204,.1);border:1px solid #66cccc;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;';
+  weekSummary.innerHTML='<span style="font-size:13px;color:#66cccc;font-weight:600;">'+filtered.length+' invoice'+(filtered.length!==1?'s':'')+'</span><span style="font-size:16px;font-weight:900;color:#66cccc;">$'+weekTotal.toFixed(0)+' total</span>';
+  cardsDiv.appendChild(weekSummary);
+  filtered.forEach(function(rec){
+    var f=rec.fields;
+    var card=document.createElement('div');
+    card.style.cssText='background:#1a1a1a;border:2px solid #333;border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;';
+    var topRow=document.createElement('div');
+    topRow.style.cssText='display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;';
+    var cb=document.createElement('input');cb.type='checkbox';cb.style.cssText='width:18px;height:18px;flex-shrink:0;margin-top:3px;accent-color:#ca3092;cursor:pointer;';
+    var info=document.createElement('div');info.style.cssText='flex:1;';
+    info.innerHTML='<div style="font-size:15px;font-weight:700;color:#fff">'+(f.LegalName||f.Name)+'</div>'
+      +'<div style="font-size:12px;color:#aaa;">'+f.WeekLabel+'</div>'
+      +(f.LineItems?'<div style="font-size:11px;color:#666;margin-top:4px;">'+f.LineItems+'</div>':'')
+      +'<div style="font-size:11px;color:#555;margin-top:2px;">Submitted: '+f.SubmittedDate+'</div>';
+    var total=document.createElement('div');total.style.cssText='font-size:24px;font-weight:900;color:#66cccc;';total.textContent='$'+f.Total;
+    topRow.appendChild(cb);topRow.appendChild(info);topRow.appendChild(total);
+    card.appendChild(topRow);
+    var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:8px;';
+    var dlBtn=document.createElement('button');
+    dlBtn.style.cssText='flex:1;padding:10px;background:#ca3092;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;';
+    dlBtn.textContent='📥 Download PDF';
+    (function(r){dlBtn.onclick=function(e){e.stopPropagation();downloadInvoicePDF(r);};})(rec);
+    var delBtn=document.createElement('button');
+    delBtn.style.cssText='padding:10px 14px;background:#333;color:#f87171;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;';
+    delBtn.textContent='🗑';
+    (function(r,c){delBtn.onclick=function(e){
+      e.stopPropagation();
+      if(!confirm('Delete invoice for '+(r.fields.LegalName||r.fields.Name)+' ('+r.fields.WeekLabel+', $'+r.fields.Total+')? This cannot be undone.'))return;
+      fetch('/.netlify/functions/airtable/Invoices/'+r.id,{method:'DELETE'})
+        .then(function(res){return res.json();})
+        .then(function(data){
+          if(data.deleted){c.remove();allSorted=allSorted.filter(function(x){return x.id!==r.id;});selectedInvs=selectedInvs.filter(function(x){return x.id!==r.id;});document.getElementById('inv-sel-count').textContent=selectedInvs.length;}
+          else{alert('Delete failed.');}
+        }).catch(function(err){alert('Error: '+err.message);});
+    };})(rec,card);
+    btnRow.appendChild(dlBtn);btnRow.appendChild(delBtn);
+    card.appendChild(btnRow);
+    (function(r,checkbox,c){
+      checkbox.onchange=function(){
+        if(checkbox.checked){selectedInvs.push(r);c.style.borderColor='#ca3092';}
+        else{selectedInvs=selectedInvs.filter(function(x){return x.id!==r.id;});c.style.borderColor='#333';}
+        document.getElementById('inv-sel-count').textContent=selectedInvs.length;
+      };
+      c.onclick=function(e){if(e.target!==checkbox&&e.target!==dlBtn&&e.target!==delBtn){checkbox.checked=!checkbox.checked;checkbox.onchange();}};
+    })(rec,cb,card);
+    cardsDiv.appendChild(card);
+  });
+}
+wfSel.onchange=renderInvoiceCards;
+renderInvoiceCards();
 }catch(e){cont.innerHTML='<div class="msg me">⚠️ '+e.message+'</div>';}
 }
 function downloadInvoicePDF(rec){
