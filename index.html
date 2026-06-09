@@ -593,11 +593,11 @@ var USERS=[
   {n:"D'Aisha Franklin",r:'jrta',p:'mploy',eh:14},
   {n:'Tanaya',r:'staff-pt',p:'staff',eh:null},
   {n:'Michayia',r:'staff-pt',p:'staff',eh:null},
-  {n:'Hermekia',r:'staff',p:'staff',eh:null},
+  {n:'Hermekia',r:'staff',p:'staff',eh:null,e:'hermekia@angelstreetmemphis.com'},
   {n:'Miah',r:'staff',p:'staff',eh:null},
   {n:'Deonna',r:'staff',p:'staff',eh:null},
   {n:'Jessica',r:'staff',p:'staff',eh:null},
-  {n:"Sa'Sha",r:'admin',p:'0825',eh:null},
+  {n:"Sa'Sha",r:'admin',p:'0825',eh:null,e:'sasha@angelstreetmemphis.com'},
   {n:'Ruth Abigail',r:'admin',p:'staff',eh:null},
   {n:"Test User (Sa'Sha)",r:'admin',p:'test',eh:null},
   {n:'Test User (Demo)',r:'jrta',p:'test',eh:15},
@@ -868,8 +868,8 @@ inp={getValue:function(){return pSel.value==='__other__'?oInp.value.trim():pSel.
 var tInp=document.createElement('input');tInp.placeholder='Pickup person name';tInp.style.cssText='width:100%;padding:12px;border:2px solid #444;border-radius:8px;font-size:16px;color:#fff;background:#333;display:block;';
 inpWrap.appendChild(tInp);inp={getValue:function(){return tInp.value.trim();},focus:function(){tInp.focus();}};
 }var sigLbl=document.createElement('div');sigLbl.style.cssText='font-size:12px;color:#aaa;margin-bottom:8px;';sigLbl.textContent='Sign below:';var canvas=document.createElement('canvas');canvas.width=320;canvas.height=150;canvas.style.cssText='border:2px solid #555;border-radius:8px;touch-action:none;width:100%;background:#fff;display:block;margin-bottom:12px;';var ctx=canvas.getContext('2d');ctx.strokeStyle='#000';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';var drawing=false;function getPos(e){var r=canvas.getBoundingClientRect();var src=e.touches?e.touches[0]:e;return{x:(src.clientX-r.left)*(canvas.width/r.width),y:(src.clientY-r.top)*(canvas.height/r.height)};}
-canvas.addEventListener('mousedown',function(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});canvas.addEventListener('mousemove',function(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});canvas.addEventListener('mouseup',function(){drawing=false;});canvas.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});canvas.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});canvas.addEventListener('touchend',function(e){e.preventDefault();drawing=false;},{passive:false});var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:8px;margin-bottom:10px;';var clrBtn=document.createElement('button');clrBtn.textContent='Clear';clrBtn.style.cssText='flex:1;padding:12px;background:#444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;';clrBtn.onclick=function(){ctx.clearRect(0,0,canvas.width,canvas.height);};var cfmBtn=document.createElement('button');cfmBtn.textContent='Confirm Checkout';cfmBtn.style.cssText='flex:1;padding:12px;background:#ca3092;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;';cfmBtn.onclick=async function(){var pu=inp.getValue?inp.getValue():inp.value.trim();if(!pu){alert('Please enter the pickup person name.');return;}
-var sig=canvas.toDataURL('image/png');var today=tstr();var checkoutTime=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});var ex=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===today;});CM();try{if(ex)await AP(TAT,ex.id,{CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFee>0?lateFee:0,FeePaid:false});else await AC(TAT,{Date:today,CamperName:name,Status:'Present',CheckInTime:'',CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFee>0?lateFee:0,FeePaid:false});ATR=await AF(TAT,"Date='"+today+"'");renderCI();alert(name.split(' ')[0]+' checked out to '+pu+'.');}catch(e){alert('Error: '+e.message);}};var cancelBtn=document.createElement('button');cancelBtn.className='mdc';cancelBtn.textContent='Cancel';cancelBtn.onclick=CM;btnRow.appendChild(clrBtn);btnRow.appendChild(cfmBtn);d.appendChild(title);d.appendChild(sub);d.appendChild(inpWrap);d.appendChild(sigLbl);d.appendChild(canvas);d.appendChild(btnRow);d.appendChild(cancelBtn);overlay.appendChild(d);var modal=document.getElementById('modal');modal.innerHTML='';modal.appendChild(overlay);modal.style.display='block';setTimeout(function(){if(inp.focus)inp.focus();},100);}
+canvas.addEventListener('mousedown',function(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});canvas.addEventListener('mousemove',function(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});canvas.addEventListener('mouseup',function(){drawing=false;});canvas.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});canvas.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});canvas.addEventListener('touchend',function(e){e.preventDefault();drawing=false;},{passive:false});var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:8px;margin-bottom:10px;';var clrBtn=document.createElement('button');clrBtn.textContent='Clear';clrBtn.style.cssText='flex:1;padding:12px;background:#444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;';clrBtn.onclick=function(){ctx.clearRect(0,0,canvas.width,canvas.height);};var cfmBtn=document.createElement('button');cfmBtn.textContent='Confirm Checkout';cfmBtn.style.cssText='flex:1;padding:12px;background:#ca3092;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;';var attRecCO=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===tstr();});var lateFeeCO=attRecCO&&attRecCO.fields.LateFee?parseFloat(attRecCO.fields.LateFee):0;cfmBtn.onclick=async function(){var pu=inp.getValue?inp.getValue():inp.value.trim();if(!pu){alert('Please enter the pickup person name.');return;}
+var sig=canvas.toDataURL('image/png');var today=tstr();var checkoutTime=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});var ex=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===today;});CM();try{if(ex)await AP(TAT,ex.id,{CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFeeCO>0?lateFeeCO:0,FeePaid:false});else await AC(TAT,{Date:today,CamperName:name,Status:'Present',CheckInTime:'',CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFeeCO>0?lateFeeCO:0,FeePaid:false});ATR=await AF(TAT,"Date='"+today+"'");renderCI();alert(name.split(' ')[0]+' checked out to '+pu+'.');}catch(e){alert('Error: '+e.message);}};var cancelBtn=document.createElement('button');cancelBtn.className='mdc';cancelBtn.textContent='Cancel';cancelBtn.onclick=CM;btnRow.appendChild(clrBtn);btnRow.appendChild(cfmBtn);d.appendChild(title);d.appendChild(sub);d.appendChild(inpWrap);d.appendChild(sigLbl);d.appendChild(canvas);d.appendChild(btnRow);d.appendChild(cancelBtn);overlay.appendChild(d);var modal=document.getElementById('modal');modal.innerHTML='';modal.appendChild(overlay);modal.style.display='block';setTimeout(function(){if(inp.focus)inp.focus();},100);}
 async function loadComm(){var em=document.getElementById('comm-msg');em.style.display='none';var canPost=CU&&(CU.r==='admin'||CU.r==='staff');document.getElementById('comm-post').style.display=canPost?'block':'none';document.getElementById('comm-att-section').style.display=canPost?'block':'none';var cw=getCampWeek();var sel=document.getElementById('comm-week');if(sel)sel.value=cw;document.getElementById('comm-week').onchange=function(){loadComm();};var week=document.getElementById('comm-week').value;try{RSR=await AF(TR,"Week='"+week+"'");ATR=await AF(TAT,"Date='"+tstr()+"'");if(canPost){renderParentList();renderAttComm();}}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
 function renderParentList(){var list=document.getElementById('comm-parent-list');list.innerHTML='';var msg=document.getElementById('comm-ta').value.trim();var allBtn=document.getElementById('comm-text-all');if(allBtn){allBtn.onclick=function(){var phones=[];RSR.forEach(function(r){if(r.fields.Parent1Phone)phones.push(r.fields.Parent1Phone.replace(/[^0-9]/g,''));if(r.fields.EmergencyContactPhone)phones.push(r.fields.EmergencyContactPhone.replace(/[^0-9]/g,''));});phones=phones.filter(function(p,i,a){return p&&a.indexOf(p)===i;});if(!phones.length){alert('No parent phone numbers found.');return;}
 navigator.clipboard.writeText(phones.join(', ')).then(function(){allBtn.textContent='✓ Copied!';allBtn.style.background='#66cccc';allBtn.style.color='#0a0a0a';setTimeout(function(){allBtn.textContent='📋 Copy All Numbers';allBtn.style.background='#8d4d9e';allBtn.style.color='#fff';},3000);}).catch(function(){prompt('Copy these numbers:',phones.join(', '));});};
@@ -2821,23 +2821,85 @@ buildHome();SP('home');
 
 function emailInvoicesToBrooke(selected,all){
   if(!selected||!selected.length){
-    // If none selected, use all
     if(confirm('No invoices selected. Email all '+all.length+' invoices?')){
       selected=all;
     }else{return;}
   }
-  var subject='AngelStreet Creative Arts Camp 2026 — Teaching Artist Invoices';
-  var body='Hi Brooke,\n\nPlease find the following Teaching Artist invoices for AngelStreet Creative Arts Camp 2026:\n\n';
+  var total=selected.reduce(function(sum,r){return sum+(parseFloat(r.fields.Total)||0);},0);
+  var senderName=CU&&CU.n?CU.n:'AngelStreet Staff';
+  var senderEmail=CU&&CU.e?CU.e:'';
+
+  // Build preview modal
+  var overlay=document.createElement('div');overlay.className='mbg';
+  overlay.onclick=function(e){if(e.target===overlay)CM();};
+  var d=document.createElement('div');d.className='md';
+  d.style.cssText='background:#1a1a1a;border-radius:16px;padding:24px;max-width:480px;width:95%;max-height:85vh;overflow-y:auto;position:relative;z-index:10000;';
+
+  var h='<div style="border-bottom:2px solid #ca3092;padding-bottom:12px;margin-bottom:16px;">';
+  h+='<div style="font-size:18px;font-weight:900;color:#ca3092;">📧 Email Preview</div>';
+  h+='<div style="font-size:12px;color:#888;margin-top:4px;">Review before sending to Brooke</div>';
+  h+='</div>';
+
+  h+='<div style="background:#111;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;">';
+  h+='<div style="margin-bottom:6px;"><span style="color:#888;">To: </span><span style="color:#fff;">vbrookeking@gmail.com</span></div>';
+  h+='<div style="margin-bottom:6px;"><span style="color:#888;">CC: </span><span style="color:#fff;">'+(senderEmail||'(your email)')+'</span></div>';
+  h+='<div style="margin-bottom:6px;"><span style="color:#888;">From: </span><span style="color:#fff;">creativehub@angelstreetmemphis.com</span></div>';
+  h+='<div><span style="color:#888;">Subject: </span><span style="color:#fff;">AngelStreet Creative Arts Camp 2026 — Teaching Artist Invoices ('+selected.length+' invoice'+(selected.length>1?'s':'')+')</span></div>';
+  h+='</div>';
+
+  h+='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Invoices ('+selected.length+')</div>';
+  h+='<div style="background:#111;border-radius:8px;padding:12px;margin-bottom:14px;">';
   selected.forEach(function(rec,i){
     var f=rec.fields;
-    body+=(i+1)+'. '+(f.LegalName||f.Name)+' — '+f.WeekLabel+' — $'+f.Total+'\n';
-    if(f.LineItems)body+='   Services: '+f.LineItems+'\n';
-    body+='   Submitted: '+f.SubmittedDate+'\n\n';
+    h+='<div style="padding:8px 0;border-bottom:1px solid #2a2a2a;font-size:13px;">';
+    h+='<div style="color:#fff;font-weight:600;">'+(i+1)+'. '+(f.LegalName||f.Name)+'</div>';
+    h+='<div style="color:#888;font-size:12px;">'+f.WeekLabel+' · $'+f.Total+'</div>';
+    if(f.LineItems)h+='<div style="color:#666;font-size:11px;margin-top:2px;">'+f.LineItems+'</div>';
+    h+='</div>';
   });
-  body+='Total Amount: $'+selected.reduce(function(sum,r){return sum+(parseFloat(r.fields.Total)||0);},0).toFixed(0)+'\n\n';
-  body+='Please download the individual PDF invoices from the AngelStreet Camp App.\n\nThank you,\nAngelStreet Memphis';
-  var mailto='mailto:vbrookeking@gmail.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
-  window.open(mailto);
+  h+='<div style="padding:10px 0;font-size:14px;font-weight:700;color:#66cccc;">Total: $'+total.toFixed(0)+'</div>';
+  h+='</div>';
+
+  h+='<div style="font-size:11px;color:#888;margin-bottom:14px;background:#111;border-radius:8px;padding:10px;">📎 Each invoice will be attached as an HTML file that Brooke can open and print.</div>';
+
+  d.innerHTML=h;
+
+  var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:8px;';
+  var cancelBtn=document.createElement('button');
+  cancelBtn.textContent='Cancel';
+  cancelBtn.style.cssText='flex:1;padding:12px;background:#333;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;';
+  cancelBtn.onclick=CM;
+
+  var sendBtn=document.createElement('button');
+  sendBtn.textContent='✉️ Send to Brooke';
+  sendBtn.style.cssText='flex:2;padding:12px;background:#ca3092;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;';
+  sendBtn.onclick=async function(){
+    sendBtn.textContent='Sending...';
+    sendBtn.disabled=true;
+    try{
+      var res=await fetch('/.netlify/functions/send-invoices',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({invoices:selected,senderName:senderName,senderEmail:senderEmail})
+      });
+      var data=await res.json();
+      CM();
+      if(data.success){
+        alert('✅ '+data.count+' invoice'+(data.count>1?'s':'')+' sent to Brooke! A copy was CC\'d to '+senderEmail+'.');
+      }else{
+        alert('❌ Error sending: '+(data.error||'Unknown error')+(data.detail?' — '+data.detail:''));
+      }
+    }catch(e){
+      CM();
+      alert('❌ Error: '+e.message);
+    }
+  };
+
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(sendBtn);
+  d.appendChild(btnRow);
+  overlay.appendChild(d);
+  var modal=document.getElementById('modal');modal.innerHTML='';modal.appendChild(overlay);modal.style.display='block';
 }
 
 </script>
