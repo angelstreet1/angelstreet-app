@@ -2329,7 +2329,7 @@ function downloadPayrollReport(pp,tcMap){
     rows.push([]);
   });
 
-  var csv=rows.map(function(r){return r.map(function(c){return '"'+(c||'')+'"';}).join(',');}).join('\n');
+  var csv=rows.map(function(r){return r.map(function(c){return '"'+(c||'')+'"';}).join(',');}).join('\x0a');
   var blob=new Blob([csv],{type:'text/csv'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
