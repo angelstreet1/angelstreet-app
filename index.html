@@ -957,7 +957,52 @@ h+='<tr><td>'+u.n+'</td><td>'+rl+'</td><td><b>'+pin+'</b></td><td>'+rst+'</td></
 async function resetPIN(name,recId){if(!confirm('Reset PIN for '+name+'?'))return;try{await AP(TU,recId,{PIN:''});await loadAdm();alert('PIN reset for '+name);}catch(e){alert('Error: '+e.message);}}
 function renderAdmWeekly(){var el=document.getElementById('adm-weekly'),now=new Date(),dw=now.getDay(),ws=new Date(now);ws.setDate(now.getDate()-(dw===0?6:dw-1));var h='<table class="at"><thead><tr><th>Name</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Total</th></tr></thead><tbody>';TC_USERS.forEach(function(u){var tot=0,cells='';for(var i=0;i<5;i++){var d=new Date(ws);d.setDate(ws.getDate()+i);var ds=(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();var rec=ADM_TC.find(function(r){return r.fields.Name===u.n&&r.fields.Date===ds;});if(rec&&rec.fields.HoursWorked){var hrs=parseFloat(rec.fields.HoursWorked);tot+=hrs;cells+='<td>'+hrs.toFixed(2)+'</td>';}else cells+='<td style="color:#555">—</td>';}
 h+='<tr><td>'+u.n+'</td>'+cells+'<td><b>'+tot.toFixed(2)+'</b></td></tr>';});h+='</tbody></table>';el.innerHTML=h;}
-function renderAdmLog(){var el=document.getElementById('adm-log');var sorted=ADM_TC.slice().sort(function(a,b){return new Date(b.fields.Date)-new Date(a.fields.Date);});var h='<table class="at"><thead><tr><th>Date</th><th>Name</th><th>In</th><th>Out</th><th>Hours</th><th>Flags</th><th>Fix</th></tr></thead><tbody>';sorted.forEach(function(rec){var fl=rec.fields.Flagged?'<span class="flb">'+rec.fields.Flagged.slice(0,20)+'</span>':'<span class="okb">OK</span>';var fix=(!rec.fields.PunchOut)?'<button class="ab pk" data-rid="'+rec.id+'" data-pin="'+(rec.fields.PunchIn||'')+'">Fix Out</button>':'';h+='<tr><td>'+(rec.fields.Date||'')+'</td><td>'+(rec.fields.Name||'')+'</td><td>'+(rec.fields.PunchIn||'—')+'</td><td>'+(rec.fields.PunchOut||'—')+'</td><td>'+(rec.fields.HoursWorked||'—')+'</td><td>'+fl+'</td><td>'+fix+'</td></tr>';});h+='</tbody></table>';el.innerHTML=h;el.querySelectorAll('.ab.pk').forEach(function(btn){btn.onclick=async function(){var time=prompt('Enter correct punch-out time (e.g. 3:00 PM):');if(!time)return;try{await AP(TT,btn.dataset.rid,{PunchOut:time,HoursWorked:chrs(btn.dataset.pin,time),Status:'Out',Flagged:'Admin fixed'});await loadAdm();}catch(e){alert('Error: '+e.message);}};});}
+function renderAdmLog(){
+var el=document.getElementById('adm-log');
+var names=[...new Set(ADM_TC.map(function(r){return r.fields.Name||'';}).filter(Boolean))].sort();
+var selHtml='<div style="margin-bottom:12px"><select id="adm-log-filter" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;font-size:13px;" onchange="renderAdmLogForPerson(this.value)"><option value="">-- Select a person --</option>';
+names.forEach(function(n){selHtml+='<option value="'+n+'">'+n+'</option>';});
+selHtml+='</select></div><div id="adm-log-person"></div>';
+el.innerHTML=selHtml;
+}
+
+function renderAdmLogForPerson(name){
+var el=document.getElementById('adm-log-person');
+if(!name){el.innerHTML='';return;}
+var recs=ADM_TC.filter(function(r){return r.fields.Name===name;}).sort(function(a,b){return new Date(b.fields.Date)-new Date(a.fields.Date);});
+if(!recs.length){el.innerHTML='<div style="color:#555;padding:12px">No punches found for '+name+'</div>';return;}
+var h='';
+recs.forEach(function(rec){
+var hasOut=!!rec.fields.PunchOut;
+var flagged=rec.fields.Flagged&&rec.fields.Flagged!='Admin fixed'&&rec.fields.Flagged!='Admin entry';
+h+='<div style="background:#'+(flagged?'2a1a1a':'111')+';border:1px solid #'+(flagged?'ca3092':'333')+';border-radius:10px;padding:12px 14px;margin-bottom:8px;">';
+h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+h+='<div style="font-size:13px;font-weight:700;color:#66cccc">'+rec.fields.Date+'</div>';
+h+='<div style="font-size:11px;color:'+(hasOut?'#34d399':'#f87171')+'">'+( hasOut?rec.fields.HoursWorked+' hrs':'Missing punch-out')+'</div>';
+h+='</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
+h+='<div><div style="font-size:10px;color:#888">Punch In</div><div style="font-size:13px;color:#fff">'+( rec.fields.PunchIn||'—')+'</div></div>';
+h+='<div><div style="font-size:10px;color:#888">Punch Out</div><div style="font-size:13px;color:#'+(hasOut?'fff':'f87171')+'">'+( rec.fields.PunchOut||'MISSING')+'</div></div>';
+h+='</div>';
+if(flagged) h+='<div style="font-size:10px;color:#ca3092;margin-bottom:8px">⚠️ '+rec.fields.Flagged+'</div>';
+h+='<div style="display:flex;gap:6px;">';
+h+='<button class="ab pk" data-rid="'+rec.id+'" data-in="'+(rec.fields.PunchIn||'')+'" data-out="'+(rec.fields.PunchOut||'')+'" onclick="adminEditPunch(this.dataset.rid,this.dataset.in,this.dataset.out)" style="flex:1">Edit Punches</button>';
+h+='</div>';
+h+='</div>';
+});
+el.innerHTML=h;
+}
+
+function adminEditPunch(rid,currentIn,currentOut){
+var newIn=prompt('Punch In time (e.g. 9:00 AM):', currentIn||'');
+if(newIn===null)return;
+var newOut=prompt('Punch Out time (e.g. 3:00 PM):', currentOut||'');
+if(newOut===null)return;
+var hrs=chrs(newIn,newOut);
+AP(TT,rid,{PunchIn:newIn,PunchOut:newOut,HoursWorked:hrs,Status:'Out',Flagged:'Admin fixed'}).then(function(){
+renderAdmLogForPerson(document.getElementById('adm-log-filter').value);
+}).catch(function(e){alert('Error: '+e.message);});
+}
 function dldCSV(){var rows=[['Date','Name','Program','In','Out','Hours','Flags']];ADM_TC.slice().sort(function(a,b){return new Date(a.fields.Date)-new Date(b.fields.Date);}).forEach(function(r){rows.push([r.fields.Date||'',r.fields.Name||'',r.fields.Program||'',r.fields.PunchIn||'',r.fields.PunchOut||'',r.fields.HoursWorked||'',r.fields.Flagged||'']);});var csv=rows.map(function(r){return r.map(function(c){return'"'+c+'"';}).join(',');}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='AngelStreet_TimeClock.csv';a.click();}
 async function dldPDF(){await loadHtml2Pdf();await html2pdf().set({margin:8,filename:'AngelStreet_Report.pdf',image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#0a0a0a'},jsPDF:{orientation:'landscape',unit:'mm',format:'a3'}}).from(document.getElementById('admin-panel')).save();}
 var EM_RECS=[];async function loadEmergency(){var em=document.getElementById('em-msg');em.style.display='none';var week=document.getElementById('em-week').value;var cw=getCampWeek();document.getElementById('em-week').value=cw;try{EM_RECS=await AF(TR,"Week='"+cw+"'");renderEmergency('');}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
