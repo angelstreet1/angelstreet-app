@@ -2128,11 +2128,9 @@ async function loadPayrollAdmin(){
   cont.innerHTML='<div style="color:#aaa;text-align:center;padding:20px">Loading payroll data...</div>';
 
   // Fetch timeclock and invoice data
-  var [tcRecs, invRecs, achRecs] = await Promise.all([
-    AF('TimeClock'),
-    AF('Invoices'),
-    AF('PayrollACH').catch(function(){return[];})
-  ]);
+  var tcRecs = await AF('TimeClock');
+  var invRecs = await AF('Invoices');
+  var achRecs = [];
 
   // Build timeclock lookup by name+date
   var tcMap = {};
