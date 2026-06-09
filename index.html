@@ -827,7 +827,7 @@ if(CF==='out'&&!(att&&att.fields.CheckOutTime))return;var init=name.split(' ').m
 var attRec=ATR.find(function(r){return r.fields.CamperName===name;});
 var lateFee=attRec&&attRec.fields.LateFee?parseFloat(attRec.fields.LateFee):0;
 var feePaid=attRec&&attRec.fields.FeePaid;
-nm.innerHTML='<span>'+name+'</span>'+(grade||age?'<span style="font-size:11px;color:#66cccc;font-weight:600;margin-left:8px">'+(grade?'Gr. '+grade:'')+'</span>':'');
+var noPhoto=name.includes('⭐📸');var noTransport=name.includes('⭐🚌');var cleanName=name.replace('⭐📸','').replace('⭐🚌','').trim();var badges='';if(noPhoto)badges+='<span style="font-size:10px;background:#b45309;color:#fff;padding:2px 6px;border-radius:10px;font-weight:700;margin-left:6px;">NO PHOTO</span>';if(noTransport)badges+='<span style="font-size:10px;background:#1d4ed8;color:#fff;padding:2px 6px;border-radius:10px;font-weight:700;margin-left:6px;">NO TRANSPORT</span>';nm.innerHTML='<span>'+cleanName+'</span>'+(grade||age?'<span style="font-size:11px;color:#66cccc;font-weight:600;margin-left:8px">'+(grade?'Gr. '+grade:'')+'</span>':'')+badges;
 if(lateFee>0&&!feePaid){
 var feeTag=document.createElement('span');
 feeTag.style.cssText='background:#ca3092;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:8px;cursor:pointer;';
