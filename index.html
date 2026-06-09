@@ -443,16 +443,6 @@
 </div>
 
 
-<!-- PAYROLL ADMIN PAGE -->
-<div id="payrolladmin" class="page">
-  <div class="nav-bar">
-    <button class="back-btn" id="payroll-back">← Back</button>
-    <div><div style="font-size:15px;font-weight:700">💰 Payroll</div><div class="nav-sub">Staff pay & budgets</div></div>
-  </div>
-  <div style="max-width:600px;margin:0 auto;padding:20px">
-    <div id="payroll-content"></div>
-  </div>
-</div>
 
 <!-- LEAD PAGE -->
 <div id="lead" class="page">
@@ -623,7 +613,6 @@ var CARDS={
     {id:'emergency',ic:'🚨',lb:'Emergency',ds:'Contacts & protocols',cl:'pk'},
     {id:'invoice',ic:'🧾',lb:'My Invoice',ds:'Submit weekly invoice',cl:'am'},
     {id:'shiftchecklist',ic:'✅',lb:'Shift Checklist',ds:'Your tasks for today',cl:'gn'},
-    {id:'payrolladmin',ic:'💰',lb:'Payroll',ds:'Staff pay & budgets',cl:'gn'},
     {id:'admin-panel',ic:'🔑',lb:'Admin',ds:'Manage users & settings',cl:'pu'}
   ]
 };
@@ -652,13 +641,13 @@ else if(id==='shiftchecklist')loadShiftChecklist();
 else if(id==='overview')loadOverview();
 else if(id==='parent-portal'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var pp=document.getElementById('parent-portal');if(pp)pp.classList.add('active');window.scrollTo(0,0);loadParentPortal();return;}
 else if(id==='invoice')loadInvoice();
-else if(id==='invoiceadmin')loadInvoiceAdmin();else if(id==='payrolladmin')loadPayrollAdmin();else if(id==='mygroup')loadMyGroup();else if(id==='groupassignments')loadGA();else if(id==='taview')loadTAView();}
+else if(id==='invoiceadmin')loadInvoiceAdmin();else if(id==='mygroup')loadMyGroup();else if(id==='groupassignments')loadGA();else if(id==='taview')loadTAView();}
 document.getElementById('so-btn').onclick=function(){signOut();};document.getElementById('sched-back').onclick=function(){SP('home');};document.getElementById('spdf').onclick=function(){exportSchedPDF();};document.getElementById('sref').onclick=function(){loadSched();};document.getElementById('sref2').onclick=function(){loadSched();};document.getElementById('tc-back').onclick=function(){SP('home');};document.getElementById('ci-back').onclick=function(){SP('home');};document.getElementById('ci-ref').onclick=function(){loadCI();};document.getElementById('ci-week').onchange=function(){loadCI();};document.getElementById('comm-back').onclick=function(){SP('home');};document.getElementById('cs-back').onclick=function(){CU?SP('home'):SP('landing');};document.getElementById('upd-back').onclick=function(){SP('home');};document.getElementById('upd-send').onclick=function(){postUpd();};document.getElementById('grp-back').onclick=function(){SP('home');};document.getElementById('grp-save-btn').onclick=function(){saveGrp();};document.getElementById('adm-back').onclick=function(){SP('home');};document.getElementById('em-back').onclick=function(){SP('home');};document.getElementById('act-back').onclick=function(){SP('home');};document.getElementById('mg-back').onclick=function(){SP('home');};document.getElementById('ga-back').onclick=function(){SP('home');};document.getElementById('tv-back').onclick=function(){SP('home');};
 document.getElementById('inv-back').onclick=function(){SP('home');};
 document.getElementById('lead-back').onclick=function(){SP('home');};
 document.getElementById('sc-back').onclick=function(){SP('home');};
 document.getElementById('ov-back').onclick=function(){SP('home');};
-document.getElementById('inva-back').onclick=function(){SP('home');};document.getElementById('payroll-back').onclick=function(){SP('home');};document.getElementById('adm-pdf').onclick=function(){dldPDF();};document.getElementById('adm-csv').onclick=function(){dldCSV();};document.getElementById('adm-ref').onclick=function(){loadAdm();};document.getElementById('tc-so').onclick=function(){tcSignOut();};function tstr(){var d=new Date();return(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();}
+document.getElementById('inva-back').onclick=function(){SP('home');};document.getElementById('adm-pdf').onclick=function(){dldPDF();};document.getElementById('adm-csv').onclick=function(){dldCSV();};document.getElementById('adm-ref').onclick=function(){loadAdm();};document.getElementById('tc-so').onclick=function(){tcSignOut();};function tstr(){var d=new Date();return(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();}
 function nstr(){var d=new Date(),h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+(m<10?'0'+m:m)+' '+ap;}
 function fd(d){return(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();}
 function sd(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
@@ -682,7 +671,7 @@ var SPIRIT_DAYS=[{date:'6/11/2026',name:'Crazy Sock Day',emoji:'🧦',desc:'Wear
 function getUpcomingSpirit(){var now=new Date();for(var i=1;i<=3;i++){var d=new Date(now);d.setDate(now.getDate()+i);var ds=(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();var found=SPIRIT_DAYS.find(function(s){return s.date===ds;});if(found)return{spirit:found,daysAway:i};}
 return null;}
 function isTurntTuesday(){var now=new Date();return now.getDay()===2&&now>=new Date(2026,5,8)&&now<=new Date(2026,6,3)&&!(now.getMonth()===5&&now.getDate()===19);}
-var ICON_MAP={'schedule':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdzYyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2EzMDkyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzhkNGQ5ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3NjKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+ThTwvdGV4dD4KPC9zdmc+','timeclock':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9Imd0YyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjZjY2NjIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRkYjhiOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3RjKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+4o+xPC90ZXh0Pgo8L3N2Zz4=','checkin':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdjaSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMzRkMzk5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA1OTY2OSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2NpKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+4pyFPC90ZXh0Pgo8L3N2Zz4=','communication':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdjbyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOGQ0ZDllIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzZkM2Q3ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2NvKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+SrDwvdGV4dD4KPC9zdmc+','campschedule-page':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdjcyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Q5NzcwNiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2NzKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TizwvdGV4dD4KPC9zdmc+','updates':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9Imd1cCIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2EzMDkyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E4MjY3MSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3VwKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TozwvdGV4dD4KPC9zdmc+','groups':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdnciIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjBhNWZhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzI1NjNlYiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2dyKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+Rr/Cfj77igI3imYDvuI88L3RleHQ+Cjwvc3ZnPg==','emergency':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdlbSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZjg3MTcxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2NhMzA5MiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2VtKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+akTwvdGV4dD4KPC9zdmc+','groupassignments':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdnYSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOGQ0ZDllIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzZkM2Q3ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2dhKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TizwvdGV4dD4KPC9zdmc+','invoice':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdpbiIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Q5NzcwNiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2luKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+nvjwvdGV4dD4KPC9zdmc+','invoiceadmin':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdpYSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Q5NzcwNiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2lhKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+nvjwvdGV4dD4KPC9zdmc+','lead':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdsZSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2EzMDkyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzhkNGQ5ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2xlKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+OpDwvdGV4dD4KPC9zdmc+','mygroup':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdtZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjBhNWZhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzI1NjNlYiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ21nKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+RpTwvdGV4dD4KPC9zdmc+','overview':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdvdiIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjZjY2NjIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRkYjhiOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ292KSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TijwvdGV4dD4KPC9zdmc+','parentupdate':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdwdSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMzRkMzk5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA1OTY2OSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3B1KSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TozwvdGV4dD4KPC9zdmc+','shiftchecklist':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdzYzIiIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzM0ZDM5OSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwNTk2NjkiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxlbGxpcHNlIGN4PSIzMCIgY3k9IjciIHJ4PSIxMyIgcnk9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRDcwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPHJlY3QgeD0iMiIgeT0iMTIiIHdpZHRoPSI1NiIgaGVpZ2h0PSI1MCIgcng9IjE0IiBmaWxsPSJ1cmwoI2dzYzIpIi8+CiAgPHRleHQgeD0iMzAiIHk9IjQwIiBmb250LXNpemU9IjI2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj7inIU8L3RleHQ+Cjwvc3ZnPg==','taview':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9Imd0YSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOGQ0ZDllIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRjMWQ5NSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3RhKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+OqDwvdGV4dD4KPC9zdmc+','activities':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdhYyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjBhNWZhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFkNGVkOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2FjKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+OrjwvdGV4dD4KPC9zdmc+','payrolladmin':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdwYSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMzRkMzk5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA1OTY2OSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3BhKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+SsDwvdGV4dD4KPC9zdmc+','admin-panel':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdhZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOGQ0ZDllIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRjMWQ5NSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2FkKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+UkDwvdGV4dD4KPC9zdmc+'};function buildHome(){document.getElementById('hg').textContent='Hi, '+CU.n.split(' ')[0]+'!';document.getElementById('hs').textContent=CU.r==='jrta'?'Jr. Teaching Artist':'Creative Arts Camp 2026';var cards=CARDS[CU.r]||CARDS.jrta;var hc=document.getElementById('hcards');hc.innerHTML='';var now=new Date();var dayNms=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var monNms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var dNum=now.getDate(),mNum=now.getMonth(),yNum=now.getFullYear();var dateStr=dayNms[now.getDay()]+', '+monNms[mNum]+' '+dNum;var isOrientation=(yNum===2026&&mNum===5&&(dNum===3||dNum===4));var inCamp=now>=new Date(2026,5,8)&&now<=new Date(2026,6,3)&&now.getDay()!==0&&now.getDay()!==6&&!(mNum===5&&dNum===19);var tc=document.createElement('div');tc.style.cssText='background:linear-gradient(135deg,#ca3092,#8d4d9e);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;';var infoHtml='';if(isOrientation){infoHtml='<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:4px">📌 Orientation Day</div>'
+var ICON_MAP={'schedule':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdzYyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2EzMDkyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzhkNGQ5ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3NjKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+ThTwvdGV4dD4KPC9zdmc+','timeclock':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9Imd0YyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjZjY2NjIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRkYjhiOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3RjKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+4o+xPC90ZXh0Pgo8L3N2Zz4=','checkin':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdjaSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMzRkMzk5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA1OTY2OSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2NpKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+4pyFPC90ZXh0Pgo8L3N2Zz4=','communication':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdjbyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOGQ0ZDllIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzZkM2Q3ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2NvKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+SrDwvdGV4dD4KPC9zdmc+','campschedule-page':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdjcyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Q5NzcwNiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2NzKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TizwvdGV4dD4KPC9zdmc+','updates':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9Imd1cCIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2EzMDkyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2E4MjY3MSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3VwKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TozwvdGV4dD4KPC9zdmc+','groups':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdnciIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjBhNWZhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzI1NjNlYiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2dyKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+Rr/Cfj77igI3imYDvuI88L3RleHQ+Cjwvc3ZnPg==','emergency':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdlbSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZjg3MTcxIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2NhMzA5MiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2VtKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+akTwvdGV4dD4KPC9zdmc+','groupassignments':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdnYSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOGQ0ZDllIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzZkM2Q3ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2dhKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TizwvdGV4dD4KPC9zdmc+','invoice':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdpbiIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Q5NzcwNiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2luKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+nvjwvdGV4dD4KPC9zdmc+','invoiceadmin':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdpYSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmJiZjI0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2Q5NzcwNiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2lhKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+nvjwvdGV4dD4KPC9zdmc+','lead':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdsZSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2EzMDkyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzhkNGQ5ZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2xlKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+OpDwvdGV4dD4KPC9zdmc+','mygroup':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdtZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjBhNWZhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzI1NjNlYiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ21nKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+RpTwvdGV4dD4KPC9zdmc+','overview':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdvdiIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjZjY2NjIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRkYjhiOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ292KSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TijwvdGV4dD4KPC9zdmc+','parentupdate':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdwdSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMzRkMzk5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA1OTY2OSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3B1KSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+TozwvdGV4dD4KPC9zdmc+','shiftchecklist':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdzYzIiIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzM0ZDM5OSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwNTk2NjkiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxlbGxpcHNlIGN4PSIzMCIgY3k9IjciIHJ4PSIxMyIgcnk9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRDcwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPHJlY3QgeD0iMiIgeT0iMTIiIHdpZHRoPSI1NiIgaGVpZ2h0PSI1MCIgcng9IjE0IiBmaWxsPSJ1cmwoI2dzYzIpIi8+CiAgPHRleHQgeD0iMzAiIHk9IjQwIiBmb250LXNpemU9IjI2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj7inIU8L3RleHQ+Cjwvc3ZnPg==','taview':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9Imd0YSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOGQ0ZDllIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRjMWQ5NSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ3RhKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+OqDwvdGV4dD4KPC9zdmc+','activities':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdhYyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjBhNWZhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFkNGVkOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2FjKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+OrjwvdGV4dD4KPC9zdmc+','admin-panel':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdhZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOGQ0ZDllIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzRjMWQ5NSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPGVsbGlwc2UgY3g9IjMwIiBjeT0iNyIgcng9IjEzIiByeT0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSIyIiB5PSIxMiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjUwIiByeD0iMTQiIGZpbGw9InVybCgjZ2FkKSIvPgogIDx0ZXh0IHg9IjMwIiB5PSI0MCIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+8J+UkDwvdGV4dD4KPC9zdmc+'};function buildHome(){document.getElementById('hg').textContent='Hi, '+CU.n.split(' ')[0]+'!';document.getElementById('hs').textContent=CU.r==='jrta'?'Jr. Teaching Artist':'Creative Arts Camp 2026';var cards=CARDS[CU.r]||CARDS.jrta;var hc=document.getElementById('hcards');hc.innerHTML='';var now=new Date();var dayNms=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];var monNms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var dNum=now.getDate(),mNum=now.getMonth(),yNum=now.getFullYear();var dateStr=dayNms[now.getDay()]+', '+monNms[mNum]+' '+dNum;var isOrientation=(yNum===2026&&mNum===5&&(dNum===3||dNum===4));var inCamp=now>=new Date(2026,5,8)&&now<=new Date(2026,6,3)&&now.getDay()!==0&&now.getDay()!==6&&!(mNum===5&&dNum===19);var tc=document.createElement('div');tc.style.cssText='background:linear-gradient(135deg,#ca3092,#8d4d9e);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;';var infoHtml='';if(isOrientation){infoHtml='<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:4px">📌 Orientation Day</div>'
 +'<div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:6px">'+dateStr+'</div>'
 +'<div style="font-size:12px;color:rgba(255,255,255,.9);font-weight:600;margin-bottom:4px">Creative Arts Camp Orientation</div>'
 +'<div style="font-size:11px;color:rgba(255,255,255,.8)">9:00 AM – 12:00 PM</div>';}else if(inCamp){var wk=getCampWeek();var wkLbl={Week1:'Week 1 · Jun 8–12',Week2:'Week 2 · Jun 15–18',Week3:'Week 3 · Jun 22–26',Week4:'Week 4 · Jun 29–Jul 3'}[wk]||'';var isTT=isTurntTuesday();var daySchedules={Monday:'Harambe 9:30 · Block 1 10:00 · Block 2 11:20 · Lunch · Choir 1:15',Tuesday:'🔥 Turnt Tuesday! Off-site morning · Lunch · Afternoon activities 1:45–2:45',Wednesday:'Harambe 9:30 · Block 1 10:00 · Block 2 11:20 · Field Trip 1:05 PM',Thursday:'Harambe 9:30 · Block 1 10:00 · Block 2 11:20 · Lunch · Choir 1:15',Friday:'Harambe 9:30 · Block 1 10:00 · Block 2 11:20 · Lunch · Afternoon Activity'};var daySched=daySchedules[dayNms[now.getDay()]]||'';infoHtml='<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.75);margin-bottom:4px">'+wkLbl+(isTT?' · 🔥 TURNT TUESDAY':'')+'</div>'
@@ -2103,238 +2092,6 @@ d.appendChild(msgLabel);d.appendChild(msgInp);
 d.appendChild(imgLabel);d.appendChild(imgInp);
 d.appendChild(postBtn);d.appendChild(viewBtn);d.appendChild(closeBtn);
 overlay.appendChild(d);var modal=document.getElementById('modal');modal.innerHTML='';modal.appendChild(overlay);modal.style.display='block';
-}
-
-// ── PAYROLL ADMIN ──────────────────────────────────────────────────────────
-var PAYROLL_BUDGET = 9675;
-var INVOICE_BUDGET = 12000;
-var PAYROLL_STAFF = [
-  {n:'Jada Jordan',      rate:15.00, flat:false},
-  {n:'London Jordan',    rate:15.00, flat:false},
-  {n:'Tatyana Walker',   rate:13.50, flat:false},
-  {n:'Destanie Hullum',  rate:13.50, flat:false},
-  {n:'Tanaya Adams',     rate:15.00, flat:true},
-  {n:'Michayia Bills',   rate:15.00, flat:true},
-];
-var PAY_PERIODS = [
-  {label:'Pay Period 1 — Orientation',  dates:['6/1/2026','6/2/2026','6/3/2026','6/4/2026','6/5/2026'],  payDate:'Jun 12, 2026'},
-  {label:'Pay Period 2 — Weeks 1 & 2', dates:['6/8/2026','6/9/2026','6/10/2026','6/11/2026','6/12/2026','6/15/2026','6/16/2026','6/17/2026','6/18/2026','6/19/2026'], payDate:'Jun 26, 2026'},
-  {label:'Pay Period 3 — Weeks 3 & 4', dates:['6/22/2026','6/23/2026','6/24/2026','6/25/2026','6/26/2026','6/29/2026','6/30/2026','7/1/2026','7/2/2026','7/3/2026'],  payDate:'Jul 10, 2026'},
-];
-
-async function loadPayrollAdmin(){
-  var cont=document.getElementById('payroll-content');
-  if(!cont)return;
-  cont.innerHTML='<div style="color:#aaa;text-align:center;padding:20px">Loading payroll data...</div>';
-
-  // Fetch timeclock and invoice data
-  var tcRecs = await AF('TimeClock');
-  var invRecs = await AF('Invoices');
-  var achRecs = [];
-
-  // Build timeclock lookup by name+date
-  var tcMap = {};
-  tcRecs.forEach(function(r){
-    var f=r.fields;
-    if(!f.Name||!f.Date)return;
-    var key=f.Name+'|'+f.Date;
-    if(!tcMap[key]||f.Status==='Out') tcMap[key]=f;
-  });
-
-  // Calculate total payroll spent from invoice records
-  var totalPayrollSpent=0;
-  var totalInvSpent=0;
-  invRecs.forEach(function(r){
-    var f=r.fields;
-    if(f.Total) totalInvSpent+=parseFloat(f.Total)||0;
-  });
-
-  cont.innerHTML='';
-
-  // ── Budget trackers ──
-  function makeBudgetBar(label, spent, budget, color){
-    var pct=Math.min(100,Math.round((spent/budget)*100));
-    var remaining=budget-spent;
-    var div=document.createElement('div');
-    div.style.cssText='background:#111;border:1px solid #333;border-radius:14px;padding:14px 16px;margin-bottom:10px;';
-    div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
-      '<div style="font-size:13px;font-weight:700;color:#fff">'+label+'</div>'+
-      '<div style="font-size:12px;color:#aaa">$'+spent.toFixed(2)+' / $'+budget.toLocaleString()+'</div>'+
-      '</div>'+
-      '<div style="background:#222;border-radius:6px;height:8px;margin-bottom:8px">'+
-        '<div style="background:'+color+';border-radius:6px;height:8px;width:'+pct+'%;transition:width .3s"></div>'+
-      '</div>'+
-      '<div style="display:flex;justify-content:space-between;font-size:11px">'+
-        '<span style="color:#aaa">'+pct+'% used</span>'+
-        '<span style="color:#34d399;font-weight:700">$'+remaining.toFixed(2)+' remaining</span>'+
-      '</div>';
-    return div;
-  }
-  cont.appendChild(makeBudgetBar('💰 Payroll Budget',totalPayrollSpent,PAYROLL_BUDGET,'#ca3092'));
-  cont.appendChild(makeBudgetBar('🧾 Invoice Budget',totalInvSpent,INVOICE_BUDGET,'#66cccc'));
-
-  // ── Pay period selector ──
-  var ppSel=document.createElement('div');
-  ppSel.style.cssText='display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;';
-  PAY_PERIODS.forEach(function(pp,i){
-    var b=document.createElement('button');
-    b.style.cssText='padding:8px 12px;border-radius:8px;border:2px solid '+(i===0?'#ca3092':'#333')+';background:'+(i===0?'#ca3092':'#1a1a1a')+';color:'+(i===0?'#fff':'#aaa')+';font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;';
-    b.textContent='PP'+(i+1);
-    b.onclick=function(){
-      ppSel.querySelectorAll('button').forEach(function(btn){btn.style.background='#1a1a1a';btn.style.borderColor='#333';btn.style.color='#aaa';});
-      b.style.background='#ca3092';b.style.borderColor='#ca3092';b.style.color='#fff';
-      renderPayPeriod(pp,tcMap,achRecs,staffDiv,downloadBtn);
-    };
-    ppSel.appendChild(b);
-  });
-  cont.appendChild(ppSel);
-
-  // Pay date label
-  var pdLabel=document.createElement('div');
-  pdLabel.id='pp-pay-date';
-  pdLabel.style.cssText='font-size:12px;color:#ca3092;font-weight:700;margin-bottom:12px;';
-  cont.appendChild(pdLabel);
-
-  // Staff cards container
-  var staffDiv=document.createElement('div');
-  staffDiv.id='payroll-staff-list';
-  cont.appendChild(staffDiv);
-
-  // Download button
-  var downloadBtn=document.createElement('button');
-  downloadBtn.style.cssText='width:100%;padding:14px;background:linear-gradient(135deg,#ca3092,#8d4d9e);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;';
-  downloadBtn.textContent='⬇️ Download Payroll Report';
-  downloadBtn.onclick=function(){downloadPayrollReport(PAY_PERIODS[0],tcMap);};
-  cont.appendChild(downloadBtn);
-
-  // ACH section
-  var achHeader=document.createElement('div');
-  achHeader.style.cssText='background:#111;border:1px solid #333;border-radius:14px;padding:14px 16px;margin-top:14px;';
-  achHeader.innerHTML='<div style="font-size:13px;font-weight:700;color:#66cccc;margin-bottom:12px">🏦 ACH / Payment Info</div>';
-  PAYROLL_STAFF.forEach(function(s){
-    var ach=achRecs.find(function(r){return r.fields.Name===s.n;})||{fields:{}};
-    var row=document.createElement('div');
-    row.style.cssText='border-top:1px solid #222;padding:10px 0;';
-    row.innerHTML='<div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:8px">'+s.n+'</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'+
-      makeACHInput('Bank','Bank',ach.fields.Bank||'')+
-      makeACHInput('Routing','Routing #',ach.fields.Routing||'')+
-      makeACHInput('Account','Account #',ach.fields.Account||'')+
-      makeACHInput('AcctType','Type',ach.fields.AcctType||'')+
-      '</div>'+
-      '<label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;color:#aaa;">'+
-        '<input type="checkbox" '+(ach.fields.SameAsFile?'checked':'')+' style="accent-color:#ca3092"> Same as on file'+
-      '</label>';
-    achHeader.appendChild(row);
-  });
-  cont.appendChild(achHeader);
-
-  // Render first pay period
-  renderPayPeriod(PAY_PERIODS[0],tcMap,achRecs,staffDiv,downloadBtn);
-}
-
-function makeACHInput(field,label,val){
-  return '<div><div style="font-size:10px;color:#aaa;margin-bottom:2px">'+label+'</div>'+
-    '<input value="'+val+'" placeholder="'+label+'" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:6px 8px;color:#fff;font-size:11px;box-sizing:border-box;"></div>';
-}
-
-function renderPayPeriod(pp,tcMap,achRecs,staffDiv,downloadBtn){
-  document.getElementById('pp-pay-date').textContent='Pay Date: '+pp.payDate+' · '+pp.label;
-  downloadBtn.onclick=function(){downloadPayrollReport(pp,tcMap);};
-  staffDiv.innerHTML='';
-
-  PAYROLL_STAFF.forEach(function(s){
-    var card=document.createElement('div');
-    card.style.cssText='background:#111;border:1px solid #333;border-radius:14px;padding:14px 16px;margin-bottom:10px;';
-
-    // Name + rate header
-    var hdr=document.createElement('div');
-    hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
-    hdr.innerHTML='<div style="font-size:14px;font-weight:700;color:#fff">'+s.n+'</div>'+
-      '<div style="font-size:11px;color:#aaa">$'+s.rate.toFixed(2)+'/hr</div>';
-    card.appendChild(hdr);
-
-    // Days
-    var totalHrs=0;
-    pp.dates.forEach(function(d){
-      var key=s.n+'|'+d;
-      var punch=tcMap[key];
-      var dt=new Date(d);
-      var dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];
-      var hrs=punch?parseFloat(punch.HoursWorked||0):0;
-      totalHrs+=hrs;
-      var row=document.createElement('div');
-      row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #1a1a1a;font-size:12px;';
-      row.innerHTML='<span style="color:#aaa;width:80px">'+dayName+' '+d.replace('/2026','')+'</span>'+
-        '<span style="color:#888">'+(punch?punch.PunchIn+' – '+punch.PunchOut:'—')+'</span>'+
-        '<span style="color:'+(hrs>0?'#34d399':'#555')+';font-weight:700;width:50px;text-align:right">'+
-          (hrs>0?hrs.toFixed(2)+' hrs':'—')+'</span>';
-      card.appendChild(row);
-    });
-
-    // Totals
-    var hourlyPay=totalHrs*s.rate;
-    var totDiv=document.createElement('div');
-    totDiv.style.cssText='margin-top:10px;padding-top:10px;border-top:1px solid #333;';
-
-    if(s.flat){
-      totDiv.innerHTML='<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:6px">'+
-        '<span>Hourly ('+totalHrs.toFixed(2)+' hrs × $'+s.rate+')</span><span>$'+hourlyPay.toFixed(2)+'</span></div>'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#aaa;margin-bottom:6px">'+
-        '<span>Flat Rate / Stipend</span>'+
-        '<input type="number" placeholder="$0.00" id="flat-'+s.n.replace(/ /g,'-')+'" style="width:80px;background:#1a1a1a;border:1px solid #ca3092;border-radius:6px;padding:4px 8px;color:#fff;font-size:12px;text-align:right;" oninput="updateFlatTotal(''+s.n+'','+s.rate+','+totalHrs+')">'+
-        '</div>'+
-        '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#fff;">'+
-        '<span>Total Pay</span><span id="total-'+s.n.replace(/ /g,'-')+'">$'+hourlyPay.toFixed(2)+'</span></div>';
-    } else {
-      totDiv.innerHTML='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#fff;">'+
-        '<span>Total Pay ('+totalHrs.toFixed(2)+' hrs)</span><span>$'+hourlyPay.toFixed(2)+'</span></div>';
-    }
-    card.appendChild(totDiv);
-    staffDiv.appendChild(card);
-  });
-}
-
-function updateFlatTotal(name,rate,hrs){
-  var flatId='flat-'+name.replace(/ /g,'-');
-  var totId='total-'+name.replace(/ /g,'-');
-  var flatEl=document.getElementById(flatId);
-  var totEl=document.getElementById(totId);
-  if(!flatEl||!totEl)return;
-  var flat=parseFloat(flatEl.value)||0;
-  var total=(hrs*rate)+flat;
-  totEl.textContent='$'+total.toFixed(2);
-}
-
-function downloadPayrollReport(pp,tcMap){
-  var rows=[['Name','Rate/Hr','Date','Day','Punch In','Punch Out','Hours','Hourly Pay','Flat Rate','Total Pay']];
-  PAYROLL_STAFF.forEach(function(s){
-    var totalHrs=0;
-    var flat=0;
-    if(s.flat){
-      var flatEl=document.getElementById('flat-'+s.n.replace(/ /g,'-'));
-      if(flatEl) flat=parseFloat(flatEl.value)||0;
-    }
-    pp.dates.forEach(function(d){
-      var key=s.n+'|'+d;
-      var punch=tcMap[key];
-      var dt=new Date(d);
-      var dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];
-      var hrs=punch?parseFloat(punch.HoursWorked||0):0;
-      totalHrs+=hrs;
-      rows.push([s.n,'$'+s.rate.toFixed(2),d,dayName,punch?punch.PunchIn:'',punch?punch.PunchOut:'',hrs.toFixed(2),'$'+(hrs*s.rate).toFixed(2),'','']);
-    });
-    var hourlyPay=totalHrs*s.rate;
-    rows.push([s.n+' TOTAL','','','','','',totalHrs.toFixed(2),'$'+hourlyPay.toFixed(2),'$'+flat.toFixed(2),'$'+(hourlyPay+flat).toFixed(2)]);
-    rows.push([]);
-  });
-
-  var csv=rows.map(function(r){return r.map(function(c){return '"'+(c||'')+'"';}).join(',');}).join('\x0a');
-  var blob=new Blob([csv],{type:'text/csv'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='AngelStreet_Payroll_'+pp.label.replace(/[^a-zA-Z0-9]/g,'_')+'.csv';
-  a.click();
 }
 
 function loadShiftChecklist(){
