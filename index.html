@@ -2103,7 +2103,7 @@ loading.textContent='Error loading roster. Please try again.';
 async function loadPickupNotifications(){
 try{
 var today=(new Date().getMonth()+1)+'/'+(new Date().getDate())+'/'+(new Date().getFullYear());
-var notifs=await AF('PickupNotifications',"AND(Date='"+today+"',Status='Waiting')");
+var all=await AF('PickupNotifications');var notifs=all.filter(function(r){return r.fields.Date===today&&r.fields.Status==='Waiting';});
 var banner=document.getElementById('pickup-banner');
 if(!banner)return;
 if(!notifs.length){banner.style.display='none';return;}
@@ -2843,3 +2843,4 @@ function emailInvoicesToBrooke(selected,all){
 </script>
 </body>
 </html>
+
