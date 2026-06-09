@@ -1545,11 +1545,53 @@ adminBtn.style.cssText='flex:1;padding:10px;border-radius:8px;border:2px solid #
 adminBtn.textContent='📋 All Invoices';
 var taBtn=document.createElement('button');
 taBtn.style.cssText='flex:1;padding:10px;border-radius:8px;border:2px solid #333;background:#1a1a1a;color:#aaa;font-size:13px;font-weight:700;cursor:pointer;';
-taBtn.textContent='🧾 TA View';
+taBtn.textContent='🧾 Submit for TA';
 var listDiv=document.createElement('div');listDiv.id='inva-list';
 var taDiv=document.createElement('div');taDiv.id='inva-ta';taDiv.style.display='none';
 adminBtn.onclick=function(){adminBtn.style.background='#ca3092';adminBtn.style.borderColor='#ca3092';adminBtn.style.color='#fff';taBtn.style.background='#1a1a1a';taBtn.style.borderColor='#333';taBtn.style.color='#aaa';listDiv.style.display='block';taDiv.style.display='none';};
-taBtn.onclick=function(){taBtn.style.background='#ca3092';taBtn.style.borderColor='#ca3092';taBtn.style.color='#fff';adminBtn.style.background='#1a1a1a';adminBtn.style.borderColor='#333';adminBtn.style.color='#aaa';listDiv.style.display='none';taDiv.style.display='block';taDiv.innerHTML='';var wkNote=document.createElement('div');wkNote.style.cssText='background:rgba(102,204,204,.1);border:1px solid #66cccc;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#66cccc;';wkNote.textContent='👁 Preview Mode — showing Week 1 camp invoice';taDiv.appendChild(wkNote);renderInvoiceForm(null,taDiv,'Week1');};
+taBtn.onclick=function(){
+  taBtn.style.background='#ca3092';taBtn.style.borderColor='#ca3092';taBtn.style.color='#fff';
+  adminBtn.style.background='#1a1a1a';adminBtn.style.borderColor='#333';adminBtn.style.color='#aaa';
+  listDiv.style.display='none';taDiv.style.display='block';taDiv.innerHTML='';
+  // TA picker
+  var taList=[
+    {n:'DJ Shai (Sabriyya Yates)',display:'DJ Shai'},
+    {n:'McKenzie Mitchell',display:'McKenzie Mitchell'},
+    {n:'Patience Andrews',display:'Patience Andrews'},
+    {n:'Jasmine Watson',display:'Jasmine Watson'}
+  ];
+  var pickerCard=document.createElement('div');
+  pickerCard.style.cssText='background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;';
+  pickerCard.innerHTML='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Submit Invoice For</div>';
+  var taSel=document.createElement('select');
+  taSel.style.cssText='width:100%;padding:10px;border:1px solid #444;border-radius:8px;background:#111;color:#fff;font-size:14px;box-sizing:border-box;';
+  var blankOpt=document.createElement('option');blankOpt.value='';blankOpt.textContent='— Select a Teaching Artist —';taSel.appendChild(blankOpt);
+  taList.forEach(function(ta){var o=document.createElement('option');o.value=ta.n;o.textContent=ta.display;taSel.appendChild(o);});
+  pickerCard.appendChild(taSel);
+  taDiv.appendChild(pickerCard);
+  var formDiv=document.createElement('div');
+  taDiv.appendChild(formDiv);
+  taSel.onchange=function(){
+    formDiv.innerHTML='';
+    if(!taSel.value)return;
+    var fakeCU={n:taSel.value,r:'ta'};
+    var savedCU=CU;
+    CU=fakeCU;
+    renderInvoiceForm(null,formDiv);
+    CU=savedCU;
+    // After render, patch submitInvoice to use the selected TA name
+    var submitBtn=formDiv.querySelector('button:last-of-type');
+    if(submitBtn){
+      var origOnClick=submitBtn.onclick;
+      submitBtn.onclick=function(){
+        var savedCU2=CU;
+        CU=fakeCU;
+        submitInvoice(document.getElementById('inv-week-sel')&&document.getElementById('inv-week-sel').value==='orientation');
+        CU=savedCU2;
+      };
+    }
+  };
+};
 toggleBar.appendChild(adminBtn);toggleBar.appendChild(taBtn);
 cont.appendChild(toggleBar);cont.appendChild(listDiv);cont.appendChild(taDiv);
 listDiv.innerHTML='<div class="msg ml">Loading...</div>';
@@ -2458,11 +2500,18 @@ card.appendChild(totDiv);
 cont.appendChild(card);
 });
 
-var dlBtn=document.createElement('button');
-dlBtn.style.cssText='width:100%;padding:14px;background:linear-gradient(135deg,#ca3092,#8d4d9e);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;';
-dlBtn.textContent='Download Payroll CSV';
-dlBtn.onclick=function(){downloadPayrollCSV(pp,tcMap);};
-cont.appendChild(dlBtn);
+var dlRow=document.createElement('div');
+dlRow.style.cssText='display:flex;gap:8px;margin-top:4px;';
+var xlsxBtn=document.createElement('button');
+xlsxBtn.style.cssText='flex:1;padding:14px;background:linear-gradient(135deg,#ca3092,#8d4d9e);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;';
+xlsxBtn.textContent='📊 Download XLSX';
+xlsxBtn.onclick=function(){downloadPayrollXLSX(pp,tcMap);};
+var csvBtn=document.createElement('button');
+csvBtn.style.cssText='flex:1;padding:14px;background:#1a1a1a;color:#66cccc;border:2px solid #66cccc;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;';
+csvBtn.textContent='📄 Download CSV';
+csvBtn.onclick=function(){downloadPayrollCSV(pp,tcMap);};
+dlRow.appendChild(xlsxBtn);dlRow.appendChild(csvBtn);
+cont.appendChild(dlRow);
 }
 
 }
@@ -2473,6 +2522,85 @@ var totEl=document.getElementById(totId);
 if(!flatEl||!totEl)return;
 var flat=parseFloat(flatEl.value)||0;
 totEl.textContent='$'+(hourlyPay+flat).toFixed(2);
+}
+
+function downloadPayrollXLSX(pp,tcMap){
+var PSTAFF=[
+{n:'Jada Jordan',rate:15.00,flat:false},
+{n:'London Jordan',rate:15.00,flat:false},
+{n:'Tatyana Walker',rate:13.50,flat:false},
+{n:'Destanie Hullum',rate:13.50,flat:false},
+{n:'Tanaya Adams',rate:15.00,flat:true},
+{n:'Michayia Bills',rate:15.00,flat:true}
+];
+var DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+// Build HTML table for xlsx-style export
+var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+html+='<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Payroll</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
+html+='<style>';
+html+='body{font-family:Arial,sans-serif;}';
+html+='.hdr{background:#ca3092;color:#fff;font-weight:bold;padding:6px 10px;border:1px solid #fff;font-size:12px;}';
+html+='.total{background:#1a1a1a;color:#fff;font-weight:bold;padding:5px 8px;border:1px solid #444;font-size:12px;}';
+html+='.row{padding:5px 8px;border:1px solid #ddd;font-size:12px;}';
+html+='.empty{padding:5px 8px;border:none;}';
+html+='.title{background:#0a0a0a;color:#ca3092;font-size:18px;font-weight:900;padding:10px;letter-spacing:2px;}';
+html+='.subtitle{background:#0a0a0a;color:#aaa;font-size:11px;padding:4px 10px;}';
+html+='</style></head><body>';
+html+='<table>';
+html+='<tr><td colspan="10" class="title">ANGELSTREET MEMPHIS — PAYROLL REPORT</td></tr>';
+html+='<tr><td colspan="10" class="subtitle">'+pp.label+' · Generated '+new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'</td></tr>';
+html+='<tr><td class="empty" colspan="10"></td></tr>';
+html+='<tr>';
+['Name','Rate/Hr','Date','Day','Punch In','Punch Out','Hours','Hourly Pay','Flat Rate','Total Pay'].forEach(function(h){html+='<td class="hdr">'+h+'</td>';});
+html+='</tr>';
+var grandTotal=0;
+PSTAFF.forEach(function(s){
+var totalHrs=0;
+var flat=0;
+if(s.flat){var flatEl=document.getElementById('flat-'+s.n.split(' ').join('-'));if(flatEl)flat=parseFloat(flatEl.value)||0;}
+pp.dates.forEach(function(d){
+var p=tcMap[s.n+'|'+d];
+var dt=new Date(d+'T12:00:00');
+var dn=DAYNAMES[dt.getDay()];
+var hrs=p?parseFloat(p.HoursWorked||0):0;
+totalHrs+=hrs;
+var rowTotal=hrs>0?'$'+(hrs*s.rate).toFixed(2):'';
+html+='<tr>';
+html+='<td class="row">'+s.n+'</td>';
+html+='<td class="row">$'+s.rate.toFixed(2)+'</td>';
+html+='<td class="row">'+d+'</td>';
+html+='<td class="row">'+dn+'</td>';
+html+='<td class="row">'+(p&&p.PunchIn?p.PunchIn:'')+'</td>';
+html+='<td class="row">'+(p&&p.PunchOut?p.PunchOut:'')+'</td>';
+html+='<td class="row">'+(hrs>0?hrs.toFixed(2):'')+'</td>';
+html+='<td class="row">'+rowTotal+'</td>';
+html+='<td class="row"></td>';
+html+='<td class="row"></td>';
+html+='</tr>';
+});
+var hp=totalHrs*s.rate;
+var tot=hp+flat;
+grandTotal+=tot;
+html+='<tr>';
+html+='<td class="total">'+s.n+' TOTAL</td>';
+html+='<td class="total"></td><td class="total"></td><td class="total"></td><td class="total"></td><td class="total"></td>';
+html+='<td class="total">'+totalHrs.toFixed(2)+'</td>';
+html+='<td class="total">$'+hp.toFixed(2)+'</td>';
+html+='<td class="total">$'+flat.toFixed(2)+'</td>';
+html+='<td class="total">$'+tot.toFixed(2)+'</td>';
+html+='</tr>';
+html+='<tr><td class="empty" colspan="10"></td></tr>';
+});
+html+='<tr>';
+html+='<td class="hdr" colspan="9">GRAND TOTAL</td>';
+html+='<td class="hdr">$'+grandTotal.toFixed(2)+'</td>';
+html+='</tr>';
+html+='</table></body></html>';
+var blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+var a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='AngelStreet_PP_'+pp.label.replace(/[^a-zA-Z0-9]/g,'_')+'.xls';
+document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
 function downloadPayrollCSV(pp,tcMap){
