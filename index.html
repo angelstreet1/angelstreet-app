@@ -320,7 +320,46 @@
       <button class="b2" id="adm-csv">📊 CSV</button>
       <button class="b2" id="adm-ref">🔄 Refresh</button>
     </div>
-    <div class="admsec"><h3>Today's Attendance</h3><div id="adm-today" style="overflow-x:auto"></div></div>
+    <div class="admsec"><h3>Fix Time Clock</h3>
+<div id="adm-tc-fix" style="padding:8px 0">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+<div>
+<div style="font-size:11px;color:#aaa;margin-bottom:4px">Staff Member</div>
+<select id="tc-name" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:13px;">
+<option value="">Select staff...</option>
+<option>Jada Jordan</option>
+<option>London Jordan</option>
+<option>Tatyana Walker</option>
+<option>Destanie Hullum</option>
+<option>Kourtney Banks</option>
+<option>Tanaya Adams</option>
+<option>Michayia Bills</option>
+<option>Hermekia</option>
+<option>Miah</option>
+<option>Deonna</option>
+<option>Jessica</option>
+</select>
+</div>
+<div>
+<div style="font-size:11px;color:#aaa;margin-bottom:4px">Date</div>
+<input type="date" id="tc-date" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:13px;box-sizing:border-box;">
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+<div>
+<div style="font-size:11px;color:#aaa;margin-bottom:4px">Punch In</div>
+<input type="time" id="tc-in" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:13px;box-sizing:border-box;">
+</div>
+<div>
+<div style="font-size:11px;color:#aaa;margin-bottom:4px">Punch Out</div>
+<input type="time" id="tc-out" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px;color:#fff;font-size:13px;box-sizing:border-box;">
+</div>
+</div>
+<button onclick="adminFixTimeClock()" style="width:100%;padding:12px;background:#ca3092;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">Save Time Entry</button>
+<div id="tc-fix-msg" style="margin-top:8px;font-size:12px;text-align:center;"></div>
+</div>
+</div>
+<div class="admsec"><h3>Today's Attendance</h3><div id="adm-today" style="overflow-x:auto"></div></div>
     <div class="admsec"><h3>User PINs</h3><div id="adm-users" style="overflow-x:auto"></div></div>
     <div class="admsec"><h3>This Week's Hours</h3><div id="adm-weekly" style="overflow-x:auto"></div></div>
     <div class="admsec"><h3>Full Time Clock Log</h3><div id="adm-log" style="overflow-x:auto"></div></div>
@@ -2294,6 +2333,77 @@ a.download='AngelStreet_Payroll_'+pp.label.replace(/[^a-zA-Z0-9]/g,'_')+'.csv';
 document.body.appendChild(a);
 a.click();
 document.body.removeChild(a);
+}
+
+
+function adminFixTimeClock(){
+  var name=document.getElementById('tc-name').value;
+  var date=document.getElementById('tc-date').value;
+  var pIn=document.getElementById('tc-in').value;
+  var pOut=document.getElementById('tc-out').value;
+  var msg=document.getElementById('tc-fix-msg');
+
+  if(!name||!date||!pIn||!pOut){
+    msg.style.color='#f87171';
+    msg.textContent='Please fill in all fields.';
+    return;
+  }
+
+  // Convert date from YYYY-MM-DD to M/D/YYYY
+  var parts=date.split('-');
+  var fmtDate=parseInt(parts[1])+'/'+parseInt(parts[2])+'/'+parts[0];
+
+  // Convert 24h time to 12h AM/PM
+  function to12h(t){
+    var sp=t.split(':');
+    var h=parseInt(sp[0]);
+    var m=sp[1];
+    var ampm=h>=12?'PM':'AM';
+    h=h%12||12;
+    return h+':'+m+' '+ampm;
+  }
+
+  var pInFmt=to12h(pIn);
+  var pOutFmt=to12h(pOut);
+
+  // Calculate hours
+  var inMins=parseInt(pIn.split(':')[0])*60+parseInt(pIn.split(':')[1]);
+  var outMins=parseInt(pOut.split(':')[0])*60+parseInt(pOut.split(':')[1]);
+  var hrs=((outMins-inMins)/60).toFixed(2);
+
+  msg.style.color='#aaa';
+  msg.textContent='Saving...';
+
+  var BASE='https://app.angelstreetmemphis.com/.netlify/functions/airtable';
+  fetch(BASE+'/TimeClock',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({fields:{
+      Name:name,
+      Date:fmtDate,
+      PunchIn:pInFmt,
+      PunchOut:pOutFmt,
+      HoursWorked:hrs,
+      Status:'Out',
+      Program:'angelstreet',
+      Flagged:'Admin entry'
+    }})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.id){
+      msg.style.color='#34d399';
+      msg.textContent='Saved! '+name+' on '+fmtDate+': '+pInFmt+' - '+pOutFmt+' ('+hrs+' hrs)';
+      document.getElementById('tc-name').value='';
+      document.getElementById('tc-date').value='';
+      document.getElementById('tc-in').value='';
+      document.getElementById('tc-out').value='';
+    } else {
+      msg.style.color='#f87171';
+      msg.textContent='Error: '+(d.error||JSON.stringify(d));
+    }
+  }).catch(function(e){
+    msg.style.color='#f87171';
+    msg.textContent='Error: '+e.message;
+  });
 }
 
 function loadShiftChecklist(){
