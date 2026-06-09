@@ -115,25 +115,27 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: JSON.stringify({ error: "Invalid JSON body" }) };
   }
 
-  const { invoices, senderName, senderEmail } = payload;
+  const { invoices, senderName, senderEmail, attachments: attachments_in } = payload;
 
   if (!invoices || !invoices.length) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: "No invoices provided" }) };
   }
 
-  // Build attachment for each invoice
-  const attachments = invoices.map((inv) => {
-    const html = generateInvoiceHTML(inv);
-    const b64 = Buffer.from(html).toString("base64");
-    const name = (inv.fields.LegalName || inv.fields.Name || "Invoice").replace(/[^a-z0-9]/gi, "_");
-    const week = (inv.fields.WeekLabel || "Week").replace(/[^a-z0-9]/gi, "_");
-    return {
-      content: b64,
-      filename: `${name}_${week}_Invoice.html`,
-      type: "text/html",
-      disposition: "attachment",
-    };
-  });
+  // Use pre-built PDF attachments from client, or fall back to HTML
+  const attachments = (attachments_in && attachments_in.length)
+    ? attachments_in
+    : invoices.map((inv) => {
+        const html = generateInvoiceHTML(inv);
+        const b64 = Buffer.from(html).toString("base64");
+        const name = (inv.fields.LegalName || inv.fields.Name || "Invoice").replace(/[^a-z0-9]/gi, "_");
+        const week = (inv.fields.WeekLabel || "Week").replace(/[^a-z0-9]/gi, "_");
+        return {
+          content: b64,
+          filename: `${name}_${week}_Invoice.html`,
+          type: "text/html",
+          disposition: "attachment",
+        };
+      });
 
   // Build email body
   const total = invoices.reduce((sum, r) => sum + (parseFloat(r.fields.Total) || 0), 0);
