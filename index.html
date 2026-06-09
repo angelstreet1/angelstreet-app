@@ -959,49 +959,102 @@ function renderAdmWeekly(){var el=document.getElementById('adm-weekly'),now=new 
 h+='<tr><td>'+u.n+'</td>'+cells+'<td><b>'+tot.toFixed(2)+'</b></td></tr>';});h+='</tbody></table>';el.innerHTML=h;}
 function renderAdmLog(){
 var el=document.getElementById('adm-log');
-var names=[...new Set(ADM_TC.map(function(r){return r.fields.Name||'';}).filter(Boolean))].sort();
-var selHtml='<div style="margin-bottom:12px"><select id="adm-log-filter" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;font-size:13px;" onchange="renderAdmLogForPerson(this.value)"><option value="">-- Select a person --</option>';
-names.forEach(function(n){selHtml+='<option value="'+n+'">'+n+'</option>';});
-selHtml+='</select></div><div id="adm-log-person"></div>';
-el.innerHTML=selHtml;
+var WEEK_DATES={
+'Orientation (Jun 1-5)':['6/1/2026','6/2/2026','6/3/2026','6/4/2026','6/5/2026'],
+'Week 1 (Jun 8-12)':['6/8/2026','6/9/2026','6/10/2026','6/11/2026','6/12/2026'],
+'Week 2 (Jun 15-19)':['6/15/2026','6/16/2026','6/17/2026','6/18/2026','6/19/2026'],
+'Week 3 (Jun 22-26)':['6/22/2026','6/23/2026','6/24/2026','6/25/2026','6/26/2026'],
+'Week 4 (Jun 29-Jul 3)':['6/29/2026','6/30/2026','7/1/2026','7/2/2026','7/3/2026']
+};
+var TC_STAFF=['Jada Jordan','London Jordan','Tatyana Walker','Destanie Hullum','Kourtney Banks','Tanaya Adams','Michayia Bills','Hermekia','Miah','Deonna','Jessica'];
+var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
+h+='<div><div style="font-size:11px;color:#aaa;margin-bottom:4px">Person</div>';
+h+='<select id="adm-log-name" style="width:100%;padding:8px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;font-size:13px;">';
+h+='<option value="">Select...</option>';
+TC_STAFF.forEach(function(n){h+='<option value="'+n+'">'+n+'</option>';});
+h+='</select></div>';
+h+='<div><div style="font-size:11px;color:#aaa;margin-bottom:4px">Week</div>';
+h+='<select id="adm-log-week" style="width:100%;padding:8px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;font-size:13px;">';
+Object.keys(WEEK_DATES).forEach(function(w){h+='<option value="'+w+'">'+w+'</option>';});
+h+='</select></div></div>';
+h+='<button onclick="renderAdmLogView()" style="width:100%;padding:10px;background:#ca3092;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">View Punches</button>';
+h+='<div id="adm-log-view"></div>';
+el.innerHTML=h;
 }
 
-function renderAdmLogForPerson(name){
-var el=document.getElementById('adm-log-person');
-if(!name){el.innerHTML='';return;}
-var recs=ADM_TC.filter(function(r){return r.fields.Name===name;}).sort(function(a,b){return new Date(b.fields.Date)-new Date(a.fields.Date);});
-if(!recs.length){el.innerHTML='<div style="color:#555;padding:12px">No punches found for '+name+'</div>';return;}
-var h='';
-recs.forEach(function(rec){
-var hasOut=!!rec.fields.PunchOut;
-var flagged=rec.fields.Flagged&&rec.fields.Flagged!='Admin fixed'&&rec.fields.Flagged!='Admin entry';
-h+='<div style="background:#'+(flagged?'2a1a1a':'111')+';border:1px solid #'+(flagged?'ca3092':'333')+';border-radius:10px;padding:12px 14px;margin-bottom:8px;">';
-h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-h+='<div style="font-size:13px;font-weight:700;color:#66cccc">'+rec.fields.Date+'</div>';
-h+='<div style="font-size:11px;color:'+(hasOut?'#34d399':'#f87171')+'">'+( hasOut?rec.fields.HoursWorked+' hrs':'Missing punch-out')+'</div>';
+function renderAdmLogView(){
+var name=document.getElementById('adm-log-name').value;
+var week=document.getElementById('adm-log-week').value;
+var el=document.getElementById('adm-log-view');
+if(!name||!week){el.innerHTML='<div style="color:#888;padding:8px">Please select a person and week.</div>';return;}
+var WEEK_DATES={
+'Orientation (Jun 1-5)':['6/1/2026','6/2/2026','6/3/2026','6/4/2026','6/5/2026'],
+'Week 1 (Jun 8-12)':['6/8/2026','6/9/2026','6/10/2026','6/11/2026','6/12/2026'],
+'Week 2 (Jun 15-19)':['6/15/2026','6/16/2026','6/17/2026','6/18/2026','6/19/2026'],
+'Week 3 (Jun 22-26)':['6/22/2026','6/23/2026','6/24/2026','6/25/2026','6/26/2026'],
+'Week 4 (Jun 29-Jul 3)':['6/29/2026','6/30/2026','7/1/2026','7/2/2026','7/3/2026']
+};
+var DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var dates=WEEK_DATES[week]||[];
+var h='<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:10px">'+name+' — '+week+'</div>';
+dates.forEach(function(d){
+var dt=new Date(d+'T12:00:00');
+var dayName=DAYNAMES[dt.getDay()];
+var rec=ADM_TC.find(function(r){return r.fields.Name===name&&r.fields.Date===d;});
+var hasIn=rec&&rec.fields.PunchIn;
+var hasOut=rec&&rec.fields.PunchOut;
+var noPunch=!rec;
+var bg=noPunch?'#1a0a0a':(!hasOut?'#1a1200':'#0a1a0a');
+var border=noPunch?'#f87171':(!hasOut?'#fbbf24':'#34d399');
+h+='<div style="background:'+bg+';border:1px solid '+border+';border-radius:10px;padding:12px 14px;margin-bottom:8px;">';
+h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+h+='<div style="font-size:13px;font-weight:700;color:#fff">'+dayName+' '+d.replace('/2026','')+'</div>';
+h+='<div style="font-size:11px;font-weight:700;color:'+border+'">'+(noPunch?'No punch':(hasOut?(rec.fields.HoursWorked+' hrs'):'Missing punch-out'))+'</div>';
 h+='</div>';
-h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
-h+='<div><div style="font-size:10px;color:#888">Punch In</div><div style="font-size:13px;color:#fff">'+( rec.fields.PunchIn||'—')+'</div></div>';
-h+='<div><div style="font-size:10px;color:#888">Punch Out</div><div style="font-size:13px;color:#'+(hasOut?'fff':'f87171')+'">'+( rec.fields.PunchOut||'MISSING')+'</div></div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">';
+h+='<div><div style="font-size:10px;color:#888;margin-bottom:2px">Punch In</div>';
+h+='<div style="font-size:13px;color:#'+(hasIn?'fff':'555')+'">'+( hasIn?rec.fields.PunchIn:'—')+'</div></div>';
+h+='<div><div style="font-size:10px;color:#888;margin-bottom:2px">Punch Out</div>';
+h+='<div style="font-size:13px;color:#'+(hasOut?'fff':'f87171')+'">'+( hasOut?rec.fields.PunchOut:'—')+'</div></div>';
 h+='</div>';
-if(flagged) h+='<div style="font-size:10px;color:#ca3092;margin-bottom:8px">⚠️ '+rec.fields.Flagged+'</div>';
-h+='<div style="display:flex;gap:6px;">';
-h+='<button class="ab pk" data-rid="'+rec.id+'" data-in="'+(rec.fields.PunchIn||'')+'" data-out="'+(rec.fields.PunchOut||'')+'" onclick="adminEditPunch(this.dataset.rid,this.dataset.in,this.dataset.out)" style="flex:1">Edit Punches</button>';
-h+='</div>';
+if(rec){
+h+='<button data-rid="'+rec.id+'" data-in="'+(rec.fields.PunchIn||'')+'" data-out="'+(rec.fields.PunchOut||'')+'" onclick="adminEditPunch(this)" style="width:100%;padding:8px;background:#333;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Edit Punch</button>';
+}else{
+h+='<button data-date="'+d+'" onclick="adminAddPunch(this)" style="width:100%;padding:8px;background:#ca3092;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">+ Add Punch</button>';
+}
 h+='</div>';
 });
 el.innerHTML=h;
 }
 
-function adminEditPunch(rid,currentIn,currentOut){
-var newIn=prompt('Punch In time (e.g. 9:00 AM):', currentIn||'');
+function adminEditPunch(btn){
+var rid=btn.dataset.rid;
+var currentIn=btn.dataset.in;
+var currentOut=btn.dataset.out;
+var name=document.getElementById('adm-log-name').value;
+var newIn=prompt('Punch In (e.g. 9:00 AM):',currentIn||'');
 if(newIn===null)return;
-var newOut=prompt('Punch Out time (e.g. 3:00 PM):', currentOut||'');
+var newOut=prompt('Punch Out (e.g. 3:00 PM):',currentOut||'');
 if(newOut===null)return;
 var hrs=chrs(newIn,newOut);
 AP(TT,rid,{PunchIn:newIn,PunchOut:newOut,HoursWorked:hrs,Status:'Out',Flagged:'Admin fixed'}).then(function(){
-renderAdmLogForPerson(document.getElementById('adm-log-filter').value);
+loadAdm();
 }).catch(function(e){alert('Error: '+e.message);});
+}
+
+function adminAddPunch(btn){
+var name=document.getElementById('adm-log-name').value;
+var date=btn.dataset.date;
+var newIn=prompt('Punch In (e.g. 9:00 AM):','9:00 AM');
+if(!newIn)return;
+var newOut=prompt('Punch Out (e.g. 3:00 PM):','3:00 PM');
+if(!newOut)return;
+var hrs=chrs(newIn,newOut);
+fetch('https://app.angelstreetmemphis.com/.netlify/functions/airtable/TimeClock',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({fields:{Name:name,Date:date,PunchIn:newIn,PunchOut:newOut,HoursWorked:hrs,Status:'Out',Program:'angelstreet',Flagged:'Admin entry'}})
+}).then(function(r){return r.json();}).then(function(){loadAdm();}).catch(function(e){alert('Error: '+e.message);});
 }
 function dldCSV(){var rows=[['Date','Name','Program','In','Out','Hours','Flags']];ADM_TC.slice().sort(function(a,b){return new Date(a.fields.Date)-new Date(b.fields.Date);}).forEach(function(r){rows.push([r.fields.Date||'',r.fields.Name||'',r.fields.Program||'',r.fields.PunchIn||'',r.fields.PunchOut||'',r.fields.HoursWorked||'',r.fields.Flagged||'']);});var csv=rows.map(function(r){return r.map(function(c){return'"'+c+'"';}).join(',');}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='AngelStreet_TimeClock.csv';a.click();}
 async function dldPDF(){await loadHtml2Pdf();await html2pdf().set({margin:8,filename:'AngelStreet_Report.pdf',image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#0a0a0a'},jsPDF:{orientation:'landscape',unit:'mm',format:'a3'}}).from(document.getElementById('admin-panel')).save();}
