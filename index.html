@@ -1316,10 +1316,16 @@ var wk=getInvoiceWeek();
 var labels={orientation:'Orientation Week (Jun 1-5)',Week1:'Week 1 (Jun 8-12)',Week2:'Week 2 (Jun 15-18)',Week3:'Week 3 (Jun 22-26)',Week4:'Week 4 (Jun 29-Jul 3)'};
 return labels[wk]||wk;
 }
+var TA_CUSTOM_RATES={
+'April Freeman':{days:[{day:'Wednesday',amt:175},{day:'Friday',amt:175}]},
+'Chasity Lloyd':{days:[{day:'Monday',amt:150},{day:'Wednesday',amt:150},{day:'Friday',amt:75}]}
+};
+
 function renderInvoiceForm(existing,cont,forceWeek){
 var week=getInvoiceWeek(forceWeek);
 var isOrientation=week==='orientation';
 window._dayClasses={};
+window._customDays={};
 
 // Week selector
 var weekOptions=[
@@ -1380,6 +1386,25 @@ row.appendChild(cb);row.appendChild(lbl);row.appendChild(amt);
 items.appendChild(row);
 });
 }else{
+var customRates=TA_CUSTOM_RATES[CU&&CU.n?CU.n:''];
+if(customRates){
+items.innerHTML='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:12px">Days Worked This Week</div>';
+customRates.days.forEach(function(dayObj){
+var key=dayObj.day.slice(0,3).toLowerCase();
+var row=document.createElement('div');row.style.cssText='padding:12px 0;border-bottom:1px solid #2a2a2a;';
+row.innerHTML='<div style="font-size:13px;color:#fff;font-weight:600;margin-bottom:8px">'+dayObj.day+'</div>';
+var btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap;';
+[{n:0,l:'Did not teach'},{n:1,l:'Taught',amt:dayObj.amt}].forEach(function(opt){
+var b=document.createElement('button');
+b.id='inv-'+key+'-'+opt.n;
+b.style.cssText='padding:8px 14px;border-radius:8px;border:2px solid #333;background:#111;color:#aaa;font-size:12px;cursor:pointer;';
+b.innerHTML=opt.l+(opt.amt?' <b>$'+opt.amt+'</b>':'');
+b.onclick=function(){setCustomDay(key,opt.n,dayObj.amt);};
+btns.appendChild(b);
+});
+row.appendChild(btns);items.appendChild(row);
+});
+}else{
 items.innerHTML='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:12px">Days Worked This Week</div>';
 ['Monday','Tuesday','Wednesday','Thursday','Friday'].forEach(function(day){
 var key=day.slice(0,3).toLowerCase();
@@ -1397,6 +1422,7 @@ btns.appendChild(b);
 row.appendChild(btns);items.appendChild(row);
 });
 }
+}
 cont.appendChild(items);
 var totalCard=document.createElement('div');
 totalCard.style.cssText='background:linear-gradient(135deg,#ca3092,#8d4d9e);border-radius:12px;padding:16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;';
@@ -1413,6 +1439,16 @@ btn.textContent='Submit Invoice';
 btn.onclick=function(){submitInvoice(isOrientation);};
 cont.appendChild(btn);
 }
+function setCustomDay(day,worked,amt){
+if(!window._customDays)window._customDays={};
+window._customDays[day]=worked?amt:0;
+[0,1].forEach(function(n){
+var b=document.getElementById('inv-'+day+'-'+n);
+if(b){b.style.background=n===worked?'#ca3092':'#111';b.style.borderColor=n===worked?'#ca3092':'#333';b.style.color=n===worked?'#fff':'#aaa';}
+});
+updateInvoiceTotal();
+}
+
 function setDayClasses(day,classes){
 if(!window._dayClasses)window._dayClasses={};
 window._dayClasses[day]=classes;
@@ -1426,6 +1462,7 @@ function updateInvoiceTotal(){
 var total=0;
 ['supplies','arc','orientation'].forEach(function(k){var cb=document.getElementById('inv-'+k);if(cb&&cb.checked)total+=50;});
 if(window._dayClasses){Object.values(window._dayClasses).forEach(function(c){total+=c===1?75:c===2?150:0;});}
+if(window._customDays){Object.values(window._customDays).forEach(function(a){total+=a||0;});}
 var el=document.getElementById('inv-total');if(el)el.textContent='$'+total;
 }
 async function submitInvoice(isOrientation){
@@ -1449,6 +1486,15 @@ var checked=[];
 var cb=document.getElementById('inv-'+item.key);if(cb&&cb.checked){checked.push(item.label+' ($50)');}
 });
 fields.LineItems=checked.join(', ');
+}else if(window._customDays&&Object.keys(window._customDays).length){
+var customLines=[];
+var customRatesNow=TA_CUSTOM_RATES[CU&&CU.n?CU.n:'']||{days:[]};
+customRatesNow.days.forEach(function(dayObj){
+var key=dayObj.day.slice(0,3).toLowerCase();
+var amt=window._customDays[key]||0;
+if(amt>0)customLines.push(dayObj.day+' ($'+amt+')');
+});
+fields.LineItems=customLines.join(', ');
 }else{
 var days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
 var lines=[];
