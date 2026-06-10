@@ -2574,7 +2574,7 @@ var flat=parseFloat(flatEl.value)||0;
 totEl.textContent='$'+(hourlyPay+flat).toFixed(2);
 }
 
-function downloadPayrollXLSX(pp,tcMap){
+async function downloadPayrollXLSX(pp,tcMap){
 var PSTAFF=[
 {n:'Jada Jordan',rate:15.00,flat:false},
 {n:'London Jordan',rate:15.00,flat:false},
@@ -2646,11 +2646,43 @@ html+='<td class="hdr" colspan="9">GRAND TOTAL</td>';
 html+='<td class="hdr">$'+grandTotal.toFixed(2)+'</td>';
 html+='</tr>';
 html+='</table></body></html>';
-var blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
-var a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download='AngelStreet_PP_'+pp.label.replace(/[^a-zA-Z0-9]/g,'_')+'.xls';
-document.body.appendChild(a);a.click();document.body.removeChild(a);
+// Build staff data payload with punch times
+var staffPayload=PSTAFF.map(function(s){
+  var flat=0;
+  if(s.flat){var flatEl=document.getElementById('flat-'+s.n.split(' ').join('-'));if(flatEl)flat=parseFloat(flatEl.value)||0;}
+  var days=pp.dates.map(function(d){
+    var p=tcMap[s.n+'|'+d];
+    return {date:d,punchIn:p&&p.PunchIn?p.PunchIn:'',punchOut:p&&p.PunchOut?p.PunchOut:'',hours:p?parseFloat(p.HoursWorked||0):0};
+  });
+  return {name:s.n,rate:s.rate,flat:s.flat,flatAmt:flat,days:days};
+});
+
+try{
+  var xlsxBtn=document.querySelector('button[onclick*="downloadPayrollXLSX"]')||{textContent:'',disabled:false};
+  var origText='📊 Download XLSX';
+  var btns=document.querySelectorAll('button');
+  var xBtn=null;
+  btns.forEach(function(b){if(b.textContent.trim()==='📊 Download XLSX')xBtn=b;});
+  if(xBtn){xBtn.textContent='Generating...';xBtn.disabled=true;}
+
+  var res=await fetch('/.netlify/functions/generate-payroll-xlsx',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({label:pp.label,payDate:'June 12, 2026',staff:staffPayload})
+  });
+
+  if(!res.ok)throw new Error('Server error: '+res.status);
+  var arrBuf=await res.arrayBuffer();
+  var blob=new Blob([arrBuf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='AngelStreet_PP_'+pp.label.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  if(xBtn){xBtn.textContent=origText;xBtn.disabled=false;}
+}catch(e){
+  alert('XLSX error: '+e.message+'. Try the CSV download instead.');
+  if(xBtn){xBtn.textContent=origText;xBtn.disabled=false;}
+}
 }
 
 function downloadPayrollCSV(pp,tcMap){
@@ -3050,6 +3082,101 @@ invCard.innerHTML='<div style="font-size:13px;font-weight:700;color:#ca3092;marg
 +'<span style="font-size:13px;color:#aaa;">Total owed</span>'
 +'<span style="font-size:18px;font-weight:900;color:#66cccc;">$'+totalInv.toFixed(0)+'</span></div>';
 cont.appendChild(invCard);
+
+// ── DAILY ATTENDANCE SECTION ─────────────────────────────────────
+var attCard=document.createElement('div');
+attCard.style.cssText='background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;';
+attCard.innerHTML='<div style="font-size:13px;font-weight:700;color:#34d399;margin-bottom:12px;">✅ Daily Attendance</div>';
+
+// Build list of all camp dates up to today
+var campDates=[];
+var campStart=new Date(2026,5,8);
+var campEnd=new Date(2026,6,3);
+var today2=new Date();
+var cutoff=today2<campEnd?today2:campEnd;
+for(var d=new Date(campStart);d<=cutoff;d.setDate(d.getDate()+1)){
+  if(d.getDay()===0||d.getDay()===6)continue;
+  var mm=(d.getMonth()+1);
+  var dd=d.getDate();
+  var yy=d.getFullYear();
+  campDates.push({str:mm+'/'+dd+'/'+yy,label:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+', '+['Jan','Feb','Mar','Apr','May','Jun','Jul'][d.getMonth()]+' '+dd});
+}
+
+if(!campDates.length){
+  attCard.innerHTML+='<div style="font-size:12px;color:#555;">Camp has not started yet.</div>';
+}else{
+  // Date picker
+  var dateRow=document.createElement('div');
+  dateRow.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:14px;';
+  dateRow.innerHTML='<label style="font-size:13px;color:#aaa;white-space:nowrap;">View date:</label>';
+  var dateSel=document.createElement('select');
+  dateSel.style.cssText='flex:1;padding:8px 12px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;font-size:13px;';
+  campDates.slice().reverse().forEach(function(cd){
+    var opt=document.createElement('option');
+    opt.value=cd.str;
+    opt.textContent=cd.label+' ('+cd.str+')';
+    dateSel.appendChild(opt);
+  });
+  dateRow.appendChild(dateSel);
+  attCard.appendChild(dateRow);
+
+  var attList=document.createElement('div');
+  attList.id='att-day-list';
+  attCard.appendChild(attList);
+
+  // Fetch all attendance records once
+  var allAtt=[];
+  try{allAtt=await AF('Attendance');}catch(e){}
+
+  function renderAttDay(dateStr){
+    var dayRecs=allAtt.filter(function(r){return r.fields.Date===dateStr;});
+    var present=dayRecs.filter(function(r){return r.fields.Status==='Present'||r.fields.CheckInTime;});
+    var absent=dayRecs.filter(function(r){return r.fields.Status==='Absent';});
+    var late=dayRecs.filter(function(r){return r.fields.Status==='Late';});
+
+    if(!dayRecs.length){
+      attList.innerHTML='<div style="font-size:13px;color:#555;padding:10px 0;">No attendance recorded for this date.</div>';
+      return;
+    }
+
+    var h='<div style="display:flex;gap:12px;margin-bottom:12px;">';
+    h+='<div style="background:rgba(52,211,153,.15);border:1px solid #34d399;border-radius:8px;padding:8px 14px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#34d399;">'+present.length+'</div><div style="font-size:11px;color:#aaa;">Present</div></div>';
+    h+='<div style="background:rgba(248,113,113,.15);border:1px solid #f87171;border-radius:8px;padding:8px 14px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#f87171;">'+absent.length+'</div><div style="font-size:11px;color:#aaa;">Absent</div></div>';
+    h+='<div style="background:rgba(251,191,36,.15);border:1px solid #fbbf24;border-radius:8px;padding:8px 14px;text-align:center;"><div style="font-size:22px;font-weight:900;color:#fbbf24;">'+late.length+'</div><div style="font-size:11px;color:#aaa;">Late</div></div>';
+    h+='</div>';
+
+    if(present.length){
+      h+='<div style="font-size:11px;color:#34d399;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Present</div>';
+      present.sort(function(a,b){return (a.fields.CamperName||'').localeCompare(b.fields.CamperName||'');});
+      present.forEach(function(r){
+        var f=r.fields;
+        var cleanName=(f.CamperName||'').replace(/⭐[^a-zA-Z]*/g,'').trim();
+        h+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2a2a2a;font-size:13px;">';
+        h+='<span style="color:#fff;font-weight:600;">'+cleanName+'</span>';
+        h+='<span style="color:#555;font-size:11px;">'+(f.CheckInTime?'In '+f.CheckInTime:'')+''+(f.CheckOutTime?' · Out '+f.CheckOutTime:'')+'</span>';
+        h+='</div>';
+      });
+    }
+    if(late.length){
+      h+='<div style="font-size:11px;color:#fbbf24;font-weight:700;text-transform:uppercase;margin-top:10px;margin-bottom:6px;">Late</div>';
+      late.forEach(function(r){
+        h+='<div style="padding:5px 0;border-bottom:1px solid #2a2a2a;font-size:13px;color:#fbbf24;">'+((r.fields.CamperName||'').replace(/⭐[^a-zA-Z]*/g,'').trim())+'</div>';
+      });
+    }
+    if(absent.length){
+      h+='<div style="font-size:11px;color:#f87171;font-weight:700;text-transform:uppercase;margin-top:10px;margin-bottom:6px;">Absent</div>';
+      absent.forEach(function(r){
+        h+='<div style="padding:5px 0;border-bottom:1px solid #2a2a2a;font-size:13px;color:#f87171;">'+((r.fields.CamperName||'').replace(/⭐[^a-zA-Z]*/g,'').trim())+'</div>';
+      });
+    }
+    attList.innerHTML=h;
+  }
+
+  dateSel.onchange=function(){renderAttDay(dateSel.value);};
+  renderAttDay(dateSel.value);
+}
+cont.appendChild(attCard);
+
 }catch(e){
 cont.innerHTML='<div class="msg me">⚠️ '+e.message+'</div>';
 }
