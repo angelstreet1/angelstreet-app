@@ -679,6 +679,35 @@ var REAL_USER=null;
 function AU(t){return PROXY_BASE+'/'+encodeURIComponent(t);}
 async function AF(t,f){var all=[],off=null,n=0;do{var u=AU(t)+'?pageSize=100'+(f?'&filterByFormula='+encodeURIComponent(f):'')+(off?'&offset='+encodeURIComponent(off):'');var r=await fetch(u,{headers:AH});if(!r.ok)throw new Error('Fetch '+r.status);var j=await r.json();all=all.concat(j.records||[]);off=j.offset||null;if(off)await new Promise(function(x){setTimeout(x,250);});n++;if(n>10)break;}while(off);return all;}
 async function AC(t,f){var r=await fetch(AU(t),{method:'POST',headers:AH,body:JSON.stringify({fields:f})});if(!r.ok)throw new Error('Create '+r.status+': '+(await r.text()).slice(0,80));return await r.json();}
+
+// ── SESSION CACHE ─────────────────────────────────────────────────
+// Caches Airtable reads for the session to avoid redundant proxy calls
+var _cache={};
+var _cacheTime={};
+var CACHE_TTL={
+  Roster:5*60*1000,        // 5 min
+  Attendance:2*60*1000,    // 2 min
+  Invoices:3*60*1000,      // 3 min
+  Groups:10*60*1000,       // 10 min
+  GroupAssignments:5*60*1000,
+  Users:10*60*1000,
+  Updates:5*60*1000,
+  Messages:2*60*1000,
+  WelcomeAck:5*60*1000,
+  Shifts:5*60*1000,
+  TimeClock:2*60*1000,
+  GroupPreferences:5*60*1000
+};
+async function AFC(t){
+  var now=Date.now();
+  var ttl=CACHE_TTL[t]||3*60*1000;
+  if(_cache[t]&&(now-(_cacheTime[t]||0))<ttl){return _cache[t];}
+  var recs=await AF(t);
+  _cache[t]=recs;
+  _cacheTime[t]=now;
+  return recs;
+}
+function clearCache(t){if(t){delete _cache[t];delete _cacheTime[t];}else{_cache={};_cacheTime={};}}
 async function AP(t,id,f){var r=await fetch(AU(t)+'/'+id,{method:'PATCH',headers:AH,body:JSON.stringify({fields:f})});if(!r.ok)throw new Error('Patch '+r.status);return await r.json();}
 async function AD(t,id){var r=await fetch(AU(t)+'/'+id,{method:'DELETE',headers:AH});if(!r.ok)throw new Error('Delete '+r.status);}
 function SM(h){var m=document.getElementById('modal');m.innerHTML='<div class="mbg">'+h+'</div>';m.style.display='block';}
@@ -811,7 +840,7 @@ var nowMins=nh*60+nm;
 if(nowMins>lateThreshold)flags.push('Late punch-in: '+n2);var f={Date:today,Name:TCU.n,PunchIn:n2,Program:TCU.p,Status:'In'};if(geoFlag)flags.push(geoFlag);if(flags.length)f.Flagged=flags.join(', ');try{if(todayR)await AP(TT,todayR.id,f);else await AC(TT,f);sTCM('ms','✓ Punched in at '+n2);}catch(e){sTCM('me','⚠️ '+e.message);return;}}else if(!todayR.fields.PunchOut){if(TCU.eh&&nh<TCU.eh){flags.push('Early punch-out: '+n2);var earlyReason=prompt('You are punching out early. Please enter a reason:');if(earlyReason)flags.push('Reason: '+earlyReason);}var hrs=chrs(todayR.fields.PunchIn,n2),ef=todayR.fields.Flagged||'';try{await AP(TT,todayR.id,{PunchOut:n2,HoursWorked:hrs,Status:'Out',Flagged:ef+(ef&&flags.length?', ':'')+flags.join(', ')});sTCM('ms','✓ Punched out · '+hrs+' hrs');}catch(e){sTCM('me','⚠️ '+e.message);return;}}
 await loadTCS();}
 function tcSignOut(){TCU=null;TCP='';document.getElementById('tc-ls').style.display='block';document.getElementById('tc-cs').style.display='none';document.getElementById('tc-pw').style.display='none';document.querySelectorAll('.tcn').forEach(function(b){b.classList.remove('sel');});}
-async function loadCI(){document.getElementById('ci-dt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});var fEl=document.getElementById('ci-filt');fEl.innerHTML='';['all','present','absent','late','out'].forEach(function(f){var b=document.createElement('div');b.className='cifb'+(CF===f?' on':'');b.textContent=f.charAt(0).toUpperCase()+f.slice(1);(function(fi,btn){btn.onclick=function(){CF=fi;document.querySelectorAll('.cifb').forEach(function(x){x.classList.remove('on');});btn.classList.add('on');renderCI();};})(f,b);fEl.appendChild(b);});var week=document.getElementById('ci-week').value;try{var allRoster=await AF(TR);RSR=allRoster.filter(function(r){return r.fields.Week===week;});ATR=await AF(TAT,"Date='"+tstr()+"'");renderCI();}catch(e){var em=document.getElementById('ci-msg');em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
+async function loadCI(){document.getElementById('ci-dt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});var fEl=document.getElementById('ci-filt');fEl.innerHTML='';['all','present','absent','late','out'].forEach(function(f){var b=document.createElement('div');b.className='cifb'+(CF===f?' on':'');b.textContent=f.charAt(0).toUpperCase()+f.slice(1);(function(fi,btn){btn.onclick=function(){CF=fi;document.querySelectorAll('.cifb').forEach(function(x){x.classList.remove('on');});btn.classList.add('on');renderCI();};})(f,b);fEl.appendChild(b);});var week=document.getElementById('ci-week').value;try{var allRoster=await AFC(TR);RSR=allRoster.filter(function(r){return r.fields.Week===week;});ATR=await AF(TAT,"Date='"+tstr()+"'");renderCI();}catch(e){var em=document.getElementById('ci-msg');em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
 function renderCI(){var list=document.getElementById('ci-list');list.innerHTML='';
 var seen={};
 var campers=[];
@@ -840,7 +869,7 @@ nm.appendChild(feeTag);
 if((status==='Present'||status==='Late')&&!(att&&att.fields.CheckOutTime)){var bco=document.createElement('button');bco.className='cibtn co';bco.textContent='Check Out';(function(nm2){bco.onclick=function(){openCO(nm2);};})(name);acts.appendChild(bco);}
 if(att&&status!=='none'){var br=document.createElement('button');br.className='cibtn rst';br.textContent='↩ Reset';(function(aid){br.onclick=function(){if(confirm('Reset check-in?'))resetAtt(aid);};})(att.id);acts.appendChild(br);}
 card.appendChild(av);card.appendChild(inf);card.appendChild(acts);list.appendChild(card);});document.getElementById('ci-sum').textContent='Present: '+pres+' · Absent: '+abs+' · Late: '+late+' · Out: '+out+' / '+campers.length;}
-async function markAtt(name,status){var today=tstr(),ex=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===today;});try{if(ex)await AP(TAT,ex.id,{Status:status,CheckInTime:nstr()});else await AC(TAT,{Date:today,CamperName:name,Status:status,CheckInTime:nstr()});ATR=await AF(TAT,"Date='"+today+"'");renderCI();}
+async function markAtt(name,status){var today=tstr(),ex=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===today;});try{clearCache('Attendance');if(ex)await AP(TAT,ex.id,{Status:status,CheckInTime:nstr()});else await AC(TAT,{Date:today,CamperName:name,Status:status,CheckInTime:nstr()});ATR=await AF(TAT,"Date='"+today+"'");renderCI();}
 catch(e){alert('Error: '+e.message);}}
 async function resetAtt(recId){try{await AD(TAT,recId);ATR=ATR.filter(function(r){return r.id!==recId;});renderCI();}catch(e){alert('Error: '+e.message);}}
 function openCO(name){var overlay=document.createElement('div');overlay.className='mbg';overlay.onclick=function(e){if(e.target===overlay)CM();};var d=document.createElement('div');d.className='md';var title=document.createElement('h3');title.textContent='Check Out: '+name;var sub=document.createElement('div');sub.className='mds';sub.textContent='Who is picking up '+name.split(' ')[0]+'?';var rosterRec=RSR.find(function(r){return r.fields.CamperName===name;})||{fields:{}};
@@ -871,8 +900,8 @@ var tInp=document.createElement('input');tInp.placeholder='Pickup person name';t
 inpWrap.appendChild(tInp);inp={getValue:function(){return tInp.value.trim();},focus:function(){tInp.focus();}};
 }var sigLbl=document.createElement('div');sigLbl.style.cssText='font-size:12px;color:#aaa;margin-bottom:8px;';sigLbl.textContent='Sign below:';var canvas=document.createElement('canvas');canvas.width=320;canvas.height=150;canvas.style.cssText='border:2px solid #555;border-radius:8px;touch-action:none;width:100%;background:#fff;display:block;margin-bottom:12px;';var ctx=canvas.getContext('2d');ctx.strokeStyle='#000';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';var drawing=false;function getPos(e){var r=canvas.getBoundingClientRect();var src=e.touches?e.touches[0]:e;return{x:(src.clientX-r.left)*(canvas.width/r.width),y:(src.clientY-r.top)*(canvas.height/r.height)};}
 canvas.addEventListener('mousedown',function(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});canvas.addEventListener('mousemove',function(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});canvas.addEventListener('mouseup',function(){drawing=false;});canvas.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});canvas.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});canvas.addEventListener('touchend',function(e){e.preventDefault();drawing=false;},{passive:false});var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:8px;margin-bottom:10px;';var clrBtn=document.createElement('button');clrBtn.textContent='Clear';clrBtn.style.cssText='flex:1;padding:12px;background:#444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;';clrBtn.onclick=function(){ctx.clearRect(0,0,canvas.width,canvas.height);};var cfmBtn=document.createElement('button');cfmBtn.textContent='Confirm Checkout';cfmBtn.style.cssText='flex:1;padding:12px;background:#ca3092;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;';var attRecCO=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===tstr();});var lateFeeCO=attRecCO&&attRecCO.fields.LateFee?parseFloat(attRecCO.fields.LateFee):0;cfmBtn.onclick=async function(){var pu=inp.getValue?inp.getValue():inp.value.trim();if(!pu){alert('Please enter the pickup person name.');return;}
-var sig=canvas.toDataURL('image/png');var today=tstr();var checkoutTime=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});var ex=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===today;});CM();try{if(ex)await AP(TAT,ex.id,{CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFeeCO>0?lateFeeCO:0,FeePaid:false});else await AC(TAT,{Date:today,CamperName:name,Status:'Present',CheckInTime:'',CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFeeCO>0?lateFeeCO:0,FeePaid:false});ATR=await AF(TAT,"Date='"+today+"'");renderCI();alert(name.split(' ')[0]+' checked out to '+pu+'.');}catch(e){alert('Error: '+e.message);}};var cancelBtn=document.createElement('button');cancelBtn.className='mdc';cancelBtn.textContent='Cancel';cancelBtn.onclick=CM;btnRow.appendChild(clrBtn);btnRow.appendChild(cfmBtn);d.appendChild(title);d.appendChild(sub);d.appendChild(inpWrap);d.appendChild(sigLbl);d.appendChild(canvas);d.appendChild(btnRow);d.appendChild(cancelBtn);overlay.appendChild(d);var modal=document.getElementById('modal');modal.innerHTML='';modal.appendChild(overlay);modal.style.display='block';setTimeout(function(){if(inp.focus)inp.focus();},100);}
-async function loadComm(){var em=document.getElementById('comm-msg');em.style.display='none';var canPost=CU&&(CU.r==='admin'||CU.r==='staff');document.getElementById('comm-post').style.display=canPost?'block':'none';document.getElementById('comm-att-section').style.display=canPost?'block':'none';var cw=getCampWeek();var sel=document.getElementById('comm-week');if(sel)sel.value=cw;document.getElementById('comm-week').onchange=function(){loadComm();};var week=document.getElementById('comm-week').value;try{var allRoster2=await AF(TR);RSR=allRoster2.filter(function(r){return r.fields.Week===week;});ATR=await AF(TAT);ATR=ATR.filter(function(r){return r.fields.Date===tstr();});if(canPost){renderParentList();renderAttComm();}}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
+var sig=canvas.toDataURL('image/png');var today=tstr();var checkoutTime=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});var ex=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===today;});CM();try{clearCache('Attendance');if(ex)await AP(TAT,ex.id,{CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFeeCO>0?lateFeeCO:0,FeePaid:false});else await AC(TAT,{Date:today,CamperName:name,Status:'Present',CheckInTime:'',CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFeeCO>0?lateFeeCO:0,FeePaid:false});ATR=await AF(TAT,"Date='"+today+"'");renderCI();alert(name.split(' ')[0]+' checked out to '+pu+'.');}catch(e){alert('Error: '+e.message);}};var cancelBtn=document.createElement('button');cancelBtn.className='mdc';cancelBtn.textContent='Cancel';cancelBtn.onclick=CM;btnRow.appendChild(clrBtn);btnRow.appendChild(cfmBtn);d.appendChild(title);d.appendChild(sub);d.appendChild(inpWrap);d.appendChild(sigLbl);d.appendChild(canvas);d.appendChild(btnRow);d.appendChild(cancelBtn);overlay.appendChild(d);var modal=document.getElementById('modal');modal.innerHTML='';modal.appendChild(overlay);modal.style.display='block';setTimeout(function(){if(inp.focus)inp.focus();},100);}
+async function loadComm(){var em=document.getElementById('comm-msg');em.style.display='none';var canPost=CU&&(CU.r==='admin'||CU.r==='staff');document.getElementById('comm-post').style.display=canPost?'block':'none';document.getElementById('comm-att-section').style.display=canPost?'block':'none';var cw=getCampWeek();var sel=document.getElementById('comm-week');if(sel)sel.value=cw;document.getElementById('comm-week').onchange=function(){loadComm();};var week=document.getElementById('comm-week').value;try{var allRoster2=await AFC(TR);RSR=allRoster2.filter(function(r){return r.fields.Week===week;});ATR=await AFC(TAT);ATR=ATR.filter(function(r){return r.fields.Date===tstr();});if(canPost){renderParentList();renderAttComm();}}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
 function renderParentList(){var list=document.getElementById('comm-parent-list');list.innerHTML='';var msg=document.getElementById('comm-ta').value.trim();var allBtn=document.getElementById('comm-text-all');if(allBtn){allBtn.onclick=function(){var phones=[];RSR.forEach(function(r){if(r.fields.Parent1Phone)phones.push(r.fields.Parent1Phone.replace(/[^0-9]/g,''));if(r.fields.EmergencyContactPhone)phones.push(r.fields.EmergencyContactPhone.replace(/[^0-9]/g,''));});phones=phones.filter(function(p,i,a){return p&&a.indexOf(p)===i;});if(!phones.length){alert('No parent phone numbers found.');return;}
 navigator.clipboard.writeText(phones.join(', ')).then(function(){allBtn.textContent='✓ Copied!';allBtn.style.background='#66cccc';allBtn.style.color='#0a0a0a';setTimeout(function(){allBtn.textContent='📋 Copy All Numbers';allBtn.style.background='#8d4d9e';allBtn.style.color='#fff';},3000);}).catch(function(){prompt('Copy these numbers:',phones.join(', '));});};
 var emailAllBtn=document.getElementById('comm-email-all');
@@ -936,7 +965,7 @@ sorted.forEach(function(rec){var d=document.createElement('div');d.className='up
 async function postUpd(){var title=document.getElementById('upd-title').value.trim(),body=document.getElementById('upd-body').value.trim();if(!title||!body){alert('Fill in both fields.');return;}
 try{await AC(TUD,{Date:tstr(),PostedBy:CU?CU.n:'Staff',Title:title,Content:body});document.getElementById('upd-title').value='';document.getElementById('upd-body').value='';await loadUpd();}
 catch(e){alert('Error: '+e.message);}}
-async function loadGrp(){var em=document.getElementById('grp-msg');em.style.display='none';var isAssignAdmin=CU&&(CU.r==='admin'||CU.n==='Hermekia'||CU.n==='Miah');var isTA=CU&&CU.r==='ta';var isJrTA=CU&&CU.r==='jrta';document.getElementById('grp-save').style.display=(isAssignAdmin&&!isJrTA)?'block':'none';try{GA_RECS=await AF(TGA);RSR=await AF(TR);if(isTA){renderTAGroups();}
+async function loadGrp(){var em=document.getElementById('grp-msg');em.style.display='none';var isAssignAdmin=CU&&(CU.r==='admin'||CU.n==='Hermekia'||CU.n==='Miah');var isTA=CU&&CU.r==='ta';var isJrTA=CU&&CU.r==='jrta';document.getElementById('grp-save').style.display=(isAssignAdmin&&!isJrTA)?'block':'none';try{GA_RECS=await AF(TGA);RSR=await AFC(TR);if(isTA){renderTAGroups();}
 else if(isJrTA){renderJrTAGroup();}
 else{renderGrp(isAssignAdmin);}}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
 function renderJrTAGroup(){var grid=document.getElementById('grp-grid');grid.innerHTML='';var other=document.getElementById('grp-other');other.innerHTML='';var week=getCampWeek();var existing=GA_RECS.find(function(r){return r.fields.JrTA1===CU.n||r.fields.JrTA2===CU.n;});if(existing){var grpNum=existing.fields.GroupNumber;var grpNames={1:'Group 1',2:'Group 2',3:'Group 3',4:'Group 4'};var grpCols={1:'#8d4d9e',2:'#ca3092',3:'#66cccc',4:'#fbbf24'};var card=document.createElement('div');card.style.cssText='background:#1a1a1a;border:2px solid '+(grpCols[grpNum]||'#333')+';border-radius:14px;padding:20px;margin-bottom:16px;';var h='<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:4px">'+grpNames[grpNum]||'My Group'+'</div>';h+='<div style="font-size:12px;color:#aaa;margin-bottom:16px">'+week.replace('Week','Week ')+'</div>';var campers=GA_RECS.filter(function(r){return r.fields.Week===week&&r.fields.GroupNumber===grpNum;});if(campers.length){h+='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:8px">Your Young Creatives ('+campers.length+')</div>';campers.forEach(function(r){h+='<div style="padding:8px 0;border-bottom:1px solid #2a2a2a;font-size:14px;color:#fff;display:flex;align-items:center;gap:10px">'
@@ -944,11 +973,11 @@ function renderJrTAGroup(){var grid=document.getElementById('grp-grid');grid.inn
 +(r.fields.CamperName||'').split(' ').map(function(p){return p[0];}).join('').slice(0,2)+'</div>'
 +'<span>'+r.fields.CamperName+'</span></div>';});}else{h+='<div style="color:#555;font-size:13px">No Young Creatives assigned to your group yet for '+week.replace('Week','Week ')+'.</div>';}
 card.innerHTML=h;grid.appendChild(card);}else{var intro=document.createElement('div');intro.style.cssText='background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:16px;margin-bottom:14px;';intro.innerHTML='<div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px">Choose Your Group</div>'
-+'<div style="font-size:13px;color:#aaa">Select the group you would like to work with this summer.</div>';grid.appendChild(intro);[1,2,3,4].forEach(function(n){var btn=document.createElement('button');btn.style.cssText='width:100%;padding:14px;margin-bottom:8px;border-radius:10px;border:2px solid #333;background:#1a1a1a;color:#fff;font-size:14px;font-weight:600;cursor:pointer;text-align:left;';btn.textContent='Group '+n;btn.onmouseover=function(){this.style.borderColor='#ca3092';};btn.onmouseout=function(){this.style.borderColor='#333';};(function(grpNum){btn.onclick=async function(){if(!confirm('Select Group '+grpNum+'? You can change this before camp starts.'))return;var rec=GA_RECS.find(function(r){return r.fields.GroupNumber===String(grpNum)&&!r.fields.JrTA1&&!r.fields.JrTA2;});var rec2=GA_RECS.find(function(r){return r.fields.GroupNumber===String(grpNum)&&r.fields.JrTA1&&!r.fields.JrTA2;});try{if(rec)await AP(TG,rec.id,{JrTA1:CU.n});else if(rec2)await AP(TG,rec2.id,{JrTA2:CU.n});else await AC(TG,{GroupNumber:String(grpNum),JrTA1:CU.n,JrTA2:''});GA_RECS=await AF(TGA);GR2=await AF(TG);await loadGrp();}catch(e){alert('Error: '+e.message);}};})(n);grid.appendChild(btn);});}}
++'<div style="font-size:13px;color:#aaa">Select the group you would like to work with this summer.</div>';grid.appendChild(intro);[1,2,3,4].forEach(function(n){var btn=document.createElement('button');btn.style.cssText='width:100%;padding:14px;margin-bottom:8px;border-radius:10px;border:2px solid #333;background:#1a1a1a;color:#fff;font-size:14px;font-weight:600;cursor:pointer;text-align:left;';btn.textContent='Group '+n;btn.onmouseover=function(){this.style.borderColor='#ca3092';};btn.onmouseout=function(){this.style.borderColor='#333';};(function(grpNum){btn.onclick=async function(){if(!confirm('Select Group '+grpNum+'? You can change this before camp starts.'))return;var rec=GA_RECS.find(function(r){return r.fields.GroupNumber===String(grpNum)&&!r.fields.JrTA1&&!r.fields.JrTA2;});var rec2=GA_RECS.find(function(r){return r.fields.GroupNumber===String(grpNum)&&r.fields.JrTA1&&!r.fields.JrTA2;});try{if(rec)await AP(TG,rec.id,{JrTA1:CU.n});else if(rec2)await AP(TG,rec2.id,{JrTA2:CU.n});else await AC(TG,{GroupNumber:String(grpNum),JrTA1:CU.n,JrTA2:''});GA_RECS=await AF(TGA);GR2=await AFC(TG);await loadGrp();}catch(e){alert('Error: '+e.message);}};})(n);grid.appendChild(btn);});}}
 function renderGrp(isAdmin){var grid=document.getElementById('grp-grid');grid.innerHTML='';var assigned=[];[1,2,3,4].forEach(function(n){var rec=GR2.find(function(r){return r.fields.GroupNumber===String(n);});var ta1=rec?rec.fields.JrTA1:'',ta2=rec?rec.fields.JrTA2:'';if(ta1)assigned.push(ta1);if(ta2)assigned.push(ta2);var card=document.createElement('div');card.className='grpcard g'+n;var h='<div class="grpttl">Group '+n+'</div><div class="grplbl">Jr. TAs</div>';if(isAdmin){h+='<select class="grpsel" id="grp'+n+'ta1"><option value="">-- Select TA 1 --</option>';JR_TAS.forEach(function(nm){h+='<option value="'+nm+'"'+(ta1===nm?' selected':'')+'>'+nm.split(' ')[0]+'</option>';});h+='</select><select class="grpsel" id="grp'+n+'ta2"><option value="">-- Select TA 2 --</option>';JR_TAS.forEach(function(nm){h+='<option value="'+nm+'"'+(ta2===nm?' selected':'')+'>'+nm.split(' ')[0]+'</option>';});h+='</select>';}else{if(ta1)h+='<div class="grpta">'+ta1+'</div>';if(ta2)h+='<div class="grpta">'+ta2+'</div>';if(!ta1&&!ta2)h+='<div style="color:#555;font-size:12px">Not yet assigned</div>';}
 var tempDiv=document.createElement('div');tempDiv.innerHTML=h;while(tempDiv.firstChild)card.appendChild(tempDiv.firstChild);grid.appendChild(card);});var other=document.getElementById('grp-other');other.innerHTML='';JR_TAS.filter(function(n){return assigned.indexOf(n)<0;}).forEach(function(name){var s=document.createElement('span');s.style.cssText='padding:6px 14px;background:rgba(141,77,158,.2);border:1px solid #8d4d9e;border-radius:20px;font-size:12px;color:#c9a0d6;';s.textContent=name;other.appendChild(s);});}
 async function saveGrp(){try{for(var n=1;n<=4;n++){var ta1el=document.getElementById('grp'+n+'ta1'),ta2el=document.getElementById('grp'+n+'ta2');if(!ta1el)continue;var ta1=ta1el.value,ta2=ta2el.value;var ex=GR2.find(function(r){return r.fields.GroupNumber===String(n);});if(ex)await AP(TG,ex.id,{GroupNumber:String(n),JrTA1:ta1,JrTA2:ta2});else await AC(TG,{GroupNumber:String(n),JrTA1:ta1,JrTA2:ta2});}
-GR2=await AF(TG);renderGrp(true);var em=document.getElementById('grp-msg');em.className='msg ms';em.textContent='✓ Groups saved!';em.style.display='block';setTimeout(function(){em.style.display='none';},3000);}catch(e){alert('Error: '+e.message);}}
+GR2=await AFC(TG);renderGrp(true);var em=document.getElementById('grp-msg');em.className='msg ms';em.textContent='✓ Groups saved!';em.style.display='block';setTimeout(function(){em.style.display='none';},3000);}catch(e){alert('Error: '+e.message);}}
 var ADM_TC=[],ADM_U=[];async function loadAdm(){var em=document.getElementById('adm-msg');em.className='msg ml';em.textContent='Loading...';em.style.display='block';try{ADM_TC=await AF(TT);ADM_U=await AF(TU);renderAdmToday();renderAdmUsers();renderAdmWeekly();renderAdmLog();em.style.display='none';}
 catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;}}
 function renderAdmToday(){var el=document.getElementById('adm-today'),today=tstr(),recs=ADM_TC.filter(function(r){return r.fields.Date===today;});if(!recs.length){el.innerHTML='<p style="color:#888;font-size:13px">No punches today</p>';return;}
@@ -1060,7 +1089,7 @@ body:JSON.stringify({fields:{Name:name,Date:date,PunchIn:newIn,PunchOut:newOut,H
 }
 function dldCSV(){var rows=[['Date','Name','Program','In','Out','Hours','Flags']];ADM_TC.slice().sort(function(a,b){return new Date(a.fields.Date)-new Date(b.fields.Date);}).forEach(function(r){rows.push([r.fields.Date||'',r.fields.Name||'',r.fields.Program||'',r.fields.PunchIn||'',r.fields.PunchOut||'',r.fields.HoursWorked||'',r.fields.Flagged||'']);});var csv=rows.map(function(r){return r.map(function(c){return'"'+c+'"';}).join(',');}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='AngelStreet_TimeClock.csv';a.click();}
 async function dldPDF(){await loadHtml2Pdf();await html2pdf().set({margin:8,filename:'AngelStreet_Report.pdf',image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#0a0a0a'},jsPDF:{orientation:'landscape',unit:'mm',format:'a3'}}).from(document.getElementById('admin-panel')).save();}
-var EM_RECS=[];async function loadEmergency(){var em=document.getElementById('em-msg');em.style.display='none';var week=document.getElementById('em-week').value;var cw=getCampWeek();document.getElementById('em-week').value=cw;try{var allRosterEM=await AF(TR);EM_RECS=allRosterEM.filter(function(r){return r.fields.Week===cw;});renderEmergency('');}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
+var EM_RECS=[];async function loadEmergency(){var em=document.getElementById('em-msg');em.style.display='none';var week=document.getElementById('em-week').value;var cw=getCampWeek();document.getElementById('em-week').value=cw;try{var allRosterEM=await AFC(TR);EM_RECS=allRosterEM.filter(function(r){return r.fields.Week===cw;});renderEmergency('');}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
 function filterEmergency(val){renderEmergency(val);}
 function renderEmergency(filter){var list=document.getElementById('em-list');list.innerHTML='';var seen={};var campers=EM_RECS.filter(function(r){if(!r.fields.CamperName)return false;if(filter&&!r.fields.CamperName.toLowerCase().includes(filter.toLowerCase()))return false;if(seen[r.fields.CamperName])return false;seen[r.fields.CamperName]=true;return true;});if(!campers.length){list.innerHTML='<div style="color:#555;text-align:center;padding:30px;font-size:14px">No Young Creatives found.</div>';return;}
 campers.forEach(function(rec){var f=rec.fields;var card=document.createElement('div');card.className='em-card';var initials=(f.CamperName||'').split(' ').map(function(p){return p[0];}).join('').slice(0,2).toUpperCase();var h='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'
@@ -1072,7 +1101,7 @@ h+='</div>';if(f.Medical&&f.Medical.trim()){h+='<div class="em-alert"><div class
 if(f.Allergies&&f.Allergies.trim()){h+='<div class="em-alert"><div class="em-alert-lbl">⚠️ Allergies</div><div class="em-alert-val">'+f.Allergies+'</div></div>';}
 if((!f.Medical||!f.Medical.trim())&&(!f.Allergies||!f.Allergies.trim())){h+='<div style="font-size:11px;color:#555;margin-top:8px">No medical conditions or allergies on file</div>';}
 card.innerHTML=h;list.appendChild(card);});}
-var GA_RECS=[];var CAN_ASSIGN=["Sa'Sha",'Ruth Abigail','Hermekia','Miah',"Test User (Sa'Sha)"];async function loadGrp(){var em=document.getElementById('grp-msg');em.style.display='none';var isAdmin=CU&&(CU.r==='admin'||CAN_ASSIGN.indexOf(CU.n)>=0);var isTA=CU&&CU.r==='ta';document.getElementById('grp-save').style.display=isAdmin?'block':'none';try{GA_RECS=await AF(TGA);RSR=await AF(TR);if(isTA){renderTAGroups();}
+var GA_RECS=[];var CAN_ASSIGN=["Sa'Sha",'Ruth Abigail','Hermekia','Miah',"Test User (Sa'Sha)"];async function loadGrp(){var em=document.getElementById('grp-msg');em.style.display='none';var isAdmin=CU&&(CU.r==='admin'||CAN_ASSIGN.indexOf(CU.n)>=0);var isTA=CU&&CU.r==='ta';document.getElementById('grp-save').style.display=isAdmin?'block':'none';try{GA_RECS=await AF(TGA);RSR=await AFC(TR);if(isTA){renderTAGroups();}
 else{renderGrp(isAdmin);}}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
 function renderTAGroups(){var grid=document.getElementById('grp-grid');grid.innerHTML='';var other=document.getElementById('grp-other');other.innerHTML='';document.getElementById('grp-save').style.display='none';var subject=CU.subject||'';var week=getCampWeek();var rotations={
 Monday:{
@@ -1118,8 +1147,8 @@ async function loadMyGroup(){
 var em=document.getElementById('mg-msg');em.style.display='none';
 var cont=document.getElementById('mg-content');cont.innerHTML='';
 try{
-GA_RECS=await AF(TGA);RSR=await AF(TR);GR2=await AF(TG);
-try{PREF_RECS=await AF('GroupPreferences');}catch(e){PREF_RECS=[];}
+GA_RECS=await AF(TGA);RSR=await AFC(TR);GR2=await AFC(TG);
+try{PREF_RECS=await AFC('GroupPreferences');}catch(e){PREF_RECS=[];}
 var isAdmin=CU&&CU.r==='admin';
 if(isAdmin){
 var toggleBar=document.createElement('div');toggleBar.style.cssText='display:flex;gap:8px;margin-bottom:16px;';
@@ -1138,7 +1167,7 @@ await renderJrTAGroupView(cont);
 }catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}
 }
 async function loadGA(){var em=document.getElementById('ga-msg');em.style.display='none';var allowed=["Sa'Sha","Ruth Abigail","Test User (Sa'Sha)",'Hermekia','Miah'];if(!CU||allowed.indexOf(CU.n)<0){em.className='msg me';em.textContent='Access restricted.';em.style.display='block';return;}
-var week=document.getElementById('ga-week').value;try{GA_RECS=await AF(TGA);var allRosterGA=await AF(TR);RSR=allRosterGA.filter(function(r){return r.fields.Week===week;});GR2=await AF(TG);try{PREF_RECS=await AF('GroupPreferences');}catch(e){PREF_RECS=[];}renderGA(week);}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
+var week=document.getElementById('ga-week').value;try{GA_RECS=await AF(TGA);var allRosterGA=await AFC(TR);RSR=allRosterGA.filter(function(r){return r.fields.Week===week;});GR2=await AFC(TG);try{PREF_RECS=await AFC('GroupPreferences');}catch(e){PREF_RECS=[];}renderGA(week);}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
 function renderGA(week){var grid=document.getElementById('ga-grid');grid.innerHTML='';var grpColors=['#8d4d9e','#ca3092','#66cccc','#fbbf24'];var allCampers=RSR.map(function(r){return r.fields.CamperName;}).filter(function(n,i,a){return n&&a.indexOf(n)===i;});var weekGA=GA_RECS.filter(function(r){return r.fields.Week===week;});var groupMap={1:[],2:[],3:[],4:[]};weekGA.forEach(function(r){var g=parseInt(r.fields.GroupNumber);if(g>=1&&g<=4)groupMap[g].push(r);});var assigned=weekGA.map(function(r){return r.fields.CamperName;});var unassigned=allCampers.filter(function(n){return assigned.indexOf(n)<0;});[1,2,3,4].forEach(function(n){var grpRec=GR2.find(function(r){return r.fields.GroupNumber===String(n);});var ta1=grpRec?grpRec.fields.JrTA1:'Unassigned';var ta2=grpRec?grpRec.fields.JrTA2:'';var card=document.createElement('div');card.style.cssText='background:#1a1a1a;border:2px solid '+grpColors[n-1]+';border-radius:12px;padding:14px;';var h='<div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px">Group '+n+'</div>'
 +'<div style="font-size:11px;color:#66cccc;font-weight:600;margin-bottom:4px">'+({'1':'Oops We Did It Again','2':'Sisterhood Melodies','3':'AMPLIFY','4':'NerdClusters'}[n]||'')+'</div>';h+='<div style="font-size:11px;color:#888;margin-bottom:10px">Jr. TAs: '+(ta1||'—')+(ta2?' & '+ta2:'')+'</div>';h+='<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:6px">Young Creatives ('+groupMap[n].length+'/10)</div>';card.innerHTML=h;groupMap[n].forEach(function(r){var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #2a2a2a;font-size:12px;color:#fff;';var nm=document.createElement('span');nm.textContent=r.fields.CamperName;var xb=document.createElement('button');xb.textContent='×';xb.style.cssText='background:none;border:none;color:#555;cursor:pointer;font-size:16px;padding:0 2px;';(function(recId){xb.onclick=async function(){await AD(TGA,recId);GA_RECS=await AF(TGA);renderGA(week);};})(r.id);row.appendChild(nm);row.appendChild(xb);card.appendChild(row);});if(groupMap[n].length<10){var sel=document.createElement('select');sel.style.cssText='width:100%;padding:6px;border:1px solid #333;border-radius:6px;background:#111;color:#fff;font-size:11px;margin-top:8px;';var defOpt=document.createElement('option');defOpt.value='';defOpt.textContent='+ Add Young Creative...';sel.appendChild(defOpt);unassigned.forEach(function(name){var opt=document.createElement('option');opt.value=name;opt.textContent=name;sel.appendChild(opt);});(function(grpNum,s,wk){s.onchange=async function(){if(!s.value)return;var wkGA=GA_RECS.filter(function(r){return r.fields.Week===wk&&r.fields.GroupNumber===String(grpNum);});if(wkGA.length>=10){alert('Group '+grpNum+' is full.');s.value='';return;}
 try{await AC(TGA,{CamperName:s.value,Week:wk,GroupNumber:String(grpNum)});s.value='';GA_RECS=await AF(TGA);RSR=await AF(TR,"Week='"+wk+"'");renderGA(wk);}
@@ -1220,10 +1249,10 @@ saveBtn.textContent='Save';
 (function(grpN,sels,existRec){saveBtn.onclick=async function(){
 try{
 var fields={GroupNumber:String(grpN),JrTA1:sels[0]?sels[0].value:'',JrTA2:sels[1]?sels[1].value:'',JrTA3:sels[2]?sels[2].value:''};
-var freshGR=await AF(TG);
+var freshGR=await AFC(TG);
 var freshRec=freshGR.find(function(r){return r.fields.GroupNumber===String(grpN);});
 if(freshRec)await AP(TG,freshRec.id,fields);else await AC(TG,fields);
-GR2=await AF(TG);alert('✓ Group '+grpN+' TAs saved!');renderGA(week);
+GR2=await AFC(TG);alert('✓ Group '+grpN+' TAs saved!');renderGA(week);
 }catch(e){alert('Error: '+e.message);}
 };})(cfg.n,selects,rec);
 card.appendChild(saveBtn);jrEl.appendChild(card);
@@ -1249,10 +1278,10 @@ taSaveBtn.textContent='Save TA Assistants';
 (function(sels,existRec){taSaveBtn.onclick=async function(){
 try{
 var fields={GroupNumber:'ta-assist',JrTA1:sels[0]?sels[0].value:'',JrTA2:sels[1]?sels[1].value:''};
-var freshGR=await AF(TG);
+var freshGR=await AFC(TG);
 var freshRec=freshGR.find(function(r){return r.fields.GroupNumber==='ta-assist';});
 if(freshRec)await AP(TG,freshRec.id,fields);else await AC(TG,fields);
-GR2=await AF(TG);alert('✓ TA Assistants saved!');renderGA(week);
+GR2=await AFC(TG);alert('✓ TA Assistants saved!');renderGA(week);
 }catch(e){alert('Error: '+e.message);}
 };})(taSels,taRec);
 taCard.appendChild(taSaveBtn);jrEl.appendChild(taCard);}
@@ -1292,7 +1321,7 @@ if(!cont)return;
 cont.innerHTML='<div class="msg ml">Loading...</div>';
 var week=getInvoiceWeek();
 try{
-var recs=await AF('Invoices');
+var recs=await AFC('Invoices');
 var mine=recs.filter(function(r){return r.fields.Name===CU.n&&r.fields.Week===week;});
 cont.innerHTML='';
 if(mine.length&&mine[0].fields.Submitted){
@@ -1505,9 +1534,9 @@ if(c>0)lines.push(days[i]+': '+c+' class'+(c>1?'es':'')+' ($'+(c*75)+')');
 fields.LineItems=lines.join(', ');
 }
 try{
-await AC('Invoices',fields);
+clearCache('Invoices');await AC('Invoices',fields);
 var cont=document.getElementById('inv-content');cont.innerHTML='';
-var recs=await AF('Invoices');
+var recs=await AFC('Invoices');
 var mine=recs.find(function(r){return r.fields.Name===CU.n&&r.fields.Week===week;});
 if(mine)renderInvoiceSubmitted(mine,cont);
 else cont.innerHTML='<div class="msg ms">✓ Invoice submitted!</div>';
@@ -1575,7 +1604,7 @@ var modal=document.getElementById('modal');modal.innerHTML='';modal.appendChild(
 async function markFeePaid(name,recId,amount){
 if(!confirm('Mark $'+amount+' late fee as PAID for '+name+'?'))return;
 try{
-await AP(TAT,recId,{FeePaid:true});
+clearCache('Attendance');await AP(TAT,recId,{FeePaid:true});
 ATR=await AF(TAT,"Date='"+tstr()+"'");
 renderCI();
 alert('✓ Late fee marked as paid for '+name);
@@ -1646,7 +1675,7 @@ toggleBar.appendChild(adminBtn);toggleBar.appendChild(taBtn);
 cont.appendChild(toggleBar);cont.appendChild(listDiv);cont.appendChild(taDiv);
 listDiv.innerHTML='<div class="msg ml">Loading...</div>';
 try{
-var recs=await AF('Invoices');
+var recs=await AFC('Invoices');
 listDiv.innerHTML='';
 if(!recs.length){listDiv.innerHTML='<div style="color:#555;text-align:center;padding:30px;font-size:14px">No invoices submitted yet.</div>';return;}
 var allSorted=recs.slice().sort(function(a,b){return new Date(b.createdTime)-new Date(a.createdTime);});
@@ -1949,8 +1978,8 @@ var PREF_RECS=[];
 var PROG_AREAS=['DJ Lab','Guitar','Visual Arts','Graphic Design','Hair Braiding','Photography','Dance & Step','Choir'];
 async function renderJrTAGroupView(cont){
 cont.innerHTML='<div class="msg ml">Loading your group...</div>';
-try{GR2=await AF(TG);}catch(e){}
-try{PREF_RECS=await AF('GroupPreferences');}catch(e){PREF_RECS=[];}
+try{GR2=await AFC(TG);}catch(e){}
+try{PREF_RECS=await AFC('GroupPreferences');}catch(e){PREF_RECS=[];}
 cont.innerHTML='';
 var week=getCampWeek();
 var ageRanges={'1':'Oops We Did It Again','2':'Sisterhood Melodies','3':'AMPLIFY','4':'NerdClusters'};
@@ -2086,7 +2115,7 @@ if(selectedProgAreas.length<2){alert('Please select 2 programming areas.');retur
 if(!confirm('Submit your preferences? This cannot be changed.'))return;
 try{
 await AC('GroupPreferences',{Name:CU.n,Choice1:c1,Choice2:c2,Choice3:c3,ProgramArea1:selectedProgAreas[0],ProgramArea2:selectedProgAreas[1]});
-PREF_RECS=await AF('GroupPreferences');
+PREF_RECS=await AFC('GroupPreferences');
 var cont=document.getElementById('mg-content');
 cont.innerHTML='';
 await renderJrTAGroupView(cont);
@@ -2137,7 +2166,7 @@ var weekSel=document.getElementById('lead-week');
 var week=weekSel?weekSel.value:getCampWeek();
 if(weekSel)weekSel.value=week;
 try{
-LEAD_RECS=await AF('LeadSignups');
+LEAD_RECS=await AFC('LeadSignups');
 }catch(e){LEAD_RECS=[];}
 var weekDates=LEAD_WEEK_DATES[week]||{};
 var days=Object.keys(weekDates);
@@ -2206,7 +2235,7 @@ await AP('LeadSignups',rec.id,{[field]:CU.n});
 }else{
 await AC('LeadSignups',{Type:type,Date:dateStr,Day:day,Week:week,Leader1:CU.n,Leader2:''});
 }
-LEAD_RECS=await AF('LeadSignups');
+LEAD_RECS=await AFC('LeadSignups');
 await loadLead();
 }catch(e){alert('Error: '+e.message);}
 }
@@ -2218,7 +2247,7 @@ var updates={};
 if(l1===CU.n){updates.Leader1=l2||'';updates.Leader2='';}
 else if(l2===CU.n){updates.Leader2='';}
 await AP('LeadSignups',recId,updates);
-LEAD_RECS=await AF('LeadSignups');
+LEAD_RECS=await AFC('LeadSignups');
 await loadLead();
 }catch(e){alert('Error: '+e.message);}
 }
@@ -2277,7 +2306,7 @@ loading.textContent='Error loading roster. Please try again.';
 async function loadPickupNotifications(){
 try{
 var today=(new Date().getMonth()+1)+'/'+(new Date().getDate())+'/'+(new Date().getFullYear());
-var all=await AF('PickupNotifications');var notifs=all.filter(function(r){return r.fields.Date===today&&r.fields.Status==='Waiting';});
+var all=await AFC('PickupNotifications');var notifs=all.filter(function(r){return r.fields.Date===today&&r.fields.Status==='Waiting';});
 var banner=document.getElementById('pickup-banner');
 if(!banner)return;
 if(!notifs.length){banner.style.display='none';return;}
@@ -2302,7 +2331,7 @@ banner.appendChild(row);
 }
 async function loadParentUpdates(cont){
 try{
-var recs=await AF('ParentUpdates');
+var recs=await AFC('ParentUpdates');
 if(!recs.length)return;
 recs.sort(function(a,b){return new Date(b.createdTime)-new Date(a.createdTime);});
 var latest=recs[0];
@@ -2399,7 +2428,7 @@ viewBtn.style.cssText='width:100%;padding:10px;background:transparent;color:#66c
 viewBtn.textContent='📋 View / Delete Existing Posts';
 viewBtn.onclick=async function(){
 var modal=document.getElementById('modal');modal.innerHTML='';modal.style.display='none';
-var recs=await AF('ParentUpdates');
+var recs=await AFC('ParentUpdates');
 recs.sort(function(a,b){return new Date(b.createdTime)-new Date(a.createdTime);});
 showAllParentUpdates(recs);
 };
@@ -2964,7 +2993,7 @@ var weeks=['Week1','Week2','Week3','Week4'];
 var labels={Week1:'Week 1 (Jun 8-12)',Week2:'Week 2 (Jun 15-18)',Week3:'Week 3 (Jun 22-26)',Week4:'Week 4 (Jun 29-Jul 3)'};
 var counts={Week1:0,Week2:0,Week3:0,Week4:0};
 try{
-var allRoster=await AF(TR);
+var allRoster=await AFC(TR);
 var seen={};
 allRoster.forEach(function(r){
 var wk=r.fields.Week;var nm=r.fields.CamperName;
@@ -3018,9 +3047,9 @@ if(!cont)return;
 cont.innerHTML='<div class="msg ml">Loading...</div>';
 try{
 var allRoster=[],invoices=[],acks=[];
-try{allRoster=await AF(TR);}catch(e){console.warn('Roster fetch failed',e);}
-try{invoices=await AF('Invoices');}catch(e){console.warn('Invoices fetch failed',e);}
-try{acks=await AF('WelcomeAck');}catch(e){}
+try{allRoster=await AFC(TR);}catch(e){console.warn('Roster fetch failed',e);}
+try{invoices=await AFC('Invoices');}catch(e){console.warn('Invoices fetch failed',e);}
+try{acks=await AFC('WelcomeAck');}catch(e){}
 cont.innerHTML='';
 var weeks=['Week1','Week2','Week3','Week4'];
 var labels={Week1:'Week 1 (Jun 8-12)',Week2:'Week 2 (Jun 15-18)',Week3:'Week 3 (Jun 22-26)',Week4:'Week 4 (Jun 29-Jul 3)'};
@@ -3126,7 +3155,7 @@ if(!campDates.length){
 
   // Fetch all attendance records once
   var allAtt=[];
-  try{allAtt=await AF('Attendance');}catch(e){console.warn('Attendance fetch failed',e);attList.innerHTML='<div style="font-size:12px;color:#f87171;">Could not load attendance data.</div>';}
+  try{allAtt=await AFC('Attendance');}catch(e){console.warn('Attendance fetch failed',e);attList.innerHTML='<div style="font-size:12px;color:#f87171;">Could not load attendance data.</div>';}
 
   function renderAttDay(dateStr){
     var dayRecs=allAtt.filter(function(r){return r.fields.Date===dateStr;});
