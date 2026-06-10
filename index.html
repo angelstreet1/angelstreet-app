@@ -2576,6 +2576,58 @@ totDiv.innerHTML='<div style="display:flex;justify-content:space-between;font-si
 totDiv.innerHTML='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#fff;"><span>Total Pay ('+totalHrs.toFixed(2)+' hrs)</span><span>$'+hourlyPay.toFixed(2)+'</span></div>';
 }
 card.appendChild(totDiv);
+
+// ACH section
+var achDiv=document.createElement('div');
+achDiv.style.cssText='margin-top:10px;padding-top:10px;border-top:1px solid #333;';
+var achId='ach-'+s.n.replace(/\s+/g,'-');
+var achTitle=document.createElement('div');
+achTitle.style.cssText='font-size:11px;color:#66cccc;font-weight:700;text-transform:uppercase;margin-bottom:8px;';
+achTitle.textContent='ACH / Payment Info';
+achDiv.appendChild(achTitle);
+// Same as file checkbox
+var achSameRow=document.createElement('div');
+achSameRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;';
+var achCb=document.createElement('input');achCb.type='checkbox';achCb.id=achId+'-same';
+achCb.style.cssText='width:16px;height:16px;accent-color:#ca3092;cursor:pointer;';
+var achLbl=document.createElement('label');achLbl.htmlFor=achId+'-same';
+achLbl.textContent='Same ACH as on file';
+achLbl.style.cssText='font-size:12px;color:#aaa;cursor:pointer;';
+var achFields=document.createElement('div');achFields.id=achId+'-fields';
+(function(cb,fields){cb.onchange=function(){fields.style.display=cb.checked?'none':'block';};})(achCb,achFields);
+achSameRow.appendChild(achCb);achSameRow.appendChild(achLbl);
+achDiv.appendChild(achSameRow);
+// Input fields
+var achInputs=[
+  {id:achId+'-bank',label:'Bank Name',placeholder:'Bank name',full:true},
+  {id:achId+'-holder',label:'Account Holder Name',placeholder:'Full legal name',full:true},
+  {id:achId+'-routing',label:'Routing #',placeholder:'Routing number',full:false},
+  {id:achId+'-account',label:'Account #',placeholder:'Account number',full:false}
+];
+var achRow2=document.createElement('div');achRow2.style.cssText='display:flex;gap:6px;margin-bottom:6px;';
+achInputs.forEach(function(inp){
+  var wrap=document.createElement('div');
+  if(inp.full){wrap.style.cssText='margin-bottom:6px;';}else{wrap.style.cssText='flex:1;';}
+  var lbl=document.createElement('label');lbl.textContent=inp.label;
+  lbl.style.cssText='font-size:11px;color:#888;display:block;margin-bottom:2px;';
+  var input=document.createElement('input');input.type='text';input.id=inp.id;
+  input.placeholder=inp.placeholder;
+  input.style.cssText='width:100%;background:#111;border:1px solid #333;border-radius:6px;padding:5px 8px;color:#fff;font-size:12px;box-sizing:border-box;';
+  wrap.appendChild(lbl);wrap.appendChild(input);
+  if(inp.full){achFields.appendChild(wrap);}else{achRow2.appendChild(wrap);}
+});
+achFields.appendChild(achRow2);
+var achTypeWrap=document.createElement('div');
+var achTypeLbl=document.createElement('label');achTypeLbl.textContent='Account Type';
+achTypeLbl.style.cssText='font-size:11px;color:#888;display:block;margin-bottom:2px;';
+var achTypeSel=document.createElement('select');achTypeSel.id=achId+'-type';
+achTypeSel.style.cssText='width:100%;background:#111;border:1px solid #333;border-radius:6px;padding:5px 8px;color:#fff;font-size:12px;box-sizing:border-box;';
+['','Checking','Savings'].forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v||'Select...';achTypeSel.appendChild(o);});
+achTypeWrap.appendChild(achTypeLbl);achTypeWrap.appendChild(achTypeSel);
+achFields.appendChild(achTypeWrap);
+achDiv.appendChild(achFields);
+card.appendChild(achDiv);
+
 cont.appendChild(card);
 });
 
@@ -2593,6 +2645,26 @@ dlRow.appendChild(xlsxBtn);dlRow.appendChild(csvBtn);
 cont.appendChild(dlRow);
 }
 
+}
+
+function toggleACH(cb,achId){
+var fields=document.getElementById(achId+'-fields');
+if(!fields)return;
+fields.style.display=cb.checked?'none':'block';
+}
+
+function getACHData(name){
+var achId='ach-'+name.split(' ').join('-');
+var same=document.getElementById(achId+'-same');
+if(same&&same.checked)return{sameAsFile:true};
+return{
+  sameAsFile:false,
+  bank:(document.getElementById(achId+'-bank')||{}).value||'',
+  holder:(document.getElementById(achId+'-holder')||{}).value||'',
+  routing:(document.getElementById(achId+'-routing')||{}).value||'',
+  account:(document.getElementById(achId+'-account')||{}).value||'',
+  type:(document.getElementById(achId+'-type')||{}).value||''
+};
 }
 
 function refreshPayrollTotal(el,hourlyPay,totId){
@@ -2715,6 +2787,7 @@ try{
   PSTAFF.forEach(function(s){
     var flat=0;
     if(s.flat){var fe=document.getElementById('flat-'+s.n.split(' ').join('-'));if(fe)flat=parseFloat(fe.value)||0;}
+    var ach=getACHData(s.n);
     var rows=[];
     rows.push([mkCell(s.n+' — '+pp.label,cellStyle(PINK,true,'FFFFFFFF',12))]);
     rows.push([mkCell('Rate: $'+s.rate.toFixed(2)+'/hr  |  Pay Date: June 12, 2026',cellStyle(WHITE,true))]);
@@ -2770,10 +2843,22 @@ try{
       ]);
     }
     // ACH section
+    var ach=s.ach||{};
     rows.push([mkCell('ACH / PAYMENT INFORMATION',cellStyle(PURP,true,'FFFFFFFF'))]);
-    ['Same ACH as on file?','Bank Name:','Account Holder Name:','Routing Number:','Account Number:','Account Type (Checking/Savings):'].forEach(function(label){
-      rows.push([mkCell(label,cellStyle(WHITE,true)),mkCell('',cellStyle(WHITE)),mkCell('',cellStyle(LTYELLOW))]);
-    });
+    if(ach.sameAsFile){
+      rows.push([mkCell('Same ACH as on file?',cellStyle(WHITE,true)),mkCell('',cellStyle(WHITE)),mkCell('✓ YES — Same as on file',cellStyle(LTGREEN,true))]);
+    }else{
+      [
+        ['Same ACH as on file?','No — New info below'],
+        ['Bank Name:',ach.bank||''],
+        ['Account Holder Name:',ach.holder||''],
+        ['Routing Number:',ach.routing||''],
+        ['Account Number:',ach.account||''],
+        ['Account Type:',ach.type||'']
+      ].forEach(function(pair){
+        rows.push([mkCell(pair[0],cellStyle(WHITE,true)),mkCell('',cellStyle(WHITE)),mkCell(pair[1],cellStyle(LTYELLOW))]);
+      });
+    }
 
     var ws=XLSX.utils.aoa_to_sheet(rows.map(function(r){return r.map(function(c){return c.v;});}));
     rows.forEach(function(row,ri){
