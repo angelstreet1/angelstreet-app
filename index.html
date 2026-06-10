@@ -2612,107 +2612,197 @@ var PSTAFF=[
 {n:'Tanaya Adams',rate:15.00,flat:true},
 {n:'Michayia Bills',rate:15.00,flat:true}
 ];
-var DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-// Build HTML table for xlsx-style export
-var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-html+='<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Payroll</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
-html+='<style>';
-html+='body{font-family:Arial,sans-serif;}';
-html+='.hdr{background:#ca3092;color:#fff;font-weight:bold;padding:6px 10px;border:1px solid #fff;font-size:12px;}';
-html+='.total{background:#1a1a1a;color:#fff;font-weight:bold;padding:5px 8px;border:1px solid #444;font-size:12px;}';
-html+='.row{padding:5px 8px;border:1px solid #ddd;font-size:12px;}';
-html+='.empty{padding:5px 8px;border:none;}';
-html+='.title{background:#0a0a0a;color:#ca3092;font-size:18px;font-weight:900;padding:10px;letter-spacing:2px;}';
-html+='.subtitle{background:#0a0a0a;color:#aaa;font-size:11px;padding:4px 10px;}';
-html+='</style></head><body>';
-html+='<table>';
-html+='<tr><td colspan="10" class="title">ANGELSTREET MEMPHIS — PAYROLL REPORT</td></tr>';
-html+='<tr><td colspan="10" class="subtitle">'+pp.label+' · Generated '+new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'</td></tr>';
-html+='<tr><td class="empty" colspan="10"></td></tr>';
-html+='<tr>';
-['Name','Rate/Hr','Date','Day','Punch In','Punch Out','Hours','Hourly Pay','Flat Rate','Total Pay'].forEach(function(h){html+='<td class="hdr">'+h+'</td>';});
-html+='</tr>';
-var grandTotal=0;
-PSTAFF.forEach(function(s){
-var totalHrs=0;
-var flat=0;
-if(s.flat){var flatEl=document.getElementById('flat-'+s.n.split(' ').join('-'));if(flatEl)flat=parseFloat(flatEl.value)||0;}
-pp.dates.forEach(function(d){
-var p=tcMap[s.n+'|'+d];
-var dp=d.split('/');var dt=new Date(parseInt(dp[2]),parseInt(dp[0])-1,parseInt(dp[1]),12,0,0);
-var dn=DAYNAMES[dt.getDay()];
-var hrs=p?parseFloat(p.HoursWorked||0):0;
-totalHrs+=hrs;
-var rowTotal=hrs>0?'$'+(hrs*s.rate).toFixed(2):'';
-html+='<tr>';
-html+='<td class="row">'+s.n+'</td>';
-html+='<td class="row">$'+s.rate.toFixed(2)+'</td>';
-html+='<td class="row">'+d+'</td>';
-html+='<td class="row">'+dn+'</td>';
-html+='<td class="row">'+(p&&p.PunchIn?p.PunchIn:'')+'</td>';
-html+='<td class="row">'+(p&&p.PunchOut?p.PunchOut:'')+'</td>';
-html+='<td class="row">'+(hrs>0?hrs.toFixed(2):'')+'</td>';
-html+='<td class="row">'+rowTotal+'</td>';
-html+='<td class="row"></td>';
-html+='<td class="row"></td>';
-html+='</tr>';
-});
-var hp=totalHrs*s.rate;
-var tot=hp+flat;
-grandTotal+=tot;
-html+='<tr>';
-html+='<td class="total">'+s.n+' TOTAL</td>';
-html+='<td class="total"></td><td class="total"></td><td class="total"></td><td class="total"></td><td class="total"></td>';
-html+='<td class="total">'+totalHrs.toFixed(2)+'</td>';
-html+='<td class="total">$'+hp.toFixed(2)+'</td>';
-html+='<td class="total">$'+flat.toFixed(2)+'</td>';
-html+='<td class="total">$'+tot.toFixed(2)+'</td>';
-html+='</tr>';
-html+='<tr><td class="empty" colspan="10"></td></tr>';
-});
-html+='<tr>';
-html+='<td class="hdr" colspan="9">GRAND TOTAL</td>';
-html+='<td class="hdr">$'+grandTotal.toFixed(2)+'</td>';
-html+='</tr>';
-html+='</table></body></html>';
-// Build staff data payload with punch times
-var staffPayload=PSTAFF.map(function(s){
-  var flat=0;
-  if(s.flat){var flatEl=document.getElementById('flat-'+s.n.split(' ').join('-'));if(flatEl)flat=parseFloat(flatEl.value)||0;}
-  var days=pp.dates.map(function(d){
-    var p=tcMap[s.n+'|'+d];
-    return {date:d,punchIn:p&&p.PunchIn?p.PunchIn:'',punchOut:p&&p.PunchOut?p.PunchOut:'',hours:p?parseFloat(p.HoursWorked||0):0};
+var DAYNAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+// Find the button
+var xBtn=null;
+document.querySelectorAll('button').forEach(function(b){if(b.textContent.trim()==='📊 Download XLSX')xBtn=b;});
+if(xBtn){xBtn.textContent='Loading...';xBtn.disabled=true;}
+
+// Load SheetJS if not already loaded
+if(!window.XLSX){
+  await new Promise(function(res,rej){
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=res;s.onerror=rej;
+    document.head.appendChild(s);
   });
-  return {name:s.n,rate:s.rate,flat:s.flat,flatAmt:flat,days:days};
-});
+}
 
 try{
-  var xlsxBtn=document.querySelector('button[onclick*="downloadPayrollXLSX"]')||{textContent:'',disabled:false};
-  var origText='📊 Download XLSX';
-  var btns=document.querySelectorAll('button');
-  var xBtn=null;
-  btns.forEach(function(b){if(b.textContent.trim()==='📊 Download XLSX')xBtn=b;});
-  if(xBtn){xBtn.textContent='Generating...';xBtn.disabled=true;}
+  var wb=XLSX.utils.book_new();
 
-  var res=await fetch('/.netlify/functions/generate-payroll-xlsx',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({label:pp.label,payDate:'June 12, 2026',staff:staffPayload})
+  // ── COLORS (as ARGB hex) ──
+  var PINK='FFCA3092',DPURP='FF3D1A47',PURP='FF6A1B9A';
+  var LTGRAY='FFF5F5F5',WHITE='FFFFFFFF',LTGREEN='FFE8F5E9';
+  var LTYELLOW='FFFFF9C4',LTPURP='FFF3E5F5';
+
+  function cellStyle(bg,bold,color,sz){
+    return {
+      fill:{patternType:'solid',fgColor:{argb:bg||WHITE}},
+      font:{bold:!!bold,color:{argb:color||'FF000000'},name:'Arial',sz:sz||11},
+      alignment:{horizontal:'left',vertical:'center'},
+      border:{top:{style:'thin',color:{argb:'FFDDDDDD'}},bottom:{style:'thin',color:{argb:'FFDDDDDD'}},
+              left:{style:'thin',color:{argb:'FFDDDDDD'}},right:{style:'thin',color:{argb:'FFDDDDDD'}}}
+    };
+  }
+  function ctr(bg,bold,color,sz){var s=cellStyle(bg,bold,color,sz);s.alignment.horizontal='center';return s;}
+  function mkCell(v,s){return {v:v,s:s,t:typeof v==='number'?'n':'s'};}
+
+  // ── SUMMARY SHEET ──────────────────────────────────────────────
+  var sumData=[];
+  // Title row
+  sumData.push([mkCell('AngelStreet Memphis — Payroll Report',cellStyle(PINK,true,'FFFFFFFF',13))]);
+  sumData.push([mkCell(pp.label+' | Pay Date: June 12, 2026',cellStyle(DPURP,true,'FFFFFFFF',11))]);
+  sumData.push([mkCell('',cellStyle(WHITE))]);
+  // Header row
+  sumData.push([
+    mkCell('Name',ctr(PURP,true,'FFFFFFFF')),
+    mkCell('Rate/Hr',ctr(PURP,true,'FFFFFFFF')),
+    mkCell('Total Hours',ctr(PURP,true,'FFFFFFFF')),
+    mkCell('Hourly Pay',ctr(PURP,true,'FFFFFFFF')),
+    mkCell('Flat Rate',ctr(PURP,true,'FFFFFFFF')),
+    mkCell('Total Pay',ctr(PURP,true,'FFFFFFFF'))
+  ]);
+
+  var grandTotal=0;
+  PSTAFF.forEach(function(s,i){
+    var bg=i%2===0?LTGRAY:WHITE;
+    var totalHrs=0;
+    var flat=0;
+    if(s.flat){var fe=document.getElementById('flat-'+s.n.split(' ').join('-'));if(fe)flat=parseFloat(fe.value)||0;}
+    pp.dates.forEach(function(d){
+      var p=tcMap[s.n+'|'+d];
+      totalHrs+=p?parseFloat(p.HoursWorked||0):0;
+    });
+    var hp=totalHrs*s.rate;
+    var tot=hp+flat;
+    grandTotal+=tot;
+    sumData.push([
+      mkCell(s.n,cellStyle(bg,true)),
+      mkCell(s.rate,cellStyle(bg)),
+      mkCell(Math.round(totalHrs*100)/100,cellStyle(bg)),
+      mkCell(Math.round(hp*100)/100,cellStyle(bg)),
+      mkCell(s.flat?flat:'—',cellStyle(bg)),
+      mkCell(Math.round(tot*100)/100,cellStyle(LTGREEN,true))
+    ]);
+  });
+  // Totals row
+  sumData.push([
+    mkCell('TOTALS',cellStyle(PINK,true,'FFFFFFFF')),
+    mkCell('',cellStyle(PINK)),
+    mkCell('',cellStyle(PINK)),
+    mkCell('',cellStyle(PINK)),
+    mkCell('',cellStyle(PINK)),
+    mkCell(Math.round(grandTotal*100)/100,cellStyle(PINK,true,'FFFFFFFF'))
+  ]);
+
+  var sumWS=XLSX.utils.aoa_to_sheet(sumData.map(function(r){return r.map(function(c){return c.v;});}));
+  // Apply styles
+  var sumRef=XLSX.utils.decode_range(sumWS['!ref']);
+  sumData.forEach(function(row,ri){
+    row.forEach(function(cell,ci){
+      var addr=XLSX.utils.encode_cell({r:ri,c:ci});
+      if(!sumWS[addr])sumWS[addr]={t:'s',v:''};
+      sumWS[addr].s=cell.s;
+    });
+  });
+  sumWS['!cols']=[{wch:22},{wch:10},{wch:14},{wch:14},{wch:12},{wch:14}];
+  sumWS['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}},{s:{r:2,c:0},e:{r:2,c:5}}];
+  XLSX.utils.book_append_sheet(wb,sumWS,'Summary');
+
+  // ── INDIVIDUAL SHEETS ──────────────────────────────────────────
+  PSTAFF.forEach(function(s){
+    var flat=0;
+    if(s.flat){var fe=document.getElementById('flat-'+s.n.split(' ').join('-'));if(fe)flat=parseFloat(fe.value)||0;}
+    var rows=[];
+    rows.push([mkCell(s.n+' — '+pp.label,cellStyle(PINK,true,'FFFFFFFF',12))]);
+    rows.push([mkCell('Rate: $'+s.rate.toFixed(2)+'/hr  |  Pay Date: June 12, 2026',cellStyle(WHITE,true))]);
+    rows.push([mkCell('',cellStyle(WHITE))]);
+    rows.push([
+      mkCell('Date',ctr(PURP,true,'FFFFFFFF')),
+      mkCell('Day',ctr(PURP,true,'FFFFFFFF')),
+      mkCell('Punch In',ctr(PURP,true,'FFFFFFFF')),
+      mkCell('Punch Out',ctr(PURP,true,'FFFFFFFF')),
+      mkCell('Hours',ctr(PURP,true,'FFFFFFFF')),
+      mkCell('Pay',ctr(PURP,true,'FFFFFFFF'))
+    ]);
+
+    var totalHrs=0;
+    pp.dates.forEach(function(d,i){
+      var bg=i%2===0?LTGRAY:WHITE;
+      var p=tcMap[s.n+'|'+d];
+      var dp=d.split('/');var dt=new Date(parseInt(dp[2]),parseInt(dp[0])-1,parseInt(dp[1]),12);
+      var dn=DAYNAMES[dt.getDay()];
+      var hrs=p?parseFloat(p.HoursWorked||0):0;
+      totalHrs+=hrs;
+      rows.push([
+        mkCell(d,cellStyle(bg)),
+        mkCell(dn,cellStyle(bg)),
+        mkCell(p&&p.PunchIn?p.PunchIn:'',cellStyle(LTYELLOW)),
+        mkCell(p&&p.PunchOut?p.PunchOut:'',cellStyle(LTYELLOW)),
+        mkCell(hrs>0?Math.round(hrs*100)/100:0,cellStyle(LTYELLOW)),
+        mkCell(hrs>0?Math.round(hrs*s.rate*100)/100:0,cellStyle(LTYELLOW))
+      ]);
+    });
+
+    var hp=totalHrs*s.rate;
+    rows.push([
+      mkCell('Hourly Total',cellStyle(LTPURP,true)),
+      mkCell('',cellStyle(LTPURP)),
+      mkCell('',cellStyle(LTPURP)),
+      mkCell('',cellStyle(LTPURP)),
+      mkCell(Math.round(totalHrs*100)/100,cellStyle(LTPURP,true)),
+      mkCell(Math.round(hp*100)/100,cellStyle(LTGREEN,true))
+    ]);
+    rows.push([
+      mkCell('TOTAL PAY:',cellStyle(WHITE,true)),
+      mkCell('',cellStyle(WHITE)),
+      mkCell(Math.round((hp+flat)*100)/100,cellStyle(LTGREEN,true)),
+      mkCell('',cellStyle(WHITE)),mkCell('',cellStyle(WHITE)),mkCell('',cellStyle(WHITE))
+    ]);
+    if(s.flat){
+      rows.push([
+        mkCell('Flat Rate Bonus:',cellStyle(WHITE,true)),
+        mkCell('',cellStyle(WHITE)),
+        mkCell(flat,cellStyle(LTYELLOW)),
+        mkCell('',cellStyle(WHITE)),mkCell('',cellStyle(WHITE)),mkCell('',cellStyle(WHITE))
+      ]);
+    }
+    // ACH section
+    rows.push([mkCell('ACH / PAYMENT INFORMATION',cellStyle(PURP,true,'FFFFFFFF'))]);
+    ['Same ACH as on file?','Bank Name:','Account Holder Name:','Routing Number:','Account Number:','Account Type (Checking/Savings):'].forEach(function(label){
+      rows.push([mkCell(label,cellStyle(WHITE,true)),mkCell('',cellStyle(WHITE)),mkCell('',cellStyle(LTYELLOW))]);
+    });
+
+    var ws=XLSX.utils.aoa_to_sheet(rows.map(function(r){return r.map(function(c){return c.v;});}));
+    rows.forEach(function(row,ri){
+      row.forEach(function(cell,ci){
+        var addr=XLSX.utils.encode_cell({r:ri,c:ci});
+        if(!ws[addr])ws[addr]={t:'s',v:''};
+        ws[addr].s=cell.s;
+      });
+    });
+    ws['!cols']=[{wch:14},{wch:13},{wch:13},{wch:13},{wch:14},{wch:12}];
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}},{s:{r:2,c:0},e:{r:2,c:5}}];
+    XLSX.utils.book_append_sheet(wb,ws,s.n.slice(0,31));
   });
 
-  if(!res.ok)throw new Error('Server error: '+res.status);
-  var arrBuf=await res.arrayBuffer();
-  var blob=new Blob([arrBuf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  // Write and download
+  var wbout=XLSX.write(wb,{bookType:'xlsx',type:'array',cellStyles:true});
+  var blob=new Blob([wbout],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='AngelStreet_PP_'+pp.label.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
-  if(xBtn){xBtn.textContent=origText;xBtn.disabled=false;}
+  if(xBtn){xBtn.textContent='📊 Download XLSX';xBtn.disabled=false;}
+
 }catch(e){
-  alert('XLSX error: '+e.message+'. Try the CSV download instead.');
-  if(xBtn){xBtn.textContent=origText;xBtn.disabled=false;}
+  alert('XLSX error: '+e.message);
+  if(xBtn){xBtn.textContent='📊 Download XLSX';xBtn.disabled=false;}
 }
 }
+
 
 function downloadPayrollCSV(pp,tcMap){
 var PSTAFF=[
