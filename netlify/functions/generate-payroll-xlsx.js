@@ -1,225 +1,261 @@
 // netlify/functions/generate-payroll-xlsx.js
-// Generates a formatted payroll XLSX matching the AngelStreet template
+const ExcelJS = require('exceljs');
 
-const { execSync } = require("child_process");
-const fs = require("fs");
-const path = require("path");
-const os = require("os");
+const PINK    = 'FFCA3092';
+const DPURP   = 'FF3D1A47';
+const PURP    = 'FF6A1B9A';
+const LTGRAY  = 'FFF5F5F5';
+const WHITE   = 'FFFFFFFF';
+const LTGREEN = 'FFE8F5E9';
+const LTYELLOW= 'FFFFF9C4';
+const LTPURP  = 'FFF3E5F5';
+const BLACK   = 'FF000000';
 
-const PYTHON_SCRIPT = `
-import sys, json, base64, datetime
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
-from openpyxl.utils import get_column_letter
+function fill(argb) {
+  return { type: 'pattern', pattern: 'solid', fgColor: { argb } };
+}
+function font(bold, color = BLACK, size = 11) {
+  return { bold, color: { argb: color }, name: 'Arial', size };
+}
+function border() {
+  const s = { style: 'thin', color: { argb: 'FFCCCCCC' } };
+  return { top: s, bottom: s, left: s, right: s };
+}
+function hdrStyle(bold = true) {
+  return { fill: fill(PURP), font: font(bold, WHITE), alignment: { horizontal: 'center', vertical: 'middle' }, border: border() };
+}
+function cellStyle(bg, bold = false, color = BLACK) {
+  return { fill: fill(bg), font: font(bold, color), alignment: { horizontal: 'left', vertical: 'middle' }, border: border() };
+}
 
-data = json.loads(sys.argv[1])
-label = data['label']
-pay_date = data['payDate']
-staff = data['staff']
+function applyRow(row, styles) {
+  row.eachCell({ includeEmpty: true }, (cell, colNum) => {
+    const s = styles[colNum - 1];
+    if (s) {
+      if (s.fill) cell.fill = s.fill;
+      if (s.font) cell.font = s.font;
+      if (s.alignment) cell.alignment = s.alignment;
+      if (s.border) cell.border = s.border;
+    }
+  });
+}
 
-PINK      = "FFCA3092"
-DARK_PUR  = "FF3D1A47"
-PURPLE    = "FF6A1B9A"
-LT_GRAY   = "FFF5F5F5"
-WHITE     = "FFFFFFFF"
-LT_GREEN  = "FFE8F5E9"
-LT_YELLOW = "FFFFF9C4"
-LT_PURPLE = "FFF3E5F5"
-
-def fill(c): return PatternFill("solid", fgColor=c)
-def fnt(bold=False, color="FF000000", size=11):
-    return Font(bold=bold, color=color, name="Arial", size=size)
-def ctr(): return Alignment(horizontal="center", vertical="center")
-def lft(): return Alignment(horizontal="left", vertical="center")
-
-wb = Workbook()
-
-# ── SUMMARY SHEET ─────────────────────────────────────────────────
-ws = wb.active
-ws.title = "Summary"
-ws.column_dimensions["A"].width = 22
-ws.column_dimensions["B"].width = 10
-ws.column_dimensions["C"].width = 14
-ws.column_dimensions["D"].width = 14
-ws.column_dimensions["E"].width = 12
-ws.column_dimensions["F"].width = 14
-ws.row_dimensions[1].height = 22
-
-ws.merge_cells("A1:F1")
-ws["A1"] = "AngelStreet Creative Arts Camp 2026 — Payroll Report"
-ws["A1"].fill = fill(PINK); ws["A1"].font = fnt(True, "FFFFFFFF", 13); ws["A1"].alignment = lft()
-
-ws.merge_cells("A2:F2")
-ws["A2"] = f"{label}  |  Pay Date: {pay_date}"
-ws["A2"].fill = fill(DARK_PUR); ws["A2"].font = fnt(True, "FFFFFFFF"); ws["A2"].alignment = lft()
-
-for col, h in enumerate(["Name","Rate/Hr","Total Hours","Hourly Pay","Flat Rate","Total Pay"], 1):
-    c = ws.cell(row=3, column=col, value=h)
-    c.fill = fill(PURPLE); c.font = fnt(True, "FFFFFFFF"); c.alignment = ctr()
-
-for i, s in enumerate(staff):
-    row = i + 4
-    bg = LT_GRAY if i % 2 == 0 else WHITE
-    sn = s['name']
-    ws.cell(row=row, column=1, value=sn).font = fnt(True)
-    ws.cell(row=row, column=1).fill = fill(bg)
-    ws.cell(row=row, column=2, value=s['rate']).fill = fill(bg)
-    ws.cell(row=row, column=2).number_format = '"$"#,##0.00'
-    ws.cell(row=row, column=3, value=f"='{sn}'!E9").fill = fill(bg)
-    ws.cell(row=row, column=3).number_format = "0.00"
-    ws.cell(row=row, column=4, value=f"=C{row}*B{row}").fill = fill(bg)
-    ws.cell(row=row, column=4).number_format = '"$"#,##0.00'
-    if s['flat']:
-        ws.cell(row=row, column=5, value=f"='{sn}'!C11").fill = fill(bg)
-        ws.cell(row=row, column=5).number_format = '"$"#,##0.00'
-        ws.cell(row=row, column=6, value=f"=D{row}+E{row}").fill = fill(LT_GREEN)
-    else:
-        ws.cell(row=row, column=5, value="—").fill = fill(bg)
-        ws.cell(row=row, column=6, value=f"=D{row}").fill = fill(LT_GREEN)
-    ws.cell(row=row, column=6).font = fnt(True)
-    ws.cell(row=row, column=6).number_format = '"$"#,##0.00'
-
-tr = len(staff) + 4
-ws.cell(row=tr, column=1, value="TOTALS").fill = fill(PINK)
-ws.cell(row=tr, column=1).font = fnt(True, "FFFFFFFF")
-for col in range(2, 7):
-    c = ws.cell(row=tr, column=col)
-    c.fill = fill(PINK); c.font = fnt(True, "FFFFFFFF")
-    if col >= 3:
-        cl = get_column_letter(col)
-        c.value = f"=SUM({cl}4:{cl}{tr-1})"
-        c.number_format = '"$"#,##0.00' if col != 3 else "0.00"
-
-# ── INDIVIDUAL SHEETS ──────────────────────────────────────────────
-for s in staff:
-    sn = s['name']
-    ws2 = wb.create_sheet(title=sn[:31])
-    for col, w in zip("ABCDEF", [14,13,13,13,14,12]):
-        ws2.column_dimensions[col].width = w
-    ws2.row_dimensions[1].height = 20
-
-    ws2.merge_cells("A1:F1")
-    ws2["A1"] = f"{sn} — {label}"
-    ws2["A1"].fill = fill(PINK); ws2["A1"].font = fnt(True,"FFFFFFFF",12); ws2["A1"].alignment = lft()
-
-    ws2.merge_cells("A2:F2")
-    ws2["A2"] = f"Rate: $" + str(round(s['rate'],2)) + "/hr  |  Pay Date: " + pay_date + "  |  Yellow = enter data"
-    ws2["A2"].font = fnt(True); ws2["A2"].alignment = lft()
-
-    for col, h in enumerate(["Date","Day","Punch In","Punch Out","Hours Worked","Pay"], 1):
-        c = ws2.cell(row=3, column=col, value=h)
-        c.fill = fill(PURPLE); c.font = fnt(True,"FFFFFFFF"); c.alignment = ctr()
-
-    for i, day in enumerate(s['days']):
-        row = i + 4
-        bg = LT_GRAY if i % 2 == 0 else WHITE
-        ws2.cell(row=row, column=1, value=day['date']).fill = fill(bg)
-        try:
-            dt = datetime.datetime.strptime(day['date'], "%m/%d/%Y")
-            dayname = dt.strftime("%A")
-        except:
-            dayname = ""
-        ws2.cell(row=row, column=2, value=dayname).fill = fill(bg)
-        if day['punchIn']:
-            ws2.cell(row=row, column=3, value=day['punchIn']).fill = fill(LT_YELLOW)
-        else:
-            ws2.cell(row=row, column=3).fill = fill(LT_YELLOW)
-        if day['punchOut']:
-            ws2.cell(row=row, column=4, value=day['punchOut']).fill = fill(LT_YELLOW)
-        else:
-            ws2.cell(row=row, column=4).fill = fill(LT_YELLOW)
-        ws2.cell(row=row, column=5, value=round(day['hours'],4)).fill = fill(LT_YELLOW)
-        ws2.cell(row=row, column=5).number_format = "0.00"
-        ws2.cell(row=row, column=6, value=round(day['hours']*s['rate'],2)).fill = fill(LT_YELLOW)
-        ws2.cell(row=row, column=6).number_format = '"$"#,##0.00'
-
-    ws2.cell(row=9,column=1,value="Hourly Total").fill=fill(LT_PURPLE)
-    ws2.cell(row=9,column=1).font=fnt(True)
-    ws2.cell(row=9,column=5,value="=SUM(E4:E8)").fill=fill(LT_PURPLE)
-    ws2.cell(row=9,column=5).font=fnt(True); ws2.cell(row=9,column=5).number_format="0.00"
-    ws2.cell(row=9,column=6,value="=SUM(F4:F8)").fill=fill(LT_GREEN)
-    ws2.cell(row=9,column=6).font=fnt(True); ws2.cell(row=9,column=6).number_format='"$"#,##0.00'
-
-    ws2.cell(row=10,column=1,value="TOTAL PAY:").font=fnt(True)
-    if s['flat']:
-        ws2.cell(row=10,column=3,value="=F9+C11").fill=fill(LT_GREEN)
-        ws2.cell(row=10,column=3).font=fnt(True); ws2.cell(row=10,column=3).number_format='"$"#,##0.00'
-        ws2.cell(row=11,column=1,value="Flat Rate Bonus:").font=fnt(True)
-        ws2.cell(row=11,column=3,value=s['flatAmt']).fill=fill(LT_YELLOW)
-        ws2.cell(row=11,column=3).number_format='"$"#,##0.00'
-        ach_start=12
-    else:
-        ws2.cell(row=10,column=3,value="=F9").fill=fill(LT_GREEN)
-        ws2.cell(row=10,column=3).font=fnt(True); ws2.cell(row=10,column=3).number_format='"$"#,##0.00'
-        ach_start=11
-
-    ws2.merge_cells(f"A{ach_start}:F{ach_start}")
-    ws2.cell(row=ach_start,column=1,value="ACH / PAYMENT INFORMATION")
-    ws2.cell(row=ach_start,column=1).fill=fill(PURPLE)
-    ws2.cell(row=ach_start,column=1).font=fnt(True,"FFFFFFFF")
-
-    for j,label2 in enumerate(["Same ACH as on file?","Bank Name:","Account Holder Name:","Routing Number:","Account Number:","Account Type (Checking/Savings):"]):
-        r=ach_start+1+j
-        ws2.cell(row=r,column=1,value=label2).font=fnt(True)
-        ws2.cell(row=r,column=3).fill=fill(LT_YELLOW)
-
-import tempfile, os
-tmp = tempfile.mktemp(suffix='.xlsx')
-wb.save(tmp)
-with open(tmp,'rb') as f:
-    b64 = base64.b64encode(f.read()).decode()
-os.unlink(tmp)
-print(b64)
-`;
+function styleCell(ws, rowNum, colNum, style) {
+  const cell = ws.getCell(rowNum, colNum);
+  if (style.fill) cell.fill = style.fill;
+  if (style.font) cell.font = style.font;
+  if (style.alignment) cell.alignment = style.alignment;
+  if (style.border) cell.border = style.border;
+}
 
 exports.handler = async (event) => {
   const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 
-  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers, body: "" };
-  if (event.httpMethod !== "POST") return { statusCode: 405, headers, body: "Method not allowed" };
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: 'Method not allowed' };
 
   let payload;
   try { payload = JSON.parse(event.body); }
-  catch (e) { return { statusCode: 400, headers, body: "Invalid JSON" }; }
+  catch (e) { return { statusCode: 400, headers, body: 'Invalid JSON' }; }
 
-  const tmpScript = path.join(os.tmpdir(), `payroll_${Date.now()}.py`);
-  const tmpData = JSON.stringify(payload).replace(/'/g, "\\'");
+  const { label, payDate, staff } = payload;
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'AngelStreet Memphis';
 
-  try {
-    fs.writeFileSync(tmpScript, PYTHON_SCRIPT);
+  // ── SUMMARY SHEET ───────────────────────────────────────────────
+  const sum = wb.addWorksheet('Summary');
+  sum.columns = [
+    { width: 24 }, { width: 11 }, { width: 15 },
+    { width: 15 }, { width: 13 }, { width: 15 }
+  ];
 
-    // Check if openpyxl is available, install if not
-    try { execSync("python3 -c 'import openpyxl'", { timeout: 5000 }); }
-    catch (e) { execSync("pip3 install openpyxl --quiet --break-system-packages", { timeout: 30000 }); }
+  // Title
+  sum.mergeCells('A1:F1');
+  sum.getCell('A1').value = 'AngelStreet Creative Arts Camp 2026 — Payroll Report';
+  sum.getCell('A1').fill = fill(PINK);
+  sum.getCell('A1').font = font(true, WHITE, 13);
+  sum.getCell('A1').alignment = { horizontal: 'left', vertical: 'middle' };
+  sum.getRow(1).height = 24;
 
-    const b64 = execSync(
-      `python3 ${tmpScript} '${JSON.stringify(payload).replace(/'/g, "'\\''")}'`,
-      { timeout: 30000, maxBuffer: 10 * 1024 * 1024 }
-    ).toString().trim();
+  // Subtitle
+  sum.mergeCells('A2:F2');
+  sum.getCell('A2').value = `${label}  |  Pay Date: ${payDate}`;
+  sum.getCell('A2').fill = fill(DPURP);
+  sum.getCell('A2').font = font(true, WHITE, 11);
+  sum.getCell('A2').alignment = { horizontal: 'left', vertical: 'middle' };
 
-    fs.unlinkSync(tmpScript);
+  // Blank row
+  sum.addRow([]);
 
-    return {
-      statusCode: 200,
-      headers: {
-        ...headers,
-        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="AngelStreet_Payroll.xlsx"`,
-        "Content-Transfer-Encoding": "base64",
-      },
-      body: b64,
-      isBase64Encoded: true,
-    };
-  } catch (err) {
-    if (fs.existsSync(tmpScript)) fs.unlinkSync(tmpScript);
-    return {
-      statusCode: 500,
-      headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ error: err.message }),
-    };
+  // Header row
+  const hdrRow = sum.addRow(['Name', 'Rate/Hr', 'Total Hours', 'Hourly Pay', 'Flat Rate', 'Total Pay']);
+  hdrRow.height = 18;
+  hdrRow.eachCell((cell) => {
+    cell.fill = fill(PURP);
+    cell.font = font(true, WHITE);
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = border();
+  });
+
+  let grandTotal = 0;
+  staff.forEach((s, i) => {
+    const bg = i % 2 === 0 ? LTGRAY : WHITE;
+    const totalHrs = s.days.reduce((sum, d) => sum + (d.hours || 0), 0);
+    const hp = totalHrs * s.rate;
+    const flat = s.flatAmt || 0;
+    const tot = hp + flat;
+    grandTotal += tot;
+
+    const row = sum.addRow([
+      s.name,
+      s.rate,
+      Math.round(totalHrs * 100) / 100,
+      Math.round(hp * 100) / 100,
+      s.flat ? flat : '—',
+      Math.round(tot * 100) / 100
+    ]);
+    row.getCell(1).fill = fill(bg); row.getCell(1).font = font(true); row.getCell(1).border = border();
+    row.getCell(2).fill = fill(bg); row.getCell(2).font = font(false); row.getCell(2).numFmt = '"$"#,##0.00'; row.getCell(2).border = border();
+    row.getCell(3).fill = fill(bg); row.getCell(3).numFmt = '0.00'; row.getCell(3).border = border();
+    row.getCell(4).fill = fill(bg); row.getCell(4).numFmt = '"$"#,##0.00'; row.getCell(4).border = border();
+    row.getCell(5).fill = fill(bg); row.getCell(5).border = border();
+    if (s.flat) { row.getCell(5).numFmt = '"$"#,##0.00'; }
+    row.getCell(6).fill = fill(LTGREEN); row.getCell(6).font = font(true); row.getCell(6).numFmt = '"$"#,##0.00'; row.getCell(6).border = border();
+  });
+
+  // Totals row
+  const totRow = sum.addRow(['TOTALS', '', '', '', '', Math.round(grandTotal * 100) / 100]);
+  totRow.eachCell((cell) => {
+    cell.fill = fill(PINK);
+    cell.font = font(true, WHITE);
+    cell.border = border();
+  });
+  totRow.getCell(6).numFmt = '"$"#,##0.00';
+
+  // ── INDIVIDUAL SHEETS ────────────────────────────────────────────
+  const DAYNAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  for (const s of staff) {
+    const ws = wb.addWorksheet(s.name.slice(0, 31));
+    ws.columns = [
+      { width: 14 }, { width: 13 }, { width: 13 },
+      { width: 13 }, { width: 14 }, { width: 13 }
+    ];
+
+    // Title
+    ws.mergeCells('A1:F1');
+    ws.getCell('A1').value = `${s.name} — ${label}`;
+    ws.getCell('A1').fill = fill(PINK);
+    ws.getCell('A1').font = font(true, WHITE, 12);
+    ws.getCell('A1').alignment = { horizontal: 'left', vertical: 'middle' };
+    ws.getRow(1).height = 22;
+
+    // Rate row
+    ws.mergeCells('A2:F2');
+    ws.getCell('A2').value = `Rate: $${s.rate.toFixed(2)}/hr  |  Pay Date: ${payDate}  |  Yellow = enter data`;
+    ws.getCell('A2').font = font(true);
+    ws.getCell('A2').alignment = { horizontal: 'left', vertical: 'middle' };
+
+    // Blank
+    ws.addRow([]);
+
+    // Column headers
+    const colHdr = ws.addRow(['Date', 'Day', 'Punch In', 'Punch Out', 'Hours Worked', 'Pay']);
+    colHdr.height = 18;
+    colHdr.eachCell((cell) => {
+      cell.fill = fill(PURP);
+      cell.font = font(true, WHITE);
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = border();
+    });
+
+    // Date rows
+    let totalHrs = 0;
+    s.days.forEach((day, i) => {
+      const bg = i % 2 === 0 ? LTGRAY : WHITE;
+      const parts = day.date.split('/');
+      const dt = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]), 12);
+      const dayName = DAYNAMES[dt.getDay()];
+      const hrs = day.hours || 0;
+      totalHrs += hrs;
+
+      const row = ws.addRow([
+        day.date, dayName,
+        day.punchIn || '', day.punchOut || '',
+        Math.round(hrs * 100) / 100,
+        Math.round(hrs * s.rate * 100) / 100
+      ]);
+      [1, 2].forEach(c => { row.getCell(c).fill = fill(bg); row.getCell(c).border = border(); });
+      [3, 4, 5, 6].forEach(c => { row.getCell(c).fill = fill(LTYELLOW); row.getCell(c).border = border(); });
+      row.getCell(5).numFmt = '0.00';
+      row.getCell(6).numFmt = '"$"#,##0.00';
+    });
+
+    // Hourly total row
+    const hrTotRow = ws.addRow(['Hourly Total', '', '', '', Math.round(totalHrs * 100) / 100, Math.round(totalHrs * s.rate * 100) / 100]);
+    [1, 2, 3, 4].forEach(c => { hrTotRow.getCell(c).fill = fill(LTPURP); hrTotRow.getCell(c).font = font(true); hrTotRow.getCell(c).border = border(); });
+    hrTotRow.getCell(5).fill = fill(LTPURP); hrTotRow.getCell(5).font = font(true); hrTotRow.getCell(5).numFmt = '0.00'; hrTotRow.getCell(5).border = border();
+    hrTotRow.getCell(6).fill = fill(LTGREEN); hrTotRow.getCell(6).font = font(true); hrTotRow.getCell(6).numFmt = '"$"#,##0.00'; hrTotRow.getCell(6).border = border();
+
+    // Total Pay row
+    const flat = s.flatAmt || 0;
+    const totalPay = totalHrs * s.rate + flat;
+    const totPayRow = ws.addRow(['TOTAL PAY:', '', Math.round(totalPay * 100) / 100]);
+    totPayRow.getCell(1).font = font(true); totPayRow.getCell(1).border = border();
+    totPayRow.getCell(3).fill = fill(LTGREEN); totPayRow.getCell(3).font = font(true); totPayRow.getCell(3).numFmt = '"$"#,##0.00'; totPayRow.getCell(3).border = border();
+
+    // Flat rate row
+    if (s.flat) {
+      const flatRow = ws.addRow(['Flat Rate Bonus:', '', flat]);
+      flatRow.getCell(1).font = font(true); flatRow.getCell(1).border = border();
+      flatRow.getCell(3).fill = fill(LTYELLOW); flatRow.getCell(3).numFmt = '"$"#,##0.00'; flatRow.getCell(3).border = border();
+    }
+
+    // ACH section
+    const achHdrRow = ws.addRow(['ACH / PAYMENT INFORMATION']);
+    ws.mergeCells(`A${achHdrRow.number}:F${achHdrRow.number}`);
+    achHdrRow.getCell(1).fill = fill(PURP);
+    achHdrRow.getCell(1).font = font(true, WHITE);
+    achHdrRow.getCell(1).border = border();
+
+    const ach = s.ach || {};
+    if (ach.sameAsFile) {
+      const r = ws.addRow(['Same ACH as on file?', '', '✓ YES — Same as on file']);
+      r.getCell(1).font = font(true); r.getCell(1).border = border();
+      r.getCell(3).fill = fill(LTGREEN); r.getCell(3).font = font(true); r.getCell(3).border = border();
+    } else {
+      [
+        ['Same ACH as on file?', 'No — New info below'],
+        ['Bank Name:', ach.bank || ''],
+        ['Account Holder Name:', ach.holder || ''],
+        ['Routing Number:', ach.routing || ''],
+        ['Account Number:', ach.account || ''],
+        ['Account Type:', ach.type || '']
+      ].forEach(([label2, val]) => {
+        const r = ws.addRow([label2, '', val]);
+        r.getCell(1).font = font(true); r.getCell(1).border = border();
+        r.getCell(3).fill = fill(LTYELLOW); r.getCell(3).border = border();
+      });
+    }
   }
+
+  // Write to buffer and return
+  const buffer = await wb.xlsx.writeBuffer();
+  const b64 = Buffer.from(buffer).toString('base64');
+
+  return {
+    statusCode: 200,
+    headers: {
+      ...headers,
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="AngelStreet_Payroll.xlsx"`,
+      'Content-Transfer-Encoding': 'base64',
+    },
+    body: b64,
+    isBase64Encoded: true,
+  };
 };
