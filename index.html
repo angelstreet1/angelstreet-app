@@ -3017,9 +3017,9 @@ var cont=document.getElementById('ov-content');
 if(!cont)return;
 cont.innerHTML='<div class="msg ml">Loading...</div>';
 try{
-var allRoster=await AF(TR);
-var invoices=await AF('Invoices');
-var acks=[];
+var allRoster=[],invoices=[],acks=[];
+try{allRoster=await AF(TR);}catch(e){console.warn('Roster fetch failed',e);}
+try{invoices=await AF('Invoices');}catch(e){console.warn('Invoices fetch failed',e);}
 try{acks=await AF('WelcomeAck');}catch(e){}
 cont.innerHTML='';
 var weeks=['Week1','Week2','Week3','Week4'];
@@ -3126,7 +3126,7 @@ if(!campDates.length){
 
   // Fetch all attendance records once
   var allAtt=[];
-  try{allAtt=await AF('Attendance');}catch(e){}
+  try{allAtt=await AF('Attendance');}catch(e){console.warn('Attendance fetch failed',e);attList.innerHTML='<div style="font-size:12px;color:#f87171;">Could not load attendance data.</div>';}
 
   function renderAttDay(dateStr){
     var dayRecs=allAtt.filter(function(r){return r.fields.Date===dateStr;});
