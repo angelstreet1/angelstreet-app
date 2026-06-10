@@ -1029,7 +1029,7 @@ var DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var dates=WEEK_DATES[week]||[];
 var h='<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:10px">'+name+' — '+week+'</div>';
 dates.forEach(function(d){
-var dt=new Date(d+'T12:00:00');
+var dp2=d.split('/');var dt=new Date(parseInt(dp2[2]),parseInt(dp2[0])-1,parseInt(dp2[1]),12,0,0);
 var dayName=DAYNAMES[dt.getDay()];
 var rec=ADM_TC.find(function(r){return r.fields.Name===name&&r.fields.Date===d;});
 var hasIn=rec&&rec.fields.PunchIn;
@@ -2549,7 +2549,7 @@ card.appendChild(hdr);
 var totalHrs=0;
 pp.dates.forEach(function(d){
 var p=tcMap[s.n+'|'+d];
-var dt=new Date(d+'T12:00:00');
+var dp=d.split('/');var dt=new Date(parseInt(dp[2]),parseInt(dp[0])-1,parseInt(dp[1]),12,0,0);
 var dn=DAYNAMES[dt.getDay()];
 var hrs=p?parseFloat(p.HoursWorked||0):0;
 totalHrs+=hrs;
@@ -2639,7 +2639,7 @@ var flat=0;
 if(s.flat){var flatEl=document.getElementById('flat-'+s.n.split(' ').join('-'));if(flatEl)flat=parseFloat(flatEl.value)||0;}
 pp.dates.forEach(function(d){
 var p=tcMap[s.n+'|'+d];
-var dt=new Date(d+'T12:00:00');
+var dp=d.split('/');var dt=new Date(parseInt(dp[2]),parseInt(dp[0])-1,parseInt(dp[1]),12,0,0);
 var dn=DAYNAMES[dt.getDay()];
 var hrs=p?parseFloat(p.HoursWorked||0):0;
 totalHrs+=hrs;
@@ -2734,7 +2734,7 @@ if(flatEl) flat=parseFloat(flatEl.value)||0;
 }
 pp.dates.forEach(function(d){
 var p=tcMap[s.n+'|'+d];
-var dt=new Date(d+'T12:00:00');
+var dp=d.split('/');var dt=new Date(parseInt(dp[2]),parseInt(dp[0])-1,parseInt(dp[1]),12,0,0);
 var dn=DAYNAMES[dt.getDay()];
 var hrs=p?parseFloat(p.HoursWorked||0):0;
 totalHrs+=hrs;
