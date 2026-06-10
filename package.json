@@ -1,0 +1,8 @@
+{
+  "name": "angelstreet-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "@sendgrid/mail": "^8.1.3"
+  }
+}
