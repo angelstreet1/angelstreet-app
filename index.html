@@ -871,7 +871,7 @@ if(att&&status!=='none'){var br=document.createElement('button');br.className='c
 card.appendChild(av);card.appendChild(inf);card.appendChild(acts);list.appendChild(card);});document.getElementById('ci-sum').textContent='Present: '+pres+' · Absent: '+abs+' · Late: '+late+' · Out: '+out+' / '+campers.length;}
 async function markAtt(name,status){var today=tstr(),ex=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===today;});try{clearCache('Attendance');if(ex)await AP(TAT,ex.id,{Status:status,CheckInTime:nstr()});else await AC(TAT,{Date:today,CamperName:name,Status:status,CheckInTime:nstr()});ATR=await AF(TAT,"Date='"+today+"'");renderCI();}
 catch(e){alert('Error: '+e.message);}}
-async function resetAtt(recId){try{await AD(TAT,recId);ATR=ATR.filter(function(r){return r.id!==recId;});renderCI();}catch(e){alert('Error: '+e.message);}}
+async function resetAtt(recId){try{await AD(TAT,recId);ATR=ATR.filter(function(r){return r.id!==recId;});renderCI();}catch(e){window._invoiceSubmitting=false;alert('Error: '+e.message);}}
 function openCO(name){var overlay=document.createElement('div');overlay.className='mbg';overlay.onclick=function(e){if(e.target===overlay)CM();};var d=document.createElement('div');d.className='md';var title=document.createElement('h3');title.textContent='Check Out: '+name;var sub=document.createElement('div');sub.className='mds';sub.textContent='Who is picking up '+name.split(' ')[0]+'?';var rosterRec=RSR.find(function(r){return r.fields.CamperName===name;})||{fields:{}};
 var pickupList=[];
 if(rosterRec.fields.Parent1Name)pickupList.push(rosterRec.fields.Parent1Name);
@@ -1418,7 +1418,9 @@ items.appendChild(row);
 var customRates=TA_CUSTOM_RATES[CU&&CU.n?CU.n:''];
 if(customRates){
 items.innerHTML='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:12px">Days Worked This Week</div>';
-customRates.days.forEach(function(dayObj){
+var noFridayWeeks=['Week2'];
+var filteredDays=customRates.days.filter(function(d){return!(noFridayWeeks.indexOf(week)>=0&&d.day==='Friday');});
+filteredDays.forEach(function(dayObj){
 var key=dayObj.day.slice(0,3).toLowerCase();
 var row=document.createElement('div');row.style.cssText='padding:12px 0;border-bottom:1px solid #2a2a2a;';
 row.innerHTML='<div style="font-size:13px;color:#fff;font-weight:600;margin-bottom:8px">'+dayObj.day+'</div>';
@@ -1495,11 +1497,13 @@ if(window._customDays){Object.values(window._customDays).forEach(function(a){tot
 var el=document.getElementById('inv-total');if(el)el.textContent='$'+total;
 }
 async function submitInvoice(isOrientation){
+if(window._invoiceSubmitting){return;}
 if(!CU||!CU.n){alert('Please log in first.');return;}
 var totalEl=document.getElementById('inv-total');
 var total=parseInt((totalEl?totalEl.textContent:'0').replace('$',''))||0;
 if(total===0){alert('Please select at least one item.');return;}
 if(!confirm('Submit invoice for $'+total+' as '+CU.n+'? This cannot be edited after submission.'))return;
+window._invoiceSubmitting=true;
 var weekSelEl=document.getElementById('inv-week-sel');
 var week=weekSelEl?weekSelEl.value:getInvoiceWeek();
 var weekLabels={orientation:'Orientation Week (Jun 1-5)',Week1:'Week 1 (Jun 8-12)',Week2:'Week 2 (Jun 15-18)',Week3:'Week 3 (Jun 22-26)',Week4:'Week 4 (Jun 29-Jul 3)'};
@@ -1534,7 +1538,7 @@ if(c>0)lines.push(days[i]+': '+c+' class'+(c>1?'es':'')+' ($'+(c*75)+')');
 fields.LineItems=lines.join(', ');
 }
 try{
-clearCache('Invoices');await AC('Invoices',fields);
+clearCache('Invoices');await AC('Invoices',fields);window._invoiceSubmitting=false;
 var cont=document.getElementById('inv-content');cont.innerHTML='';
 var recs=await AFC('Invoices');
 var mine=recs.find(function(r){return r.fields.Name===CU.n&&r.fields.Week===week;});
