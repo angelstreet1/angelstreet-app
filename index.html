@@ -1347,9 +1347,13 @@ var labels={orientation:'Orientation Week (Jun 1-5)',Week1:'Week 1 (Jun 8-12)',W
 return labels[wk]||wk;
 }
 var TA_CUSTOM_RATES={
+'DJ Shai':{days:[{day:'Monday',amt:null,classes:true},{day:'Thursday',amt:null,classes:true}]},
+'McKenzie Mitchell':{days:[{day:'Monday',amt:null,classes:true},{day:'Thursday',amt:null,classes:true}]},
+'Patience Andrews':{days:[{day:'Thursday',amt:null,classes:true},{day:'Friday',amt:null,classes:true}]},
+'Jasmine Watson':{days:[{day:'Monday',amt:null,classes:true},{day:'Thursday',amt:null,classes:true}]},
 'April Freeman':{days:[{day:'Wednesday',amt:175},{day:'Friday',amt:175}]},
-'Chasity Lloyd':{days:[{day:'Monday',amt:150},{day:'Wednesday',amt:150},{day:'Friday',amt:75}]},
-'Nancy White':{days:[{day:'Wednesday',amt:150},{day:'Friday',amt:150}]}
+'Nancy White':{days:[{day:'Wednesday',amt:150},{day:'Friday',amt:150}]},
+'Chasity Lloyd':{days:[{day:'Monday',amt:150},{day:'Wednesday',amt:150},{day:'Friday',amt:75}]}
 };
 
 function renderInvoiceForm(existing,cont,forceWeek){
@@ -1425,6 +1429,16 @@ var key=dayObj.day.slice(0,3).toLowerCase();
 var row=document.createElement('div');row.style.cssText='padding:12px 0;border-bottom:1px solid #2a2a2a;';
 row.innerHTML='<div style="font-size:13px;color:#fff;font-weight:600;margin-bottom:8px">'+dayObj.day+'</div>';
 var btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap;';
+if(dayObj.classes){
+[{n:0,l:'Did not work',amt:0},{n:1,l:'1 class',amt:75},{n:2,l:'2 classes',amt:150}].forEach(function(opt){
+var b=document.createElement('button');
+b.id='inv-'+key+'-'+opt.n;
+b.style.cssText='padding:8px 14px;border-radius:8px;border:2px solid #333;background:#111;color:#aaa;font-size:12px;cursor:pointer;';
+b.innerHTML=opt.l+(opt.amt?' <b>$'+opt.amt+'</b>':'');
+b.onclick=function(){setCustomDay(key,opt.n?opt.amt:0,opt.amt);window._customDayClasses=window._customDayClasses||{};window._customDayClasses[key]=opt.n;[0,1,2].forEach(function(n){var bb=document.getElementById('inv-'+key+'-'+n);if(bb){bb.style.background=n===opt.n?'#ca3092':'#111';bb.style.borderColor=n===opt.n?'#ca3092':'#333';bb.style.color=n===opt.n?'#fff':'#aaa';}});updateInvoiceTotal();};
+btns.appendChild(b);
+});
+}else{
 [{n:0,l:'Did not teach'},{n:1,l:'Taught',amt:dayObj.amt}].forEach(function(opt){
 var b=document.createElement('button');
 b.id='inv-'+key+'-'+opt.n;
@@ -1433,6 +1447,7 @@ b.innerHTML=opt.l+(opt.amt?' <b>$'+opt.amt+'</b>':'');
 b.onclick=function(){setCustomDay(key,opt.n,dayObj.amt);};
 btns.appendChild(b);
 });
+}
 row.appendChild(btns);items.appendChild(row);
 });
 }else{
@@ -1525,8 +1540,7 @@ var customRatesNow=TA_CUSTOM_RATES[CU&&CU.n?CU.n:'']||{days:[]};
 customRatesNow.days.forEach(function(dayObj){
 var key=dayObj.day.slice(0,3).toLowerCase();
 var amt=window._customDays[key]||0;
-if(amt>0)customLines.push(dayObj.day+' ($'+amt+')');
-});
+if(amt>0){if(dayObj.classes){var numC=amt/75;customLines.push(dayObj.day+' ('+numC+' class'+(numC>1?'es':'')+' - $'+amt+')');}else{customLines.push(dayObj.day+' ($'+amt+')');}}});
 fields.LineItems=customLines.join(', ');
 }else{
 var days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
@@ -1636,7 +1650,7 @@ taBtn.onclick=function(){
   listDiv.style.display='none';taDiv.style.display='block';taDiv.innerHTML='';
   // TA picker
   var taList=[
-    {n:'DJ Shai (Sabriyya Yates)',display:'DJ Shai'},
+    {n:'DJ Shai',display:'DJ Shai (Sabriyya Yates)'},
     {n:'McKenzie Mitchell',display:'McKenzie Mitchell'},
     {n:'Patience Andrews',display:'Patience Andrews'},
     {n:'Jasmine Watson',display:'Jasmine Watson'},
