@@ -585,6 +585,8 @@ var USERS=[
   {n:'Tatyana Walker',r:'jrta',p:'angelstreet',eh:15},
   {n:'Destanie Hullum',r:'jrta',p:'angelstreet',eh:15},
   {n:'Kourtney Banks',r:'jrta',p:'both',eh:14},
+  {n:'Telia Stewart',r:'jrta',p:'both',eh:null},
+  {n:'Tavoria Bady',r:'jrta',p:'both',eh:null},
   {n:"Cai'lee Page",r:'jrta',p:'mploy',eh:14},
   {n:'Jaida Dooley',r:'jrta',p:'mploy',eh:14},
   {n:'Angel Perry',r:'jrta',p:'mploy',eh:14},
@@ -998,7 +1000,7 @@ var WEEK_DATES={
 'Week 3 (Jun 22-26)':['6/22/2026','6/23/2026','6/24/2026','6/25/2026','6/26/2026'],
 'Week 4 (Jun 29-Jul 3)':['6/29/2026','6/30/2026','7/1/2026','7/2/2026','7/3/2026']
 };
-var TC_STAFF=['Jada Jordan','London Jordan','Tatyana Walker','Destanie Hullum','Kourtney Banks','Tanaya Adams','Michayia Bills','Hermekia','Miah','Deonna','Jessica'];
+var TC_STAFF=['Jada Jordan','London Jordan','Tatyana Walker','Destanie Hullum','Kourtney Banks','Telia Stewart','Tavoria Bady','Tanaya Adams','Michayia Bills','Hermekia','Miah','Deonna','Jessica'];
 var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
 h+='<div><div style="font-size:11px;color:#aaa;margin-bottom:4px">Person</div>';
 h+='<select id="adm-log-name" style="width:100%;padding:8px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;font-size:13px;">';
@@ -1356,7 +1358,7 @@ var TA_CUSTOM_RATES={
 'Chasity Lloyd':{days:[{day:'Monday',amt:150},{day:'Wednesday',amt:150},{day:'Friday',amt:75}]}
 };
 
-function renderInvoiceForm(existing,cont,forceWeek){
+function renderInvoiceForm(existing,cont,forceWeek,taNameOverride){
 var week=getInvoiceWeek(forceWeek);
 var isOrientation=week==='orientation';
 window._dayClasses={};
@@ -1421,7 +1423,8 @@ row.appendChild(cb);row.appendChild(lbl);row.appendChild(amt);
 items.appendChild(row);
 });
 }else{
-var customRates=TA_CUSTOM_RATES[CU&&CU.n?CU.n:''];
+var taNameForRates=taNameOverride||(CU&&CU.n?CU.n:'');
+var customRates=TA_CUSTOM_RATES[taNameForRates];
 if(customRates){
 items.innerHTML='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:12px">Days Worked This Week</div>';
 customRates.days.forEach(function(dayObj){
@@ -1477,12 +1480,12 @@ cont.appendChild(totalCard);
 var prevBtn=document.createElement('button');
 prevBtn.style.cssText='width:100%;padding:14px;background:#1a1a1a;color:#66cccc;border:2px solid #66cccc;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;';
 prevBtn.textContent='👁 Preview Invoice';
-prevBtn.onclick=function(){previewInvoice(isOrientation,week);};
+prevBtn.onclick=function(){previewInvoice(isOrientation,week,taNameOverride);};
 cont.appendChild(prevBtn);
 var btn=document.createElement('button');
 btn.style.cssText='width:100%;padding:16px;background:#ca3092;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;';
 btn.textContent='Submit Invoice';
-btn.onclick=function(){submitInvoice(isOrientation);};
+btn.onclick=function(){submitInvoice(isOrientation,taNameOverride);};
 cont.appendChild(btn);
 }
 function setCustomDay(day,worked,amt){
@@ -1511,19 +1514,21 @@ if(window._dayClasses){Object.values(window._dayClasses).forEach(function(c){tot
 if(window._customDays){Object.values(window._customDays).forEach(function(a){total+=a||0;});}
 var el=document.getElementById('inv-total');if(el)el.textContent='$'+total;
 }
-async function submitInvoice(isOrientation){
+async function submitInvoice(isOrientation,taNameOverride){
 if(window._invoiceSubmitting){return;}
 if(!CU||!CU.n){alert('Please log in first.');return;}
 var totalEl=document.getElementById('inv-total');
 var total=parseInt((totalEl?totalEl.textContent:'0').replace('$',''))||0;
 if(total===0){alert('Please select at least one item.');return;}
-if(!confirm('Submit invoice for $'+total+' as '+CU.n+'? This cannot be edited after submission.'))return;
+var invoiceName=taNameOverride||CU.n;
+if(!confirm('Submit invoice for $'+total+' as '+invoiceName+'? This cannot be edited after submission.'))return;
 window._invoiceSubmitting=true;
 var weekSelEl=document.getElementById('inv-week-sel');
 var week=weekSelEl?weekSelEl.value:getInvoiceWeek();
 var weekLabels={orientation:'Orientation Week (Jun 1-5)',Week1:'Week 1 (Jun 8-12)',Week2:'Week 2 (Jun 15-18)',Week3:'Week 3 (Jun 22-26)',Week4:'Week 4 (Jun 29-Jul 3)'};
 var weekLabel=weekLabels[week]||getInvoiceWeekLabel();
 if(!week||!weekLabel||week==='undefined'){alert('Error: could not determine week. Please try again.');return;}
+var invoiceName=taNameOverride||CU.n;
 var legalNameEl=document.getElementById('inv-legal-name');
 var legalName=legalNameEl?legalNameEl.value.trim():'';
 if(!legalName){alert('Please enter your full legal name.');return;}
@@ -1672,22 +1677,7 @@ taBtn.onclick=function(){
   taSel.onchange=function(){
     formDiv.innerHTML='';
     if(!taSel.value)return;
-    var fakeCU={n:taSel.value,r:'ta'};
-    var savedCU=CU;
-    CU=fakeCU;
-    renderInvoiceForm(null,formDiv);
-    CU=savedCU;
-    // After render, patch submitInvoice to use the selected TA name
-    var submitBtn=formDiv.querySelector('button:last-of-type');
-    if(submitBtn){
-      var origOnClick=submitBtn.onclick;
-      submitBtn.onclick=function(){
-        var savedCU2=CU;
-        CU=fakeCU;
-        submitInvoice(document.getElementById('inv-week-sel')&&document.getElementById('inv-week-sel').value==='orientation');
-        CU=savedCU2;
-      };
-    }
+    renderInvoiceForm(null,formDiv,null,taSel.value);
   };
 };
 toggleBar.appendChild(adminBtn);toggleBar.appendChild(taBtn);
@@ -2477,7 +2467,9 @@ var PSTAFF=[
 {n:'Destanie Hullum',rate:13.50,flat:false},
 {n:'Tanaya Adams',rate:15.00,flat:true},
 {n:'Michayia Bills',rate:15.00,flat:true},
-{n:'Kourtney Banks',rate:15.00,flat:false,invoiceOnly:true}
+{n:'Kourtney Banks',rate:15.00,flat:false,invoiceOnly:true},
+{n:'Telia Stewart',rate:15.00,flat:false},
+{n:'Tavoria Bady',rate:12.00,flat:false}
 ];
 var PPS=[
 {label:'PP1 - Orientation',dates:['6/1/2026','6/2/2026','6/3/2026','6/4/2026','6/5/2026'],payDate:'Jun 12, 2026'},
@@ -2751,7 +2743,9 @@ var PSTAFF=[
 {n:'Destanie Hullum',rate:13.50,flat:false},
 {n:'Tanaya Adams',rate:15.00,flat:true},
 {n:'Michayia Bills',rate:15.00,flat:true},
-{n:'Kourtney Banks',rate:15.00,flat:false,invoiceOnly:true}
+{n:'Kourtney Banks',rate:15.00,flat:false,invoiceOnly:true},
+{n:'Telia Stewart',rate:15.00,flat:false},
+{n:'Tavoria Bady',rate:12.00,flat:false}
 ];
 var DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var rows=[['Name','Rate/Hr','Date','Day','Punch In','Punch Out','Hours','Hourly Pay','Flat Rate','Total Pay']];
