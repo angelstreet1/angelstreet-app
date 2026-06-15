@@ -603,6 +603,7 @@ var USERS=[
   {n:'Test User (Demo)',r:'jrta',p:'test',eh:15},
   {n:'DJ Shai',r:'ta',p:'staff',eh:null,subject:'DJ Lab'},
   {n:'April Freeman',r:'ta',p:'staff',eh:null,subject:'Photography'},
+  {n:'Nancy White',r:'ta',p:'staff',eh:null,subject:'Hair Braiding'},
   {n:'Chasity Lloyd',r:'ta',p:'staff',eh:null,subject:'Step'},
   {n:'McKenzie',r:'ta',p:'staff',eh:null,subject:'Guitar'},
   {n:'Patience',r:'ta',p:'staff',eh:null,subject:'Visual Arts'},
@@ -1347,7 +1348,8 @@ return labels[wk]||wk;
 }
 var TA_CUSTOM_RATES={
 'April Freeman':{days:[{day:'Wednesday',amt:175},{day:'Friday',amt:175}]},
-'Chasity Lloyd':{days:[{day:'Monday',amt:150},{day:'Wednesday',amt:150},{day:'Friday',amt:75}]}
+'Chasity Lloyd':{days:[{day:'Monday',amt:150},{day:'Wednesday',amt:150},{day:'Friday',amt:75}]},
+'Nancy White':{days:[{day:'Wednesday',amt:150},{day:'Friday',amt:150}]}
 };
 
 function renderInvoiceForm(existing,cont,forceWeek){
@@ -1639,6 +1641,7 @@ taBtn.onclick=function(){
     {n:'Patience Andrews',display:'Patience Andrews'},
     {n:'Jasmine Watson',display:'Jasmine Watson'},
     {n:'April Freeman',display:'April Freeman'},
+    {n:'Nancy White',display:'Nancy White'},
     {n:'Chasity Lloyd',display:'Chasity Lloyd'}
   ];
   var pickerCard=document.createElement('div');
