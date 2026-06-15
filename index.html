@@ -1418,9 +1418,7 @@ items.appendChild(row);
 var customRates=TA_CUSTOM_RATES[CU&&CU.n?CU.n:''];
 if(customRates){
 items.innerHTML='<div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:12px">Days Worked This Week</div>';
-var noFridayWeeks=['Week2'];
-var filteredDays=customRates.days.filter(function(d){return!(noFridayWeeks.indexOf(week)>=0&&d.day==='Friday');});
-filteredDays.forEach(function(dayObj){
+customRates.days.forEach(function(dayObj){
 var key=dayObj.day.slice(0,3).toLowerCase();
 var row=document.createElement('div');row.style.cssText='padding:12px 0;border-bottom:1px solid #2a2a2a;';
 row.innerHTML='<div style="font-size:13px;color:#fff;font-weight:600;margin-bottom:8px">'+dayObj.day+'</div>';
