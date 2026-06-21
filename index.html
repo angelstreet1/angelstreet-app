@@ -367,6 +367,12 @@
     <div class="admsec"><h3>User PINs</h3><div id="adm-users" style="overflow-x:auto"></div></div>
     <div class="admsec"><h3>This Week's Hours</h3><div id="adm-weekly" style="overflow-x:auto"></div></div>
     <div class="admsec"><h3>Full Time Clock Log</h3><div id="adm-log" style="overflow-x:auto"></div></div>
+    <div class="admsec">
+      <h3>&#127961;&#65039; City of Memphis Timesheets</h3>
+      <div id="city-ts-week-sel" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;"></div>
+      <div id="city-ts-grid"></div>
+      <div id="city-ts-btns" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;"></div>
+    </div>
   </div>
 </div>
 
@@ -985,6 +991,229 @@ function renderGrp(isAdmin){var grid=document.getElementById('grp-grid');grid.in
 var tempDiv=document.createElement('div');tempDiv.innerHTML=h;while(tempDiv.firstChild)card.appendChild(tempDiv.firstChild);grid.appendChild(card);});var other=document.getElementById('grp-other');other.innerHTML='';JR_TAS.filter(function(n){return assigned.indexOf(n)<0;}).forEach(function(name){var s=document.createElement('span');s.style.cssText='padding:6px 14px;background:rgba(141,77,158,.2);border:1px solid #8d4d9e;border-radius:20px;font-size:12px;color:#c9a0d6;';s.textContent=name;other.appendChild(s);});}
 async function saveGrp(){try{for(var n=1;n<=4;n++){var ta1el=document.getElementById('grp'+n+'ta1'),ta2el=document.getElementById('grp'+n+'ta2');if(!ta1el)continue;var ta1=ta1el.value,ta2=ta2el.value;var ex=GR2.find(function(r){return r.fields.GroupNumber===String(n);});if(ex)await AP(TG,ex.id,{GroupNumber:String(n),JrTA1:ta1,JrTA2:ta2});else await AC(TG,{GroupNumber:String(n),JrTA1:ta1,JrTA2:ta2});}
 GR2=await AFC(TG);renderGrp(true);var em=document.getElementById('grp-msg');em.className='msg ms';em.textContent='✓ Groups saved!';em.style.display='block';setTimeout(function(){em.style.display='none';},3000);}catch(e){alert('Error: '+e.message);}}
+
+// ── CITY OF MEMPHIS TIMESHEETS ────────────────────────────────────────────
+var CITY_YOUTH=[
+  {short:'Angel Perry',legal:'Angel Renee Perry'},
+  {short:"Cai'lee Page",legal:"Cai'lee Lee'nique Page"},
+  {short:"D'Aisha Franklin",legal:"D'Asiah Me'Shelle Franklin"},
+  {short:'Jaida Dooley',legal:'Jaida Janai Dooley'},
+  {short:'Johnae Lauderdale',legal:'Johnae Love Lauderdale'},
+  {short:'Kennedi Moffett',legal:'Kennedi Chrisette Moffett'},
+  {short:'Kourtney Banks',legal:'Kourtney Banks'}
+];
+var CITY_WEEK='Week2';
+var CITY_WK_DATES={
+  Week1:{label:'Jun 8, 2026',days:[{n:'Monday',d:'6/8/2026'},{n:'Tuesday',d:'6/9/2026'},{n:'Wednesday',d:'6/10/2026'},{n:'Thursday',d:'6/11/2026'},{n:'Friday',d:'6/12/2026'}]},
+  Week2:{label:'Jun 15, 2026',days:[{n:'Monday',d:'6/15/2026'},{n:'Tuesday',d:'6/16/2026'},{n:'Wednesday',d:'6/17/2026'},{n:'Thursday',d:'6/18/2026'},{n:'Friday',d:'6/19/2026'}]},
+  Week3:{label:'Jun 22, 2026',days:[{n:'Monday',d:'6/22/2026'},{n:'Tuesday',d:'6/23/2026'},{n:'Wednesday',d:'6/24/2026'},{n:'Thursday',d:'6/25/2026'},{n:'Friday',d:'6/26/2026'}]},
+  Week4:{label:'Jun 29, 2026',days:[{n:'Monday',d:'6/29/2026'},{n:'Tuesday',d:'6/30/2026'},{n:'Wednesday',d:'7/1/2026'},{n:'Thursday',d:'7/2/2026'},{n:'Friday',d:'7/3/2026'}]}
+};
+var CITY_OVR={};
+
+function cityCalcHrs(pIn,pOut){
+  if(!pIn||!pOut)return 0;
+  function toM(t){var m=t.match(/(\d+):(\d+)\s*(AM|PM)?/i);if(!m)return 0;var h=parseInt(m[1]),mn=parseInt(m[2]),ap=(m[3]||'').toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return h*60+mn;}
+  var diff=toM(pOut)-toM(pIn);
+  return diff>0?Math.round(diff/60*100)/100:0;
+}
+function cityOverride(name,date,pIn,pOut){
+  var k=name+'|'+date;
+  if(!pIn&&!pOut){delete CITY_OVR[k];return;}
+  CITY_OVR[k]={punchIn:pIn,punchOut:pOut,hours:cityCalcHrs(pIn,pOut)};
+}
+function getCityData(tcRecs,shortName,date){
+  var k=shortName+'|'+date;
+  if(CITY_OVR[k])return CITY_OVR[k];
+  var tc=tcRecs.find(function(r){return r.fields.Name===shortName&&r.fields.Date===date;});
+  if(tc)return{punchIn:tc.fields.PunchIn||'',punchOut:tc.fields.PunchOut||'',hours:parseFloat(tc.fields.HoursWorked)||0};
+  return{punchIn:'',punchOut:'',hours:0};
+}
+
+async function loadCityTimesheets(){
+  var selDiv=document.getElementById('city-ts-week-sel');
+  if(!selDiv)return;
+  selDiv.innerHTML='';
+  ['Week1','Week2','Week3','Week4'].forEach(function(w){
+    var lbs={Week1:'Week 1',Week2:'Week 2',Week3:'Week 3',Week4:'Week 4'};
+    var btn=document.createElement('button');
+    btn.textContent=lbs[w];
+    btn.id='city-wk-btn-'+w;
+    btn.style.cssText='padding:7px 16px;border-radius:20px;border:2px solid '+(w===CITY_WEEK?'#34d399':'#333')+';background:'+(w===CITY_WEEK?'#34d399':'#1a1a1a')+';color:'+(w===CITY_WEEK?'#0a0a0a':'#aaa')+';font-size:12px;font-weight:700;cursor:pointer;';
+    btn.onclick=function(){
+      CITY_WEEK=w;
+      ['Week1','Week2','Week3','Week4'].forEach(function(x){
+        var b=document.getElementById('city-wk-btn-'+x);
+        if(b){b.style.background=x===w?'#34d399':'#1a1a1a';b.style.borderColor=x===w?'#34d399':'#333';b.style.color=x===w?'#0a0a0a':'#aaa';}
+      });
+      renderCityGrid();
+    };
+    selDiv.appendChild(btn);
+  });
+  renderCityGrid();
+}
+
+async function renderCityGrid(){
+  var grid=document.getElementById('city-ts-grid');
+  var btnsDiv=document.getElementById('city-ts-btns');
+  grid.innerHTML='<div style="color:#888;font-size:13px;padding:8px 0">Loading...</div>';
+  btnsDiv.innerHTML='';
+  try{
+    var tcRecs=await AFC('TimeClock');
+    var wk=CITY_WK_DATES[CITY_WEEK];
+    var html='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:720px;">';
+    html+='<thead><tr><th style="text-align:left;padding:10px;background:#1e1e1e;color:#34d399;border-bottom:2px solid #333;min-width:180px;">Youth (Legal Name)</th>';
+    wk.days.forEach(function(day){
+      html+='<th style="text-align:center;padding:8px;background:#1e1e1e;color:#34d399;border-bottom:2px solid #333;min-width:100px;">'+day.n+'<br><span style="font-size:10px;color:#555;font-weight:400;">'+day.d+'</span></th>';
+    });
+    html+='<th style="text-align:center;padding:10px;background:#1e1e1e;color:#ca3092;border-bottom:2px solid #333;">Total</th></tr></thead><tbody>';
+
+    CITY_YOUTH.forEach(function(youth,yi){
+      var rowBg=yi%2===0?'#111':'#161616';
+      html+='<tr style="background:'+rowBg+';">';
+      html+='<td style="padding:10px;color:#fff;font-weight:600;border-bottom:1px solid #1a1a1a;font-size:11px;">'+youth.legal+'</td>';
+      var total=0;
+      wk.days.forEach(function(day){
+        var data=getCityData(tcRecs,youth.short,day.d);
+        total+=data.hours;
+        var inId='cti-'+yi+'-'+yi+day.d.replace(/\//g,'');
+        var outId='cto-'+yi+'-'+yi+day.d.replace(/\//g,'');
+        var cellBg=data.hours>0?'rgba(52,211,153,0.05)':'transparent';
+        html+='<td style="padding:6px;border-bottom:1px solid #1a1a1a;background:'+cellBg+';">';
+        html+='<div style="display:flex;flex-direction:column;gap:2px;align-items:center;">';
+        html+='<span style="font-size:9px;color:#666;">In:</span>';
+        html+='<input id="'+inId+'" data-y="'+yi+'" data-name="'+youth.short+'" data-date="'+day.d+'" data-role="in" value="'+data.punchIn+'" class="city-inp" style="width:64px;padding:3px 4px;background:#222;border:1px solid #444;border-radius:4px;color:#fff;font-size:10px;text-align:center;">';
+        html+='<span style="font-size:9px;color:#666;">Out:</span>';
+        html+='<input id="'+outId+'" data-y="'+yi+'" data-name="'+youth.short+'" data-date="'+day.d+'" data-role="out" value="'+data.punchOut+'" class="city-inp" style="width:64px;padding:3px 4px;background:#222;border:1px solid #444;border-radius:4px;color:#fff;font-size:10px;text-align:center;">';
+        html+='<span style="font-size:11px;font-weight:700;color:'+(data.hours>0?'#34d399':'#444')+';">'+(data.hours>0?data.hours.toFixed(2)+'h':'—')+'</span>';
+        html+='</div></td>';
+      });
+      html+='<td style="text-align:center;padding:10px;border-bottom:1px solid #1a1a1a;font-weight:700;font-size:13px;color:'+(total>0?'#ca3092':'#555')+';">'+(total>0?total.toFixed(2):'—')+'</td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+    html+='<div style="font-size:11px;color:#555;margin-top:8px;">Edit punch times above — updates apply to downloaded timesheets only. Press Tab after editing each field.</div>';
+    grid.innerHTML=html;
+
+    // Wire input events
+    grid.querySelectorAll('.city-inp').forEach(function(inp){
+      inp.addEventListener('change',function(){
+        var name=this.dataset.name;
+        var date=this.dataset.date;
+        var yi=this.dataset.y;
+        var role=this.dataset.role;
+        var safeD=date.replace(/\//g,'');
+        var inEl=document.getElementById('cti-'+yi+'-'+yi+safeD);
+        var outEl=document.getElementById('cto-'+yi+'-'+yi+safeD);
+        var pIn=inEl?inEl.value.trim():'';
+        var pOut=outEl?outEl.value.trim():'';
+        cityOverride(name,date,pIn,pOut);
+        // Update hours display
+        var hrs=cityCalcHrs(pIn,pOut);
+        var hrsSpan=outEl?outEl.nextElementSibling:null;
+        if(hrsSpan){hrsSpan.textContent=hrs>0?hrs.toFixed(2)+'h':'—';hrsSpan.style.color=hrs>0?'#34d399':'#444';}
+        // Recalc total for this row
+        var row=this.closest('tr');
+        if(row){
+          var cells=row.querySelectorAll('.city-inp[data-role="in"]');
+          var tot=0;
+          cells.forEach(function(c){
+            var k=c.dataset.name+'|'+c.dataset.date;
+            var ovr=CITY_OVR[k];
+            tot+=ovr?ovr.hours:0;
+          });
+          var lastTd=row.querySelector('td:last-child');
+          if(lastTd){lastTd.textContent=tot>0?tot.toFixed(2):'—';lastTd.style.color=tot>0?'#ca3092':'#555';}
+        }
+      });
+    });
+
+    // Buttons
+    var xlBtn=document.createElement('button');
+    xlBtn.textContent='📊 Download XLSX (MPLOY Format)';
+    xlBtn.style.cssText='padding:12px 20px;background:linear-gradient(135deg,#34d399,#059669);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;';
+    xlBtn.onclick=function(){downloadCityXLSX(tcRecs);};
+    btnsDiv.appendChild(xlBtn);
+
+    var pdBtn=document.createElement('button');
+    pdBtn.textContent='&#128196; Print / Save PDF';
+    pdBtn.style.cssText='padding:12px 20px;background:linear-gradient(135deg,#ca3092,#8d4d9e);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;';
+    pdBtn.onclick=function(){downloadCityPDF(tcRecs);};
+    btnsDiv.appendChild(pdBtn);
+
+  }catch(e){
+    grid.innerHTML='<div style="color:#ca3092;font-size:13px;">Error: '+e.message+'</div>';
+  }
+}
+
+function downloadCityPDF(tcRecs){
+  var wk=CITY_WK_DATES[CITY_WEEK];
+  var win=window.open('','_blank');
+  if(!win){alert('Please allow popups to view the PDF.');return;}
+  var h='<!DOCTYPE html><html><head><meta charset="utf-8"><title>MPLOY Timesheet '+wk.label+'</title>';
+  h+='<style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px 24px;}';
+  h+='h2{font-size:15px;margin:0 0 2px;text-align:center;}';
+  h+='.sub{text-align:center;font-size:11px;margin-bottom:14px;color:#555;}';
+  h+='.meta{display:flex;justify-content:space-between;margin-bottom:10px;font-size:11px;border-bottom:1px solid #ccc;padding-bottom:8px;}';
+  h+='table{width:100%;border-collapse:collapse;}';
+  h+='th{background:#333;color:#fff;padding:7px 6px;text-align:center;font-size:10px;border:1px solid #999;}';
+  h+='th.l{text-align:left;}';
+  h+='td{border:1px solid #ccc;padding:8px 6px;font-size:10px;text-align:center;height:28px;}';
+  h+='td.name{text-align:left;font-weight:600;}';
+  h+='tr:nth-child(even){background:#f8f8f8;}';
+  h+='.hrs{font-weight:700;color:#059669;}';
+  h+='.tot{font-weight:700;font-size:11px;}';
+  h+='@media print{.no-print{display:none;}}';
+  h+='</style></head><body>';
+  h+='<h2>MPLOY 2026 Roster</h2>';
+  h+='<div class="sub">Creative Arts Camp 2026 &mdash; AngelStreet Memphis &mdash; 686 N 7th St, Memphis, TN 38107</div>';
+  h+='<div class="meta"><span><strong>Business name:</strong> Angel Street</span><span><strong>Week of:</strong> '+wk.label+'</span></div>';
+  h+='<table><thead><tr><th class="l" style="min-width:140px;">Youth Name</th>';
+  wk.days.forEach(function(day){h+='<th>'+day.n+'<br><span style="font-weight:400;font-size:9px;">'+day.d+'</span><br><span style="font-weight:400;font-size:9px;">Hrs &nbsp; Initials</span></th>';});
+  h+='<th>Total Hours</th><th>Signature</th></tr></thead><tbody>';
+  CITY_YOUTH.forEach(function(youth){
+    var total=0;
+    h+='<tr><td class="name">'+youth.legal+'</td>';
+    wk.days.forEach(function(day){
+      var data=getCityData(tcRecs,youth.short,day.d);
+      total+=data.hours;
+      h+='<td><span class="hrs">'+(data.hours>0?data.hours.toFixed(2):'')+'</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>';
+    });
+    h+='<td class="tot">'+(total>0?total.toFixed(2):'')+'</td>';
+    h+='<td>&nbsp;</td></tr>';
+  });
+  h+='</tbody></table>';
+  h+='<br><button class="no-print" onclick="window.print()" style="padding:10px 20px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">&#128438; Print / Save as PDF</button>';
+  h+='</body></html>';
+  win.document.write(h);
+  win.document.close();
+}
+
+async function downloadCityXLSX(tcRecs){
+  var wk=CITY_WK_DATES[CITY_WEEK];
+  var staffPayload=CITY_YOUTH.map(function(youth){
+    var days=wk.days.map(function(day){
+      var data=getCityData(tcRecs,youth.short,day.d);
+      return{dayName:day.n,date:day.d,punchIn:data.punchIn,punchOut:data.punchOut,hours:data.hours};
+    });
+    return{legal:youth.legal,days:days,total:days.reduce(function(s,d){return s+d.hours;},0)};
+  });
+  try{
+    var res=await fetch('/.netlify/functions/generate-city-xlsx',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({weekLabel:wk.label,staff:staffPayload})
+    });
+    if(!res.ok)throw new Error('Server error '+res.status);
+    var b64=await res.text();
+    var bin=atob(b64),buf=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+    var blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='AngelStreet_MPLOY_'+CITY_WEEK+'.xlsx';a.click();
+  }catch(e){alert('XLSX error: '+e.message);}
+}
+// ── END CITY TIMESHEETS ───────────────────────────────────────────────────
+
 var ADM_TC=[],ADM_U=[];
 
 var ADM_ATT_WEEK='Week2';
@@ -1102,7 +1331,7 @@ async function renderAdmAttendance(){
   }
 }
 
-async function loadAdm(){var em=document.getElementById('adm-msg');em.className='msg ml';em.textContent='Loading...';em.style.display='block';try{ADM_TC=await AF(TT);ADM_U=await AF(TU);renderAdmToday();renderAdmUsers();renderAdmWeekly();renderAdmLog();renderAdmAttendance();em.style.display='none';}
+async function loadAdm(){var em=document.getElementById('adm-msg');em.className='msg ml';em.textContent='Loading...';em.style.display='block';try{ADM_TC=await AF(TT);ADM_U=await AF(TU);renderAdmToday();renderAdmUsers();renderAdmWeekly();renderAdmLog();renderAdmAttendance();loadCityTimesheets();em.style.display='none';}
 catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;}}
 function renderAdmToday(){var el=document.getElementById('adm-today'),today=tstr(),recs=ADM_TC.filter(function(r){return r.fields.Date===today;});if(!recs.length){el.innerHTML='<p style="color:#888;font-size:13px">No punches today</p>';return;}
 var h='<table class="at"><thead><tr><th>Name</th><th>In</th><th>Out</th><th>Hours</th><th>Flags</th></tr></thead><tbody>';TC_USERS.forEach(function(u){var rec=recs.find(function(r){return r.fields.Name===u.n;});if(rec){var fl=rec.fields.Flagged?'<span class="flb">'+rec.fields.Flagged.slice(0,25)+'</span>':'<span class="okb">OK</span>';h+='<tr><td>'+u.n+'</td><td>'+(rec.fields.PunchIn||'—')+'</td><td>'+(rec.fields.PunchOut||'—')+'</td><td>'+(rec.fields.HoursWorked||'—')+'</td><td>'+fl+'</td></tr>';}
