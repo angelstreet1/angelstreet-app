@@ -110,25 +110,31 @@ exports.handler = async (event) => {
     const tot = hp + flat;
     grandTotal += tot;
 
+    const isInvoice = s.invoiceOnly;
+    const rowBg = isInvoice ? 'FFFFF3CD' : bg; // yellow tint for invoice-only
+    const nameLabel = isInvoice ? s.name + ' ★ INVOICE BUDGET' : s.name;
+    if (!isInvoice) grandTotal += tot; // don't add invoice staff to payroll total
+
     const row = sum.addRow([
-      s.name,
+      nameLabel,
       s.rate,
       Math.round(totalHrs * 100) / 100,
       Math.round(hp * 100) / 100,
       s.flat ? flat : '—',
       Math.round(tot * 100) / 100
     ]);
-    row.getCell(1).fill = fill(bg); row.getCell(1).font = font(true); row.getCell(1).border = border();
-    row.getCell(2).fill = fill(bg); row.getCell(2).font = font(false); row.getCell(2).numFmt = '"$"#,##0.00'; row.getCell(2).border = border();
-    row.getCell(3).fill = fill(bg); row.getCell(3).numFmt = '0.00'; row.getCell(3).border = border();
-    row.getCell(4).fill = fill(bg); row.getCell(4).numFmt = '"$"#,##0.00'; row.getCell(4).border = border();
-    row.getCell(5).fill = fill(bg); row.getCell(5).border = border();
+    row.getCell(1).fill = fill(rowBg); row.getCell(1).font = font(true); row.getCell(1).border = border();
+    row.getCell(2).fill = fill(rowBg); row.getCell(2).font = font(false); row.getCell(2).numFmt = '"$"#,##0.00'; row.getCell(2).border = border();
+    row.getCell(3).fill = fill(rowBg); row.getCell(3).numFmt = '0.00'; row.getCell(3).border = border();
+    row.getCell(4).fill = fill(rowBg); row.getCell(4).numFmt = '"$"#,##0.00'; row.getCell(4).border = border();
+    row.getCell(5).fill = fill(rowBg); row.getCell(5).border = border();
     if (s.flat) { row.getCell(5).numFmt = '"$"#,##0.00'; }
-    row.getCell(6).fill = fill(LTGREEN); row.getCell(6).font = font(true); row.getCell(6).numFmt = '"$"#,##0.00'; row.getCell(6).border = border();
+    const totalCellBg = isInvoice ? 'FFFFE0B2' : LTGREEN; // orange tint for invoice total
+    row.getCell(6).fill = fill(totalCellBg); row.getCell(6).font = font(true); row.getCell(6).numFmt = '"$"#,##0.00'; row.getCell(6).border = border();
   });
 
-  // Totals row
-  const totRow = sum.addRow(['TOTALS', '', '', '', '', Math.round(grandTotal * 100) / 100]);
+  // Totals row (payroll budget only — excludes invoice staff)
+  const totRow = sum.addRow(['PAYROLL TOTALS (excl. Invoice Budget)', '', '', '', '', Math.round(grandTotal * 100) / 100]);
   totRow.eachCell((cell) => {
     cell.fill = fill(PINK);
     cell.font = font(true, WHITE);
@@ -156,7 +162,9 @@ exports.handler = async (event) => {
 
     // Rate row
     ws.mergeCells('A2:F2');
-    ws.getCell('A2').value = `Rate: $${s.rate.toFixed(2)}/hr  |  Pay Date: ${payDate}  |  Yellow = enter data`;
+    ws.getCell('A2').value = s.invoiceOnly
+      ? `Rate: $${s.rate.toFixed(2)}/hr  |  Pay Date: ${payDate}  |  ★ PAID FROM INVOICE BUDGET`
+      : `Rate: $${s.rate.toFixed(2)}/hr  |  Pay Date: ${payDate}  |  Yellow = enter data`;
     ws.getCell('A2').font = font(true);
     ws.getCell('A2').alignment = { horizontal: 'left', vertical: 'middle' };
 

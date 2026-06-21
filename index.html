@@ -2695,7 +2695,9 @@ var PSTAFF=[
 {n:'Destanie Hullum',rate:13.50,flat:false},
 {n:'Tanaya Adams',rate:15.00,flat:true},
 {n:'Michayia Bills',rate:15.00,flat:true},
-{n:'Kourtney Banks',rate:15.00,flat:false,invoiceOnly:true}
+{n:'Kourtney Banks',rate:15.00,flat:false,invoiceOnly:true},
+{n:'Telia Stewart',rate:15.00,flat:false},
+{n:'Tavoria Bady',rate:12.00,flat:false}
 ];
 var xBtn=null;
 document.querySelectorAll('button').forEach(function(b){if(b.textContent.trim()==='📊 Download XLSX')xBtn=b;});
@@ -2710,13 +2712,13 @@ var staffPayload=PSTAFF.map(function(s){
     return {date:d,punchIn:p&&p.PunchIn?p.PunchIn:'',punchOut:p&&p.PunchOut?p.PunchOut:'',hours:p?parseFloat(p.HoursWorked||0):0};
   });
   var ach=getACHData(s.n);
-  return {name:s.n,rate:s.rate,flat:s.flat,flatAmt:flat,days:days,ach:ach};
+  return {name:s.n,rate:s.rate,flat:s.flat,flatAmt:flat,invoiceOnly:s.invoiceOnly||false,days:days,ach:ach};
 });
 
 var res=await fetch('/.netlify/functions/generate-payroll-xlsx',{
   method:'POST',
   headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({label:pp.label,payDate:'June 12, 2026',staff:staffPayload})
+  body:JSON.stringify({label:pp.label,payDate:pp.payDate,staff:staffPayload})
 });
 
 if(!res.ok)throw new Error('Server error: '+res.status);
