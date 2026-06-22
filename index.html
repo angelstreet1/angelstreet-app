@@ -1073,12 +1073,14 @@ async function renderCityGrid(){
       html+='<tr style="background:'+rowBg+';">';
       html+='<td style="padding:10px;color:#fff;font-weight:600;border-bottom:1px solid #1a1a1a;font-size:11px;">'+youth.legal+'</td>';
       var total=0;
+      var youthDayData={};
       wk.days.forEach(function(day){
         var data=getCityData(tcRecs,youth.short,day.d);
+        youthDayData[day.d]=data.hours;
         total+=data.hours;
-        var safeD=day.d.replace(/\//g,'');
+        var safeD=day.d.split('/').join('');
         var inId='cti-'+yi+'-'+safeD;
-        var outId='cto-'+yi+'-'+safeD;
+        var outId='cto-'+yi+'-'+safeD; var outId='cto-'+yi+'-'+safeD;
         var cellBg=data.hours>0?'rgba(52,211,153,0.05)':'transparent';
         html+='<td style="padding:6px;border-bottom:1px solid #1a1a1a;background:'+cellBg+';">';
         html+='<div style="display:flex;flex-direction:column;gap:2px;align-items:center;">';
@@ -1120,7 +1122,7 @@ async function renderCityGrid(){
         var date=this.dataset.date;
         var yi=this.dataset.y;
         var role=this.dataset.role;
-        var safeD=date.replace(/[/]/g,'');
+        var safeD=date.split('/').join('');
         var inEl=document.getElementById('cti-'+yi+'-'+safeD);
         var outEl=document.getElementById('cto-'+yi+'-'+safeD);
         var pIn=inEl?inEl.value.trim():'';
@@ -1130,18 +1132,27 @@ async function renderCityGrid(){
         var hrs=cityCalcHrs(pIn,pOut);
         var hrsSpan=outEl?outEl.nextElementSibling:null;
         if(hrsSpan){hrsSpan.textContent=hrs>0?hrs.toFixed(2)+'h':'—';hrsSpan.style.color=hrs>0?'#34d399':'#444';}
-        // Recalc total for this row
+        // Recalc total for this row - sum ALL days
         var row=this.closest('tr');
         if(row){
-          var cells=row.querySelectorAll('.city-inp[data-role="in"]');
+          var allIns=row.querySelectorAll('.city-inp[data-role="in"]');
           var tot=0;
-          cells.forEach(function(c){
-            var k=c.dataset.name+'|'+c.dataset.date;
-            var ovr=CITY_OVR[k];
-            tot+=ovr?ovr.hours:0;
+          allIns.forEach(function(c){
+            var d=c.dataset.date;
+            var n=c.dataset.name;
+            var yi2=c.dataset.y;
+            var safeD2=d.split('/').join('');
+            var inEl2=document.getElementById('cti-'+yi2+'-'+safeD2);
+            var outEl2=document.getElementById('cto-'+yi2+'-'+safeD2);
+            var pIn2=inEl2?inEl2.value.trim():'';
+            var pOut2=outEl2?outEl2.value.trim():'';
+            // Use override if exists, else use original data
+            var k=n+'|'+d;
+            if(CITY_OVR[k]){tot+=CITY_OVR[k].hours;}
+            else if(pIn2&&pOut2){tot+=cityCalcHrs(pIn2,pOut2);}
           });
           var lastTd=row.querySelector('td:last-child');
-          if(lastTd){lastTd.textContent=tot>0?tot.toFixed(2):'—';lastTd.style.color=tot>0?'#ca3092':'#555';}
+          if(lastTd){lastTd.textContent=tot>0?tot.toFixed(2)+'h':'—';lastTd.style.color=tot>0?'#ca3092':'#555';}
         }
       });
     });
