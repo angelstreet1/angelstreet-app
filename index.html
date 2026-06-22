@@ -1076,15 +1076,16 @@ async function renderCityGrid(){
       wk.days.forEach(function(day){
         var data=getCityData(tcRecs,youth.short,day.d);
         total+=data.hours;
-        var inId='cti-'+yi+'-'+yi+day.d.replace(/\//g,'');
-        var outId='cto-'+yi+'-'+yi+day.d.replace(/\//g,'');
+        var safeD=day.d.replace(/\//g,'');
+        var inId='cti-'+yi+'-'+safeD;
+        var outId='cto-'+yi+'-'+safeD;
         var cellBg=data.hours>0?'rgba(52,211,153,0.05)':'transparent';
         html+='<td style="padding:6px;border-bottom:1px solid #1a1a1a;background:'+cellBg+';">';
         html+='<div style="display:flex;flex-direction:column;gap:2px;align-items:center;">';
         html+='<span style="font-size:9px;color:#666;">In:</span>';
-        html+='<input id="'+inId+'" data-y="'+yi+'" data-name="'+youth.short+'" data-date="'+day.d+'" data-role="in" value="'+data.punchIn+'" class="city-inp" style="width:64px;padding:3px 4px;background:#222;border:1px solid #444;border-radius:4px;color:#fff;font-size:10px;text-align:center;">';
+        html+='<input id="'+inId+'" data-y="'+yi+'" data-name="'+youth.short+'" data-date="'+day.d+'" data-role="in" value="'+data.punchIn+'" class="city-inp" placeholder="9:00 AM" style="width:64px;padding:3px 4px;background:#222;border:1px solid #444;border-radius:4px;color:#fff;font-size:10px;text-align:center;">';
         html+='<span style="font-size:9px;color:#666;">Out:</span>';
-        html+='<input id="'+outId+'" data-y="'+yi+'" data-name="'+youth.short+'" data-date="'+day.d+'" data-role="out" value="'+data.punchOut+'" class="city-inp" style="width:64px;padding:3px 4px;background:#222;border:1px solid #444;border-radius:4px;color:#fff;font-size:10px;text-align:center;">';
+        html+='<input id="'+outId+'" data-y="'+yi+'" data-name="'+youth.short+'" data-date="'+day.d+'" data-role="out" value="'+data.punchOut+'" class="city-inp" placeholder="3:00 PM" style="width:64px;padding:3px 4px;background:#222;border:1px solid #444;border-radius:4px;color:#fff;font-size:10px;text-align:center;">';
         html+='<span style="font-size:11px;font-weight:700;color:'+(data.hours>0?'#34d399':'#444')+';">'+(data.hours>0?data.hours.toFixed(2)+'h':'—')+'</span>';
         html+='</div></td>';
       });
@@ -1119,9 +1120,9 @@ async function renderCityGrid(){
         var date=this.dataset.date;
         var yi=this.dataset.y;
         var role=this.dataset.role;
-        var safeD=date.replace(/\//g,'');
-        var inEl=document.getElementById('cti-'+yi+'-'+yi+safeD);
-        var outEl=document.getElementById('cto-'+yi+'-'+yi+safeD);
+        var safeD=date.replace(/[/]/g,'');
+        var inEl=document.getElementById('cti-'+yi+'-'+safeD);
+        var outEl=document.getElementById('cto-'+yi+'-'+safeD);
         var pIn=inEl?inEl.value.trim():'';
         var pOut=outEl?outEl.value.trim():'';
         cityOverride(name,date,pIn,pOut);
