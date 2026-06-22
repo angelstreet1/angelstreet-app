@@ -1091,7 +1091,24 @@ async function renderCityGrid(){
       html+='<td style="text-align:center;padding:10px;border-bottom:1px solid #1a1a1a;font-weight:700;font-size:13px;color:'+(total>0?'#ca3092':'#555')+';">'+(total>0?total.toFixed(2):'—')+'</td>';
       html+='</tr>';
     });
-    html+='</tbody></table></div>';
+    // Totals footer
+    var dayTotals={};
+    wk.days.forEach(function(day){dayTotals[day.d]=0;});
+    CITY_YOUTH.forEach(function(youth){
+      wk.days.forEach(function(day){
+        var data=getCityData(tcRecs,youth.short,day.d);
+        dayTotals[day.d]+=data.hours;
+      });
+    });
+    var grandWeekTotal=0;
+    html+='<tr style="background:#1e1e1e;border-top:2px solid #34d399;">';
+    html+='<td style="padding:10px;color:#34d399;font-weight:700;font-size:12px;border-top:2px solid #34d399;">WEEKLY TOTALS</td>';
+    wk.days.forEach(function(day){
+      var dt=dayTotals[day.d];grandWeekTotal+=dt;
+      html+='<td style="text-align:center;padding:10px;font-weight:700;color:'+(dt>0?'#34d399':'#444')+';border-top:2px solid #34d399;">'+(dt>0?dt.toFixed(2)+'h':'—')+'</td>';
+    });
+    html+='<td style="text-align:center;padding:10px;font-weight:700;font-size:14px;color:#ca3092;border-top:2px solid #34d399;">'+(grandWeekTotal>0?grandWeekTotal.toFixed(2)+'h':'—')+'</td>';
+    html+='</tr></tbody></table></div>';
     html+='<div style="font-size:11px;color:#555;margin-top:8px;">Edit punch times above — updates apply to downloaded timesheets only. Press Tab after editing each field.</div>';
     grid.innerHTML=html;
 
