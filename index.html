@@ -373,6 +373,11 @@
       <div id="city-ts-grid"></div>
       <div id="city-ts-btns" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;"></div>
     </div>
+    <div class="admsec">
+      <h3>&#128373;&#65039; Punch Submission Log</h3>
+      <div id="adm-sublog-filter" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;"></div>
+      <div id="adm-sublog"></div>
+    </div>
   </div>
 </div>
 
@@ -1243,6 +1248,107 @@ async function downloadCityXLSX(tcRecs){
 }
 // ── END CITY TIMESHEETS ───────────────────────────────────────────────────
 
+
+function renderSubmissionLog(tcRecs, filterName){
+  var logDiv = document.getElementById('adm-sublog');
+  var filterDiv = document.getElementById('adm-sublog-filter');
+  if(!logDiv) return;
+
+  // Get all unique staff names
+  var allNames = [...new Set(tcRecs.map(function(r){return r.fields.Name||'Unknown';}))].sort();
+
+  // Build filter buttons
+  if(filterDiv && !filterDiv.hasChildNodes()){
+    var allBtn = document.createElement('button');
+    allBtn.textContent = 'All Staff';
+    allBtn.id = 'sublog-btn-all';
+    allBtn.style.cssText = 'padding:5px 12px;border-radius:16px;border:2px solid #ca3092;background:#ca3092;color:#fff;font-size:11px;font-weight:700;cursor:pointer;';
+    allBtn.onclick = function(){ renderSubmissionLog(tcRecs, null); };
+    filterDiv.appendChild(allBtn);
+
+    allNames.forEach(function(name){
+      var btn = document.createElement('button');
+      btn.textContent = name;
+      btn.id = 'sublog-btn-'+name.replace(/\s/g,'-');
+      btn.style.cssText = 'padding:5px 12px;border-radius:16px;border:2px solid #333;background:#1a1a1a;color:#aaa;font-size:11px;font-weight:600;cursor:pointer;';
+      btn.onclick = function(){ renderSubmissionLog(tcRecs, name); };
+      filterDiv.appendChild(btn);
+    });
+  }
+
+  // Update button styles
+  filterDiv.querySelectorAll('button').forEach(function(b){
+    var isActive = b.id === 'sublog-btn-all' ? !filterName : b.id === 'sublog-btn-'+(filterName||'').replace(/\s/g,'-');
+    b.style.background = isActive ? '#ca3092' : '#1a1a1a';
+    b.style.borderColor = isActive ? '#ca3092' : '#333';
+    b.style.color = isActive ? '#fff' : '#aaa';
+  });
+
+  // Filter and sort records — newest first
+  var recs = filterName ? tcRecs.filter(function(r){return r.fields.Name===filterName;}) : tcRecs;
+  recs = recs.slice().sort(function(a,b){ return new Date(b.createdTime) - new Date(a.createdTime); });
+
+  if(!recs.length){
+    logDiv.innerHTML = '<div style="color:#555;font-size:13px;padding:10px 0;">No punch records found.</div>';
+    return;
+  }
+
+  var html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html += '<thead><tr>';
+  html += '<th style="text-align:left;padding:9px 12px;background:#1e1e1e;color:#ca3092;border-bottom:2px solid #333;font-weight:700;">Staff Member</th>';
+  html += '<th style="text-align:center;padding:9px 12px;background:#1e1e1e;color:#ca3092;border-bottom:2px solid #333;font-weight:700;">Shift Date</th>';
+  html += '<th style="text-align:center;padding:9px 12px;background:#1e1e1e;color:#ca3092;border-bottom:2px solid #333;font-weight:700;">Punch In</th>';
+  html += '<th style="text-align:center;padding:9px 12px;background:#1e1e1e;color:#ca3092;border-bottom:2px solid #333;font-weight:700;">Punch Out</th>';
+  html += '<th style="text-align:center;padding:9px 12px;background:#1e1e1e;color:#ca3092;border-bottom:2px solid #333;font-weight:700;">Hours</th>';
+  html += '<th style="text-align:left;padding:9px 12px;background:#1e1e1e;color:#ca3092;border-bottom:2px solid #333;font-weight:700;">Submitted At</th>';
+  html += '</tr></thead><tbody>';
+
+  recs.forEach(function(r, i){
+    var bg = i%2===0 ? '#111' : '#161616';
+    var name = r.fields.Name || '—';
+    var date = r.fields.Date || '—';
+    var pIn = r.fields.PunchIn || '—';
+    var pOut = r.fields.PunchOut || '—';
+    var hrs = r.fields.HoursWorked ? parseFloat(r.fields.HoursWorked).toFixed(2) : '—';
+
+    // Format createdTime
+    var submitted = '—';
+    var flagColor = '#555';
+    if(r.createdTime){
+      var dt = new Date(r.createdTime);
+      var dateStr = dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      var timeStr = dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+      submitted = dateStr + ' at ' + timeStr;
+      // Flag if submitted same day as shift (normal) vs later (manual/late)
+      var shiftParts = date.split('/');
+      var shiftDate = shiftParts.length===3 ? new Date(shiftParts[2],shiftParts[0]-1,shiftParts[1]) : null;
+      if(shiftDate){
+        var diffDays = Math.floor((dt - shiftDate)/(1000*60*60*24));
+        if(diffDays > 1) flagColor = '#fbbf24'; // submitted late - yellow
+        else if(diffDays < 0) flagColor = '#ca3092'; // future date - suspicious
+        else flagColor = '#34d399'; // same day - green
+      }
+    }
+
+    html += '<tr style="background:'+bg+';">';
+    html += '<td style="padding:9px 12px;color:#fff;font-weight:600;border-bottom:1px solid #1a1a1a;">'+name+'</td>';
+    html += '<td style="text-align:center;padding:9px 12px;color:#aaa;border-bottom:1px solid #1a1a1a;">'+date+'</td>';
+    html += '<td style="text-align:center;padding:9px 12px;color:#aaa;border-bottom:1px solid #1a1a1a;">'+pIn+'</td>';
+    html += '<td style="text-align:center;padding:9px 12px;color:#aaa;border-bottom:1px solid #1a1a1a;">'+pOut+'</td>';
+    html += '<td style="text-align:center;padding:9px 12px;font-weight:700;color:'+(hrs!=='—'?'#34d399':'#555')+';border-bottom:1px solid #1a1a1a;">'+hrs+'</td>';
+    html += '<td style="padding:9px 12px;color:'+flagColor+';font-weight:600;border-bottom:1px solid #1a1a1a;">'+submitted+'</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  html += '<div style="display:flex;gap:16px;margin-top:10px;font-size:11px;">';
+  html += '<span style="color:#34d399;">&#9679; Submitted same day</span>';
+  html += '<span style="color:#fbbf24;">&#9679; Submitted late</span>';
+  html += '<span style="color:#ca3092;">&#9679; Date issue</span>';
+  html += '</div>';
+  logDiv.innerHTML = html;
+}
+
 var ADM_TC=[],ADM_U=[];
 
 var ADM_ATT_WEEK='Week2';
@@ -1360,7 +1466,7 @@ async function renderAdmAttendance(){
   }
 }
 
-async function loadAdm(){var em=document.getElementById('adm-msg');em.className='msg ml';em.textContent='Loading...';em.style.display='block';try{ADM_TC=await AF(TT);ADM_U=await AF(TU);renderAdmToday();renderAdmUsers();renderAdmWeekly();renderAdmLog();renderAdmAttendance();loadCityTimesheets();em.style.display='none';}
+async function loadAdm(){var em=document.getElementById('adm-msg');em.className='msg ml';em.textContent='Loading...';em.style.display='block';try{ADM_TC=await AF(TT);ADM_U=await AF(TU);renderAdmToday();renderAdmUsers();renderAdmWeekly();renderAdmLog();renderAdmAttendance();loadCityTimesheets();renderSubmissionLog(ADM_TC,null);em.style.display='none';}
 catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;}}
 function renderAdmToday(){var el=document.getElementById('adm-today'),today=tstr(),recs=ADM_TC.filter(function(r){return r.fields.Date===today;});if(!recs.length){el.innerHTML='<p style="color:#888;font-size:13px">No punches today</p>';return;}
 var h='<table class="at"><thead><tr><th>Name</th><th>In</th><th>Out</th><th>Hours</th><th>Flags</th></tr></thead><tbody>';TC_USERS.forEach(function(u){var rec=recs.find(function(r){return r.fields.Name===u.n;});if(rec){var fl=rec.fields.Flagged?'<span class="flb">'+rec.fields.Flagged.slice(0,25)+'</span>':'<span class="okb">OK</span>';h+='<tr><td>'+u.n+'</td><td>'+(rec.fields.PunchIn||'—')+'</td><td>'+(rec.fields.PunchOut||'—')+'</td><td>'+(rec.fields.HoursWorked||'—')+'</td><td>'+fl+'</td></tr>';}
