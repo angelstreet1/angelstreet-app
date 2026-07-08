@@ -726,6 +726,29 @@ async function AFC(t){
   return recs;
 }
 function clearCache(t){if(t){delete _cache[t];delete _cacheTime[t];}else{_cache={};_cacheTime={};}}
+// ── BATCH PRE-WARM ───────────────────────────────────────────────────────
+// Fetches all core tables in one Netlify function call on app start
+async function prewarmCache(){
+  try{
+    var coreTables=[TU,TS,TR,TAT,TT,TG,TGA,'Invoices','Updates','Shifts'];
+    var res=await fetch('/.netlify/functions/airtable-batch',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tables:coreTables})
+    });
+    if(!res.ok)return;
+    var data=await res.json();
+    var now=Date.now();
+    Object.keys(data).forEach(function(table){
+      _cache[table]=data[table];
+      _cacheTime[table]=now;
+    });
+    // Populate LUR from cache
+    if(data[TU])LUR=data[TU];
+  }catch(e){}
+}
+// ── END BATCH PRE-WARM ────────────────────────────────────────────────────
+
 async function AP(t,id,f){var r=await fetch(AU(t)+'/'+id,{method:'PATCH',headers:AH,body:JSON.stringify({fields:f})});if(!r.ok)throw new Error('Patch '+r.status);return await r.json();}
 async function AD(t,id){var r=await fetch(AU(t)+'/'+id,{method:'DELETE',headers:AH});if(!r.ok)throw new Error('Delete '+r.status);}
 function SM(h){var m=document.getElementById('modal');m.innerHTML='<div class="mbg">'+h+'</div>';m.style.display='block';}
@@ -785,7 +808,7 @@ infoHtml+='<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:6px"
 var scheduleIds=['campschedule-page','updates','schedule'];var topCards=cards.filter(function(c){return scheduleIds.indexOf(c.id)>=0;});var gridCards=cards.filter(function(c){return scheduleIds.indexOf(c.id)<0;});function makeCard(c){var d=document.createElement('div');d.className='hcard';var iconSrc=ICON_MAP[c.id];var iconHtml=iconSrc?'<img src="'+iconSrc+'" style="width:52px;height:56px;object-fit:contain;margin-bottom:6px">':'<div class="hci '+c.cl+'">'+c.ic+'</div>';d.innerHTML=iconHtml+'<div class="hcl"><h3>'+c.lb+'</h3></div>';(function(pid){d.onclick=function(){SP(pid);};})(c.id);return d;}
 if(topCards.length){var row=document.createElement('div');row.className='hcard-row';topCards.forEach(function(c){row.appendChild(makeCard(c));});hc.appendChild(row);}
 if(gridCards.length){var grid=document.createElement('div');grid.className='hcard-grid';gridCards.forEach(function(c){grid.appendChild(makeCard(c));});hc.appendChild(grid);}}
-async function initLogin(){buildNL('');try{LUR=await AFC(TU);}catch(e){try{LUR=await AF(TU);}catch(e2){}}}
+async function initLogin(){buildNL('');prewarmCache();}
 var SW=[{k:'Hermekia',l:'Hermekia'},{k:'Miah',l:'Miah'},{k:'SaSha',l:"Sa'Sha"},{k:'Deonna',l:'Deonna'},{k:'Jessica',l:'Jessica'},{k:'Tanaya',l:'Tanaya'},{k:'Michayia',l:'Michayia'}];var SP2=['Tanaya','Michayia'];var ST={'All-day':'8:30am – 3:30pm','Opening':'8:30am – 12:00pm','Morning':'9:00am – 12:30pm','Afternoon':'11:30am – 3:00pm','Closing':'12:00pm – 3:30pm'};function cdates(){var d=[],dt=new Date(2026,5,8),e=new Date(2026,6,3);while(dt<=e){var w=dt.getDay();if(w!==0&&w!==6){if(!(dt.getMonth()===5&&dt.getDate()===19))d.push(new Date(dt));}dt.setDate(dt.getDate()+1);}return d;}
 function ssf(d){var day=dfl(d),ds=fd(d),j2=(d.getMonth()===6&&d.getDate()===2),j8=(ds==='6/8/2026'),j12=(ds==='6/12/2026');if(j2)return[{type:'Opening',slots:2,time:'8:30am (Showcase)',pf:[]},{type:'Closing',slots:2,time:'ends 3:30pm',pf:[]}];var isW1=(['6/8/2026','6/9/2026','6/10/2026','6/11/2026','6/12/2026'].indexOf(ds)>=0);var mn=(day==='Tuesday'||day==='Monday')?2:1,af=(day==='Wednesday'||day==='Thursday'||day==='Friday')?2:1,op=1,cl=1;if(j8)mn=1;if(j12)af=1;if(isW1){if(day==='Monday')mn=2;if(day==='Tuesday')cl=2;if(day==='Wednesday')op=2;if(day==='Thursday'){af=2;mn=2;}if(day==='Friday')af=2;}
 var adS=(j8||j12)?2:1,adP=(j8||j12)?['Hermekia','Miah']:(day==='Tuesday'?['SaSha']:[]);return[{type:'All-day',slots:adS,time:ST['All-day'],pf:adP},{type:'Opening',slots:op,time:ST['Opening'],pf:[]},{type:'Morning',slots:mn,time:ST['Morning'],pf:[]},{type:'Afternoon',slots:af,time:ST['Afternoon'],pf:[]},{type:'Closing',slots:cl,time:ST['Closing'],pf:[]}].concat(isW1?[]:[{type:'Day Off',slots:1,time:'Not working today',pf:[]}]);}
