@@ -948,8 +948,166 @@ inpWrap.appendChild(tInp);inp={getValue:function(){return tInp.value.trim();},fo
 canvas.addEventListener('mousedown',function(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});canvas.addEventListener('mousemove',function(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});canvas.addEventListener('mouseup',function(){drawing=false;});canvas.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});canvas.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});canvas.addEventListener('touchend',function(e){e.preventDefault();drawing=false;},{passive:false});var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:8px;margin-bottom:10px;';var clrBtn=document.createElement('button');clrBtn.textContent='Clear';clrBtn.style.cssText='flex:1;padding:12px;background:#444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;';clrBtn.onclick=function(){ctx.clearRect(0,0,canvas.width,canvas.height);};var cfmBtn=document.createElement('button');cfmBtn.textContent='Confirm Checkout';cfmBtn.style.cssText='flex:1;padding:12px;background:#ca3092;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;';var attRecCO=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===tstr();});var lateFeeCO=attRecCO&&attRecCO.fields.LateFee?parseFloat(attRecCO.fields.LateFee):0;cfmBtn.onclick=async function(){var pu=inp.getValue?inp.getValue():inp.value.trim();if(!pu){alert('Please enter the pickup person name.');return;}
 var sig=canvas.toDataURL('image/png');var today=tstr();var checkoutTime=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});var ex=ATR.find(function(r){return r.fields.CamperName===name&&r.fields.Date===today;});CM();try{clearCache('Attendance');if(ex)await AP(TAT,ex.id,{CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFeeCO>0?lateFeeCO:0,FeePaid:false});else await AC(TAT,{Date:today,CamperName:name,Status:'Present',CheckInTime:'',CheckOutTime:checkoutTime,PickupPerson:pu,Signature:sig,LateFee:lateFeeCO>0?lateFeeCO:0,FeePaid:false});ATR=await AF(TAT,"Date='"+today+"'");renderCI();alert(name.split(' ')[0]+' checked out to '+pu+'.');}catch(e){alert('Error: '+e.message);}};var cancelBtn=document.createElement('button');cancelBtn.className='mdc';cancelBtn.textContent='Cancel';cancelBtn.onclick=CM;btnRow.appendChild(clrBtn);btnRow.appendChild(cfmBtn);d.appendChild(title);d.appendChild(sub);d.appendChild(inpWrap);d.appendChild(sigLbl);d.appendChild(canvas);d.appendChild(btnRow);d.appendChild(cancelBtn);overlay.appendChild(d);var modal=document.getElementById('modal');modal.innerHTML='';modal.appendChild(overlay);modal.style.display='block';setTimeout(function(){if(inp.focus)inp.focus();},100);}
 async function loadComm(){var em=document.getElementById('comm-msg');em.style.display='none';var canPost=CU&&(CU.r==='admin'||CU.r==='staff');document.getElementById('comm-post').style.display=canPost?'block':'none';document.getElementById('comm-att-section').style.display=canPost?'block':'none';var cw=getCampWeek();var sel=document.getElementById('comm-week');if(sel)sel.value=cw;document.getElementById('comm-week').onchange=function(){loadComm();};var week=document.getElementById('comm-week').value;try{var allRoster2=await AFC(TR);RSR=allRoster2.filter(function(r){return r.fields.Week===week;});ATR=await AFC(TAT);ATR=ATR.filter(function(r){return r.fields.Date===tstr();});if(canPost){renderParentList();renderAttComm();}}catch(e){em.className='msg me';em.textContent='⚠️ '+e.message;em.style.display='block';}}
-function renderParentList(){var list=document.getElementById('comm-parent-list');list.innerHTML='';var msg=document.getElementById('comm-ta').value.trim();var allBtn=document.getElementById('comm-text-all');if(allBtn){allBtn.onclick=function(){var phones=[];RSR.forEach(function(r){if(r.fields.Parent1Phone)phones.push(r.fields.Parent1Phone.replace(/[^0-9]/g,''));if(r.fields.EmergencyContactPhone)phones.push(r.fields.EmergencyContactPhone.replace(/[^0-9]/g,''));});phones=phones.filter(function(p,i,a){return p&&a.indexOf(p)===i;});if(!phones.length){alert('No parent phone numbers found.');return;}
-navigator.clipboard.writeText(phones.join(', ')).then(function(){allBtn.textContent='✓ Copied!';allBtn.style.background='#66cccc';allBtn.style.color='#0a0a0a';setTimeout(function(){allBtn.textContent='📋 Copy All Numbers';allBtn.style.background='#8d4d9e';allBtn.style.color='#fff';},3000);}).catch(function(){prompt('Copy these numbers:',phones.join(', '));});};
+function renderParentList(){var list=document.getElementById('comm-parent-list');list.innerHTML='';var msg=document.getElementById('comm-ta').value.trim();
+
+// Build unique parent map
+var parents={};
+RSR.forEach(function(r){
+  if(!r.fields.CamperName)return;
+  var key=r.fields.Parent1Phone||r.fields.Parent1Name;
+  if(!key)return;
+  if(!parents[key]){parents[key]={name:r.fields.Parent1Name||'Parent',phone:r.fields.Parent1Phone||'',campers:[],selected:false};}
+  parents[key].campers.push(r.fields.CamperName.split(' ')[0]);
+});
+var parentArr=Object.values(parents).filter(function(p){return p.phone;});
+
+// Selection state
+var selected=new Set(parentArr.map(function(p){return p.phone;})); // all selected by default
+
+function getSelectedPhones(){return parentArr.filter(function(p){return selected.has(p.phone);}).map(function(p){return p.phone.replace(/[^0-9]/g,'');});}
+
+function updateCopyBtn(){
+  var allBtn=document.getElementById('comm-text-all');
+  if(!allBtn)return;
+  var n=selected.size;
+  allBtn.textContent='📋 Copy Selected ('+n+')';
+}
+
+// Top action bar
+var topBar=document.createElement('div');
+topBar.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px 14px;background:#1a1a1a;border-radius:10px;border:1px solid #333;';
+
+var selAllBtn=document.createElement('button');
+selAllBtn.textContent='Select All';
+selAllBtn.style.cssText='padding:6px 12px;border-radius:8px;border:1px solid #333;background:#2a2a2a;color:#fff;font-size:12px;font-weight:600;cursor:pointer;';
+selAllBtn.onclick=function(){
+  parentArr.forEach(function(p){selected.add(p.phone);});
+  list.querySelectorAll('.parent-cb').forEach(function(cb){cb.checked=true;});
+  updateCopyBtn();
+};
+
+var selNoneBtn=document.createElement('button');
+selNoneBtn.textContent='Clear All';
+selNoneBtn.style.cssText='padding:6px 12px;border-radius:8px;border:1px solid #333;background:#2a2a2a;color:#aaa;font-size:12px;font-weight:600;cursor:pointer;';
+selNoneBtn.onclick=function(){
+  selected.clear();
+  list.querySelectorAll('.parent-cb').forEach(function(cb){cb.checked=false;});
+  updateCopyBtn();
+};
+
+var countLbl=document.createElement('span');
+countLbl.style.cssText='font-size:12px;color:#888;margin-left:4px;';
+countLbl.textContent=parentArr.length+' parents';
+
+topBar.appendChild(selAllBtn);
+topBar.appendChild(selNoneBtn);
+topBar.appendChild(countLbl);
+list.appendChild(topBar);
+
+// Batch copy buttons (groups of 20)
+var batchBar=document.createElement('div');
+batchBar.style.cssText='margin-bottom:12px;';
+var batchLbl=document.createElement('div');
+batchLbl.style.cssText='font-size:11px;color:#888;margin-bottom:6px;';
+batchLbl.textContent='Copy in batches (iPhone limit ~20 per text):';
+batchBar.appendChild(batchLbl);
+var batchBtns=document.createElement('div');
+batchBtns.style.cssText='display:flex;gap:6px;flex-wrap:wrap;';
+batchBar.appendChild(batchBtns);
+list.appendChild(batchBar);
+
+function rebuildBatchBtns(){
+  batchBtns.innerHTML='';
+  var phones=getSelectedPhones();
+  if(!phones.length){
+    batchBtns.innerHTML='<span style="font-size:12px;color:#555;">No parents selected</span>';
+    return;
+  }
+  var batchSize=20;
+  for(var i=0;i<phones.length;i+=batchSize){
+    var batch=phones.slice(i,i+batchSize);
+    var bNum=Math.floor(i/batchSize)+1;
+    var total=Math.ceil(phones.length/batchSize);
+    var bb=document.createElement('button');
+    bb.textContent='📋 Copy Batch '+bNum+(total>1?' of '+total:'');
+    bb.style.cssText='padding:8px 14px;border-radius:8px;background:#8d4d9e;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;';
+    (function(b,bn){
+      bb.onclick=function(){
+        navigator.clipboard.writeText(b.join(', ')).then(function(){
+          bb.textContent='✓ Copied!';bb.style.background='#66cccc';bb.style.color='#0a0a0a';
+          setTimeout(function(){bb.textContent='📋 Copy Batch '+bn+(total>1?' of '+total:'');bb.style.background='#8d4d9e';bb.style.color='#fff';},3000);
+        }).catch(function(){prompt('Copy batch '+bn+':',b.join(', '));});
+      };
+    })(batch,bNum);
+    batchBtns.appendChild(bb);
+  }
+}
+rebuildBatchBtns();
+
+// Wire up the existing "Copy Numbers" button at top
+var allBtn=document.getElementById('comm-text-all');
+if(allBtn){
+  allBtn.textContent='📋 Copy Selected ('+parentArr.length+')';
+  allBtn.onclick=function(){
+    var phones=getSelectedPhones();
+    if(!phones.length){alert('No parents selected.');return;}
+    navigator.clipboard.writeText(phones.join(', ')).then(function(){
+      allBtn.textContent='✓ Copied!';allBtn.style.background='#66cccc';allBtn.style.color='#0a0a0a';
+      setTimeout(function(){allBtn.textContent='📋 Copy Selected ('+selected.size+')';allBtn.style.background='#8d4d9e';allBtn.style.color='#fff';},3000);
+    }).catch(function(){prompt('Copy numbers:',phones.join(', '));});
+  };
+}
+
+// Email button
+var emailAllBtn=document.getElementById('comm-email-all');
+if(emailAllBtn){emailAllBtn.onclick=function(){
+  var emails=[];
+  RSR.forEach(function(r){if(r.fields.Parent1Email)emails.push(r.fields.Parent1Email.trim());});
+  emails=emails.filter(function(e,i,a){return e&&a.indexOf(e)===i;});
+  if(!emails.length){alert('No parent emails found.');return;}
+  navigator.clipboard.writeText(emails.join(', ')).then(function(){
+    emailAllBtn.textContent='✓ Copied!';emailAllBtn.style.background='#66cccc';emailAllBtn.style.color='#0a0a0a';
+    setTimeout(function(){emailAllBtn.textContent='📧 Copy Emails';emailAllBtn.style.background='#ca3092';emailAllBtn.style.color='#fff';},3000);
+  }).catch(function(){prompt('Copy emails:',emails.join(', '));});
+};}
+
+// Parent rows with checkboxes
+parentArr.forEach(function(p){
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 14px;background:#111;border:1px solid #333;border-radius:8px;margin-bottom:6px;';
+
+  var cb=document.createElement('input');
+  cb.type='checkbox';
+  cb.className='parent-cb';
+  cb.checked=true;
+  cb.style.cssText='width:18px;height:18px;accent-color:#ca3092;flex-shrink:0;cursor:pointer;';
+  cb.onchange=function(){
+    if(cb.checked)selected.add(p.phone);
+    else selected.delete(p.phone);
+    updateCopyBtn();
+    rebuildBatchBtns();
+  };
+
+  var info=document.createElement('div');
+  info.style.cssText='flex:1;min-width:0;';
+  info.innerHTML='<div style="font-size:13px;font-weight:600;color:#fff">'+(p.name||'Parent')+'</div>'
+    +'<div style="font-size:11px;color:#aaa">'+p.campers.join(', ')+' · '+p.phone+'</div>';
+
+  var textBtn=document.createElement('button');
+  textBtn.style.cssText='background:#66cccc;color:#0a0a0a;border:none;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;';
+  textBtn.textContent='📱 Text';
+  var phone=p.phone.replace(/[^0-9]/g,'');
+  var txtMsg=msg||'Hi! This is AngelStreet Memphis.';
+  textBtn.onclick=function(){window.open('sms:'+phone+'?body='+encodeURIComponent(txtMsg));};
+
+  row.appendChild(cb);
+  row.appendChild(info);
+  row.appendChild(textBtn);
+  list.appendChild(row);
+});
+
+if(!parentArr.length){list.innerHTML='<div style="color:#555;font-size:13px;text-align:center;padding:16px">No parent contacts found for this week.</div>';}
+
 var emailAllBtn=document.getElementById('comm-email-all');
 if(emailAllBtn){emailAllBtn.onclick=function(){
 var emails=[];
@@ -962,13 +1120,6 @@ setTimeout(function(){emailAllBtn.textContent='📧 Copy Emails';emailAllBtn.sty
 }).catch(function(){prompt('Copy these emails:',emails.join(', '));});
 };}
 }
-var parents={};RSR.forEach(function(r){if(!r.fields.CamperName)return;var key=r.fields.Parent1Phone||r.fields.Parent1Name;if(!key)return;if(!parents[key]){parents[key]={name:r.fields.Parent1Name,phone:r.fields.Parent1Phone,campers:[]};}
-parents[key].campers.push(r.fields.CamperName.split(' ')[0]);if(r.fields.EmergencyContactPhone){var key2=r.fields.EmergencyContactPhone;if(!parents[key2]){parents[key2]={name:r.fields.EmergencyContact,phone:r.fields.EmergencyContactPhone,campers:[]};}
-parents[key2].campers.push(r.fields.CamperName.split(' ')[0]);}});Object.values(parents).forEach(function(p){if(!p.phone)return;var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#111;border:1px solid #333;border-radius:8px;margin-bottom:6px;';var info=document.createElement('div');info.innerHTML='<div style="font-size:13px;font-weight:600;color:#fff">'+(p.name||'Parent')+'</div>'
-+'<div style="font-size:11px;color:#aaa">'+p.campers.join(', ')+' · '+p.phone+'</div>';var btnWrap=document.createElement('div');btnWrap.style.cssText='display:flex;gap:6px;flex-shrink:0;margin-left:8px;';
-var btn=document.createElement('button');btn.style.cssText='background:#66cccc;color:#0a0a0a;border:none;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;';btn.textContent='📱 Text';var phone=p.phone.replace(/[^0-9]/g,'');var txtMsg=msg||'Hi! This is AngelStreet Memphis. Your Young Creative has camp this week Mon-Fri, 9am-3pm. Please ensure they arrive on time. Thank you!';btn.onclick=function(){window.open('sms:'+phone+'?body='+encodeURIComponent(txtMsg));};btnWrap.appendChild(btn);
-if(p.email){var eBtn=document.createElement('button');eBtn.style.cssText='background:#ca3092;color:#fff;border:none;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;';eBtn.textContent='📧 Email';(function(e2){eBtn.onclick=function(){var m=document.getElementById('comm-ta')?document.getElementById('comm-ta').value:'This is AngelStreet Memphis.';window.open('mailto:'+e2+'?subject=AngelStreet+Creative+Arts+Camp+2026&body='+encodeURIComponent(m));};})(p.email);btnWrap.appendChild(eBtn);}
-row.appendChild(info);row.appendChild(btnWrap);list.appendChild(row);});if(Object.keys(parents).length===0){list.innerHTML='<div style="color:#555;font-size:13px;text-align:center;padding:16px">No parent contacts found for this week.</div>';}}
 function renderAttComm(){var list=document.getElementById('comm-att-list');list.innerHTML='';
 var seen={};
 var campers=[];
