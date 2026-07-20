@@ -729,25 +729,15 @@ function clearCache(t){if(t){delete _cache[t];delete _cacheTime[t];}else{_cache=
 // ── BATCH PRE-WARM ───────────────────────────────────────────────────────
 // Fetches all core tables in one Netlify function call on app start
 async function prewarmCache(){
+  // Only fetch Users on login — fetching everything at once causes 429 rate limiting
   try{
-    var coreTables=[TU,TS,TR,TAT,TT,TG,TGA,'Invoices','Updates','Shifts'];
-    var res=await fetch('/.netlify/functions/airtable-batch',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({tables:coreTables})
-    });
-    if(res.ok){
-      var data=await res.json();
-      var now=Date.now();
-      Object.keys(data).forEach(function(table){
-        _cache[table]=data[table];
-        _cacheTime[table]=now;
-      });
-      if(data[TU]&&data[TU].length>0){LUR=data[TU];return;}
+    var recs=await AF(TU);
+    if(recs&&recs.length>0){
+      LUR=recs;
+      _cache[TU]=recs;
+      _cacheTime[TU]=Date.now();
     }
   }catch(e){}
-  // Batch failed or returned empty — fall back to direct Users fetch
-  try{LUR=await AF(TU);}catch(e){}
 }
 // ── END BATCH PRE-WARM ────────────────────────────────────────────────────
 
