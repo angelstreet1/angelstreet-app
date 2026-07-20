@@ -736,16 +736,18 @@ async function prewarmCache(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({tables:coreTables})
     });
-    if(!res.ok)return;
-    var data=await res.json();
-    var now=Date.now();
-    Object.keys(data).forEach(function(table){
-      _cache[table]=data[table];
-      _cacheTime[table]=now;
-    });
-    // Populate LUR from cache
-    if(data[TU])LUR=data[TU];
+    if(res.ok){
+      var data=await res.json();
+      var now=Date.now();
+      Object.keys(data).forEach(function(table){
+        _cache[table]=data[table];
+        _cacheTime[table]=now;
+      });
+      if(data[TU]&&data[TU].length>0){LUR=data[TU];return;}
+    }
   }catch(e){}
+  // Batch failed or returned empty — fall back to direct Users fetch
+  try{LUR=await AF(TU);}catch(e){}
 }
 // ── END BATCH PRE-WARM ────────────────────────────────────────────────────
 
@@ -779,7 +781,14 @@ function getDateForDay(dayName,weekNum){var weekStarts={1:new Date(2026,5,8),2:n
 function getCampWeek(){var n=new Date(),t=n.getTime();if(t>=new Date(2026,5,8)&&t<new Date(2026,5,15))return'Week1';if(t>=new Date(2026,5,15)&&t<new Date(2026,5,22))return'Week2';if(t>=new Date(2026,5,22)&&t<new Date(2026,5,29))return'Week3';if(t>=new Date(2026,5,29)&&t<=new Date(2026,6,4))return'Week4';if(t<new Date(2026,5,8))return'Week1';return'Week1';}
 function filterNames(v){buildNL(v);}
 function buildNL(f){var nl=document.getElementById('nl');nl.innerHTML='';USERS.filter(function(u){return!f||u.n.toLowerCase().includes(f.toLowerCase());}).forEach(function(u){var d=document.createElement('div');d.className='ni'+(LU&&LU.n===u.n?' sel':'');var rl=u.r==='jrta'?'Jr. TA':u.r==='staff-pt'?'Staff PT':u.r==='staff'?'Staff':u.r==='ta'?'Teaching Artist':'Admin';d.innerHTML='<span>'+u.n+'</span><span class="rt">'+rl+'</span>';(function(usr){d.onclick=function(){selLU(usr);};})(u);nl.appendChild(d);});}
-async function selLU(u){LU=u;LP='';document.querySelectorAll('.ni').forEach(function(el){el.classList.toggle('sel',el.querySelector('span').textContent===u.n);});if(!LUR||LUR.length===0){try{LUR=await AFC(TU);}catch(e){}}var hp=LUR.find(function(r){return r.fields.Name===u.n&&r.fields.PIN;});document.getElementById('pl').textContent=hp?'Enter your PIN':'Create a 4-digit PIN';document.getElementById('pinsec').style.display='block';buildPD();buildKP();document.getElementById('lm').textContent='';}
+async function selLU(u){LU=u;LP='';document.querySelectorAll('.ni').forEach(function(el){el.classList.toggle('sel',el.querySelector('span').textContent===u.n);});
+  if(!LUR||LUR.length===0){
+    var lm2=document.getElementById('lm');
+    if(lm2){lm2.textContent='Loading...';lm2.style.color='#ca3092';lm2.style.display='block';}
+    try{LUR=await AFC(TU);}catch(e){try{LUR=await AF(TU);}catch(e2){}}
+    if(lm2){lm2.textContent='';lm2.style.display='none';}
+  }
+  var hp=LUR.find(function(r){return r.fields.Name===u.n&&r.fields.PIN;});document.getElementById('pl').textContent=hp?'Enter your PIN':'Create a 4-digit PIN';document.getElementById('pinsec').style.display='block';buildPD();buildKP();document.getElementById('lm').textContent='';}
 function buildPD(){var d=document.getElementById('pd');d.innerHTML='';for(var i=0;i<4;i++){var dot=document.createElement('div');dot.className='dot'+(LP.length>i?' on':'');d.appendChild(dot);}}
 function buildKP(){var kp=document.getElementById('kp');kp.innerHTML='';[1,2,3,4,5,6,7,8,9,'⌫',0,'→'].forEach(function(k){var b=document.createElement('button');b.className='key'+(k==='⌫'?' del':k==='→'?' go':'');b.textContent=k;(function(key){b.onclick=function(){if(key==='⌫'){LP=LP.slice(0,-1);buildPD();}
 else if(key==='→'){subLP();}
@@ -808,7 +817,13 @@ infoHtml+='<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:6px"
 var scheduleIds=['campschedule-page','updates','schedule'];var topCards=cards.filter(function(c){return scheduleIds.indexOf(c.id)>=0;});var gridCards=cards.filter(function(c){return scheduleIds.indexOf(c.id)<0;});function makeCard(c){var d=document.createElement('div');d.className='hcard';var iconSrc=ICON_MAP[c.id];var iconHtml=iconSrc?'<img src="'+iconSrc+'" style="width:52px;height:56px;object-fit:contain;margin-bottom:6px">':'<div class="hci '+c.cl+'">'+c.ic+'</div>';d.innerHTML=iconHtml+'<div class="hcl"><h3>'+c.lb+'</h3></div>';(function(pid){d.onclick=function(){SP(pid);};})(c.id);return d;}
 if(topCards.length){var row=document.createElement('div');row.className='hcard-row';topCards.forEach(function(c){row.appendChild(makeCard(c));});hc.appendChild(row);}
 if(gridCards.length){var grid=document.createElement('div');grid.className='hcard-grid';gridCards.forEach(function(c){grid.appendChild(makeCard(c));});hc.appendChild(grid);}}
-async function initLogin(){buildNL('');prewarmCache();}
+async function initLogin(){
+  buildNL('');
+  var lm=document.getElementById('lm');
+  if(lm){lm.textContent='Loading...';lm.style.color='#ca3092';lm.style.display='block';}
+  try{await prewarmCache();}catch(e){}
+  if(lm){lm.textContent='';lm.style.display='none';}
+}
 var SW=[{k:'Hermekia',l:'Hermekia'},{k:'Miah',l:'Miah'},{k:'SaSha',l:"Sa'Sha"},{k:'Deonna',l:'Deonna'},{k:'Jessica',l:'Jessica'},{k:'Tanaya',l:'Tanaya'},{k:'Michayia',l:'Michayia'}];var SP2=['Tanaya','Michayia'];var ST={'All-day':'8:30am – 3:30pm','Opening':'8:30am – 12:00pm','Morning':'9:00am – 12:30pm','Afternoon':'11:30am – 3:00pm','Closing':'12:00pm – 3:30pm'};function cdates(){var d=[],dt=new Date(2026,5,8),e=new Date(2026,6,3);while(dt<=e){var w=dt.getDay();if(w!==0&&w!==6){if(!(dt.getMonth()===5&&dt.getDate()===19))d.push(new Date(dt));}dt.setDate(dt.getDate()+1);}return d;}
 function ssf(d){var day=dfl(d),ds=fd(d),j2=(d.getMonth()===6&&d.getDate()===2),j8=(ds==='6/8/2026'),j12=(ds==='6/12/2026');if(j2)return[{type:'Opening',slots:2,time:'8:30am (Showcase)',pf:[]},{type:'Closing',slots:2,time:'ends 3:30pm',pf:[]}];var isW1=(['6/8/2026','6/9/2026','6/10/2026','6/11/2026','6/12/2026'].indexOf(ds)>=0);var mn=(day==='Tuesday'||day==='Monday')?2:1,af=(day==='Wednesday'||day==='Thursday'||day==='Friday')?2:1,op=1,cl=1;if(j8)mn=1;if(j12)af=1;if(isW1){if(day==='Monday')mn=2;if(day==='Tuesday')cl=2;if(day==='Wednesday')op=2;if(day==='Thursday'){af=2;mn=2;}if(day==='Friday')af=2;}
 var adS=(j8||j12)?2:1,adP=(j8||j12)?['Hermekia','Miah']:(day==='Tuesday'?['SaSha']:[]);return[{type:'All-day',slots:adS,time:ST['All-day'],pf:adP},{type:'Opening',slots:op,time:ST['Opening'],pf:[]},{type:'Morning',slots:mn,time:ST['Morning'],pf:[]},{type:'Afternoon',slots:af,time:ST['Afternoon'],pf:[]},{type:'Closing',slots:cl,time:ST['Closing'],pf:[]}].concat(isW1?[]:[{type:'Day Off',slots:1,time:'Not working today',pf:[]}]);}
