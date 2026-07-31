@@ -1931,21 +1931,52 @@ async function renderParentDashboard() {
   if (!REG_SESSION) { renderRegLanding(); return; }
   var f = REG_SESSION.fields;
 
-  // Load existing registrations
-  var regsData = await af2Fetch('Registrations');
-  var myRegs = (regsData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
-  var enrolledIds = myRegs.map(function(r){ return r.fields.ProgramId; });
+  // Load children and registrations
+  var [childData, regsData] = await Promise.all([af2Fetch('Children'), af2Fetch('Registrations')]);
+  var extraChildren = (childData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
 
-  var grade = gradeToNum(f.Grade);
+  // Build full children list: primary child + extra children
+  var allChildren = [{id: REG_SESSION.id + '_primary', name: f.ChildName, grade: f.Grade, school: f.School, isPrimary: true}];
+  extraChildren.forEach(function(r){
+    allChildren.push({id: r.id, name: r.fields.ChildName, grade: r.fields.Grade, school: r.fields.School, isPrimary: false, recId: r.id});
+  });
+
+  // Set active child
+  if (ACTIVE_CHILD_IDX >= allChildren.length) ACTIVE_CHILD_IDX = 0;
+  var activeChild = allChildren[ACTIVE_CHILD_IDX];
+
+  // Get regs for active child
+  var myRegs = (regsData.records||[]).filter(function(r){
+    if (activeChild.isPrimary) return r.fields.FamilyId === REG_SESSION.id && !r.fields.ChildRecordId;
+    return r.fields.ChildRecordId === activeChild.recId;
+  });
+  var enrolledIds = myRegs.map(function(r){ return r.fields.ProgramId; });
+  var grade = gradeToNum(activeChild.grade);
+
   var initials = (f.ParentName||'').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
 
-  var html = '<div style="background:rgba(255,255,255,0.04);border-radius:16px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">'
-    +'<div style="width:44px;height:44px;border-radius:50%;background:#ca3092;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;">'+initials+'</div>'
-    +'<div style="flex:1;">'
-    +'<p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 2px;">'+(f.ParentName||'')+'</p>'
-    +'<p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0;">'+(f.ChildName||'')+' · '+(f.Grade||'')+'th grade · '+(f.School||'')+'</p>'
-    +'</div>'
+  var html = '<div style="background:rgba(255,255,255,0.04);border-radius:16px;padding:14px;margin-bottom:16px;">'
+    +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:'+(allChildren.length>1?'14px':'0')+';">'
+    +'<div style="width:40px;height:40px;border-radius:50%;background:#ca3092;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;">'+initials+'</div>'
+    +'<div style="flex:1;"><p style="color:#fff;font-size:13px;font-weight:700;margin:0;">'+(f.ParentName||'')+'</p></div>'
     +'<button onclick="addChild()" style="background:rgba(102,204,204,0.15);border:1px solid rgba(102,204,204,0.3);border-radius:8px;padding:6px 10px;color:#66cccc;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">+ Child</button>'
+    +'</div>';
+
+  // Child selector tabs if multiple children
+  if (allChildren.length > 1) {
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    allChildren.forEach(function(child, idx) {
+      var isActive = idx === ACTIVE_CHILD_IDX;
+      html += '<button onclick="ACTIVE_CHILD_IDX='+idx+';renderParentDashboard()" style="padding:6px 12px;border-radius:20px;border:1.5px solid '+(isActive?'#ca3092':'rgba(255,255,255,0.15)')+';background:'+(isActive?'#ca3092':'transparent')+';color:'+(isActive?'#fff':'rgba(255,255,255,0.5)')+';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">'+child.name+'</button>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Show active child info
+  html += '<div style="background:rgba(202,48,146,0.06);border:1px solid rgba(202,48,146,0.15);border-radius:12px;padding:12px 14px;margin-bottom:16px;">'
+    +'<p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">'+activeChild.name+'</p>'
+    +'<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+activeChild.grade+'th grade · '+activeChild.school+'</p>'
     +'</div>';
 
   if (enrolledIds.length > 0) {
@@ -2005,6 +2036,58 @@ async function renderParentDashboard() {
   c.innerHTML = html;
 }
 
+var ACTIVE_CHILD_IDX = 0; // which child is selected
+
+function addChild() {
+  var c = document.getElementById('reg-content');
+  c.innerHTML = '<p style="color:#fff;font-size:18px;font-weight:800;margin:0 0 4px;">Add another child</p>'
+    + '<p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0 0 20px;">Add a second child to your account</p>'
+    + renderField('ac-cname','Child full name','text','First Last')
+    + renderField('ac-dob','Date of birth','date','')
+    + '<div style="margin-bottom:14px;"><label style="font-size:11px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">Current grade</label>'
+    + '<select id="ac-grade" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:14px;box-sizing:border-box;font-family:inherit;">'
+    + '<option value="">Select grade</option>'
+    + '<option value="3">3rd grade</option><option value="4">4th grade</option><option value="5">5th grade</option>'
+    + '<option value="6">6th grade</option><option value="7">7th grade</option><option value="8">8th grade</option>'
+    + '</select></div>'
+    + renderField('ac-school','School name','text','')
+    + renderField('ac-dismissal','School dismissal time','time','')
+    + renderField('ac-allergies','Allergies or medical conditions','text','None')
+    + '<p id="ac-err" style="color:#ca3092;font-size:13px;margin:0 0 14px;display:none;"></p>'
+    + '<button onclick="doAddChild()" style="width:100%;padding:16px;background:#ca3092;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;">Add child</button>'
+    + '<button onclick="renderParentDashboard()" style="width:100%;padding:12px;background:none;border:none;color:rgba(255,255,255,0.35);font-size:13px;cursor:pointer;font-family:inherit;">← Back</button>';
+}
+
+async function doAddChild() {
+  var err = document.getElementById('ac-err');
+  if (!gv('ac-cname') || !gv('ac-grade') || !gv('ac-school')) {
+    err.textContent = 'Please fill in all required fields.';
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+
+  // Store additional child as a new record in Children table
+  var fields = {
+    FamilyId: REG_SESSION.id,
+    ParentName: REG_SESSION.fields.ParentName,
+    ChildName: gv('ac-cname'),
+    DateOfBirth: gv('ac-dob'),
+    Grade: gv('ac-grade'),
+    School: gv('ac-school'),
+    DismissalTime: gv('ac-dismissal'),
+    Allergies: gv('ac-allergies') || 'None',
+    CreatedAt: new Date().toISOString()
+  };
+
+  var rec = await af2Post('Children', fields);
+  if (rec.error) { err.textContent = 'Error: ' + rec.error; err.style.display='block'; return; }
+
+  // Reload dashboard
+  ACTIVE_CHILD_IDX = -1; // will be set to new child
+  renderParentDashboard();
+}
+
 async function enrollInProgram(progId) {
   if (!REG_SESSION) return;
   var prog = AS_PROGRAMS.find(function(p){ return p.id === progId; });
@@ -2017,15 +2100,28 @@ async function enrollInProgram(progId) {
     if (count >= prog.cap) { alert(prog.name + ' is full ('+prog.cap+' spots max).'); return; }
   }
 
+  // Get active child info
+  var allCh = [{id:REG_SESSION.id+'_primary',name:REG_SESSION.fields.ChildName,grade:REG_SESSION.fields.Grade,isPrimary:true}];
   var fields = {
     FamilyId: REG_SESSION.id,
-    ChildName: REG_SESSION.fields.ChildName,
+    ChildName: allCh[ACTIVE_CHILD_IDX] ? allCh[ACTIVE_CHILD_IDX].name : REG_SESSION.fields.ChildName,
     ProgramId: progId,
     ProgramName: prog.name,
-    Grade: REG_SESSION.fields.Grade,
+    Grade: allCh[ACTIVE_CHILD_IDX] ? allCh[ACTIVE_CHILD_IDX].grade : REG_SESSION.fields.Grade,
     RegisteredAt: new Date().toISOString(),
     Status: 'Active'
   };
+  // Tag extra children
+  if (ACTIVE_CHILD_IDX > 0) {
+    var childData2 = await af2Fetch('Children');
+    var extraKids = (childData2.records||[]).filter(function(r){return r.fields.FamilyId===REG_SESSION.id;});
+    var kid = extraKids[ACTIVE_CHILD_IDX-1];
+    if (kid) {
+      fields.ChildName = kid.fields.ChildName;
+      fields.Grade = kid.fields.Grade;
+      fields.ChildRecordId = kid.id;
+    }
+  }
 
   var rec = await af2Post('Registrations', fields);
   if (rec.error) { alert('Error: ' + rec.error); return; }
