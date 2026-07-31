@@ -1810,6 +1810,8 @@ function renderCreateAccount() {
     + '<option value="">Select grade</option>'
     + '<option value="3">3rd grade</option><option value="4">4th grade</option><option value="5">5th grade</option>'
     + '<option value="6">6th grade</option><option value="7">7th grade</option><option value="8">8th grade</option>'
+    + '<option value="9">9th grade</option><option value="10">10th grade</option><option value="11">11th grade</option>'
+    + '<option value="12">12th grade</option>'
     + '</select></div>'
     + renderField('ca-school','School name','text','')
     + renderField('ca-dismissal','School dismissal time','time','')
@@ -1959,7 +1961,7 @@ async function renderParentDashboard() {
     +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:'+(allChildren.length>1?'14px':'0')+';">'
     +'<div style="width:40px;height:40px;border-radius:50%;background:#ca3092;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;">'+initials+'</div>'
     +'<div style="flex:1;"><p style="color:#fff;font-size:13px;font-weight:700;margin:0;">'+(f.ParentName||'')+'</p></div>'
-    +'<button onclick="addChild()" style="background:rgba(102,204,204,0.15);border:1px solid rgba(102,204,204,0.3);border-radius:8px;padding:6px 10px;color:#66cccc;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">+ Child</button>'
+    +'<button onclick="addChild()" style="background:rgba(102,204,204,0.15);border:1px solid rgba(102,204,204,0.3);border-radius:8px;padding:6px 10px;color:#66cccc;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">+ Add child</button>'
     +'</div>';
 
   // Child selector tabs if multiple children
@@ -2049,6 +2051,8 @@ function addChild() {
     + '<option value="">Select grade</option>'
     + '<option value="3">3rd grade</option><option value="4">4th grade</option><option value="5">5th grade</option>'
     + '<option value="6">6th grade</option><option value="7">7th grade</option><option value="8">8th grade</option>'
+    + '<option value="9">9th grade</option><option value="10">10th grade</option><option value="11">11th grade</option>'
+    + '<option value="12">12th grade</option>'
     + '</select></div>'
     + renderField('ac-school','School name','text','')
     + renderField('ac-dismissal','School dismissal time','time','')
