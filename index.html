@@ -61,7 +61,7 @@
       <h1 style="font-size:32px;font-weight:800;color:#fff;margin:0 0 4px;letter-spacing:-0.5px;">AngelStreet</h1>
       <p style="font-size:12px;color:rgba(255,255,255,0.65);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin:0 0 36px;">Memphis</p>
       <div style="display:flex;flex-direction:column;gap:12px;">
-        <button onclick="SP('parent-portal')" style="width:100%;padding:17px;background:rgba(255,255,255,0.95);color:#0a0a0a;border:none;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Parent portal</button>
+        <button onclick="SP('reg-portal');loadRegPortal();" style="width:100%;padding:17px;background:rgba(255,255,255,0.95);color:#0a0a0a;border:none;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Parent portal</button>
         <button onclick="SP('login')" style="width:100%;padding:17px;background:#ca3092;color:#fff;border:none;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">AngelStreet team</button>
       </div>
     </div>
@@ -501,6 +501,175 @@
 </div>
 
 
+<!-- PROGRAM SELECTOR (after team login) -->
+<div id="program-selector" class="page">
+  <div style="min-height:100vh;background:#0d0d1a;display:flex;flex-direction:column;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);flex-shrink:0;"></div>
+    <div style="flex:1;display:flex;flex-direction:column;padding:28px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;">
+        <div>
+          <p style="color:rgba(255,255,255,0.45);font-size:11px;font-weight:600;margin:0;text-transform:uppercase;letter-spacing:0.5px;">Welcome back</p>
+          <p id="ps-name" style="color:#fff;font-size:22px;font-weight:800;margin:3px 0 0;letter-spacing:-0.5px;"></p>
+        </div>
+        <div id="ps-avatar" style="width:42px;height:42px;border-radius:50%;background:#ca3092;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;"></div>
+      </div>
+      <p style="color:rgba(255,255,255,0.4);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 16px;">Select a program</p>
+      <div onclick="SP('home')" style="background:rgba(202,48,146,0.1);border:1.5px solid rgba(202,48,146,0.35);border-radius:18px;padding:20px 18px;margin-bottom:14px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:#ca3092;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="font-size:22px;">☀️</span>
+          </div>
+          <div>
+            <p style="color:#fff;font-size:15px;font-weight:800;margin:0 0 2px;letter-spacing:-0.3px;">Creative Arts Camp</p>
+            <p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0;">Summer 2026</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="background:rgba(202,48,146,0.2);color:#e878bb;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Check-in</span>
+          <span style="background:rgba(202,48,146,0.2);color:#e878bb;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Payroll</span>
+          <span style="background:rgba(202,48,146,0.2);color:#e878bb;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Roster</span>
+          <span style="background:rgba(202,48,146,0.2);color:#e878bb;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Timesheets</span>
+        </div>
+      </div>
+      <div onclick="SP('afterschool-home')" style="background:rgba(102,204,204,0.08);border:1.5px solid rgba(102,204,204,0.25);border-radius:18px;padding:20px 18px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;background:#66cccc;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="font-size:22px;">🏫</span>
+          </div>
+          <div>
+            <p style="color:#fff;font-size:15px;font-weight:800;margin:0 0 2px;letter-spacing:-0.3px;">After-School Programs</p>
+            <p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0;">School year 2026–2027</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="background:rgba(102,204,204,0.15);color:#66cccc;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Registrations</span>
+          <span style="background:rgba(102,204,204,0.15);color:#66cccc;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Programs</span>
+          <span style="background:rgba(102,204,204,0.15);color:#66cccc;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Attendance</span>
+        </div>
+      </div>
+      <div style="margin-top:auto;padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <button onclick="CU=null;SP('landing')" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;">Sign out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AFTER-SCHOOL HOME -->
+<div id="afterschool-home" class="page">
+  <div style="min-height:100vh;background:#0d0d1a;display:flex;flex-direction:column;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);flex-shrink:0;"></div>
+    <div style="padding:20px 18px 14px;display:flex;align-items:center;gap:12px;">
+      <button onclick="SP('program-selector')" style="width:34px;height:34px;background:rgba(102,204,204,0.12);border:1px solid rgba(102,204,204,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#66cccc;font-size:16px;font-weight:700;">←</button>
+      <div>
+        <p style="color:#fff;font-size:17px;font-weight:800;margin:0;letter-spacing:-0.3px;">After-School</p>
+        <p style="color:rgba(255,255,255,0.35);font-size:10px;margin:0;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">School year 2026–2027</p>
+      </div>
+    </div>
+    <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div onclick="SP('as-registrations')" style="background:rgba(102,204,204,0.08);border:1px solid rgba(102,204,204,0.2);border-radius:14px;padding:16px 14px;cursor:pointer;">
+        <div style="width:32px;height:32px;background:#66cccc;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:16px;">📋</div>
+        <p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">Registrations</p>
+        <p style="color:rgba(255,255,255,0.35);font-size:10px;margin:0;">All programs</p>
+      </div>
+      <div onclick="SP('as-attendance')" style="background:rgba(141,77,158,0.1);border:1px solid rgba(141,77,158,0.25);border-radius:14px;padding:16px 14px;cursor:pointer;">
+        <div style="width:32px;height:32px;background:#8d4d9e;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:16px;">✅</div>
+        <p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">Attendance</p>
+        <p style="color:rgba(255,255,255,0.35);font-size:10px;margin:0;">By program</p>
+      </div>
+      <div onclick="SP('as-programs')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px 14px;cursor:pointer;">
+        <div style="width:32px;height:32px;background:rgba(255,255,255,0.1);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:16px;">🎭</div>
+        <p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">Programs</p>
+        <p style="color:rgba(255,255,255,0.35);font-size:10px;margin:0;">Manage all</p>
+      </div>
+      <div onclick="SP('as-participants')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px 14px;cursor:pointer;">
+        <div style="width:32px;height:32px;background:rgba(255,255,255,0.1);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:16px;">👥</div>
+        <p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">Participants</p>
+        <p style="color:rgba(255,255,255,0.35);font-size:10px;margin:0;">All families</p>
+      </div>
+    </div>
+    <div style="margin:0 16px;">
+      <div style="background:rgba(202,48,146,0.08);border:1px solid rgba(202,48,146,0.2);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="SP('comm')">
+        <div>
+          <p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">Communication</p>
+          <p style="color:rgba(255,255,255,0.35);font-size:10px;margin:0;">Text all parents</p>
+        </div>
+        <span style="font-size:20px;">💬</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AS REGISTRATIONS PAGE -->
+<div id="as-registrations" class="page">
+  <div style="background:#0d0d1a;min-height:100vh;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);"></div>
+    <div class="nav-bar" style="background:#0d0d1a;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <button onclick="SP('afterschool-home')" style="background:none;border:none;color:#66cccc;font-size:14px;font-weight:600;cursor:pointer;">← Back</button>
+      <div><div style="font-size:15px;font-weight:700;color:#fff;">Registrations</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">2026–2027 programs</div></div>
+    </div>
+    <div style="max-width:700px;margin:0 auto;padding:16px;" id="as-reg-content">
+      <div style="color:#888;text-align:center;padding:40px;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- AS PROGRAMS PAGE -->
+<div id="as-programs" class="page">
+  <div style="background:#0d0d1a;min-height:100vh;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);"></div>
+    <div class="nav-bar" style="background:#0d0d1a;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <button onclick="SP('afterschool-home')" style="background:none;border:none;color:#66cccc;font-size:14px;font-weight:600;cursor:pointer;">← Back</button>
+      <div><div style="font-size:15px;font-weight:700;color:#fff;">Programs</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">Manage after-school programs</div></div>
+    </div>
+    <div style="max-width:700px;margin:0 auto;padding:16px;" id="as-prog-content">
+      <div style="color:#888;text-align:center;padding:40px;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- AS PARTICIPANTS PAGE -->
+<div id="as-participants" class="page">
+  <div style="background:#0d0d1a;min-height:100vh;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);"></div>
+    <div class="nav-bar" style="background:#0d0d1a;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <button onclick="SP('afterschool-home')" style="background:none;border:none;color:#66cccc;font-size:14px;font-weight:600;cursor:pointer;">← Back</button>
+      <div><div style="font-size:15px;font-weight:700;color:#fff;">Participants</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">All registered families</div></div>
+    </div>
+    <div style="max-width:700px;margin:0 auto;padding:16px;" id="as-part-content">
+      <div style="color:#888;text-align:center;padding:40px;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- AS ATTENDANCE PAGE -->
+<div id="as-attendance" class="page">
+  <div style="background:#0d0d1a;min-height:100vh;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);"></div>
+    <div class="nav-bar" style="background:#0d0d1a;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <button onclick="SP('afterschool-home')" style="background:none;border:none;color:#66cccc;font-size:14px;font-weight:600;cursor:pointer;">← Back</button>
+      <div><div style="font-size:15px;font-weight:700;color:#fff;">Attendance</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">After-school programs</div></div>
+    </div>
+    <div style="max-width:700px;margin:0 auto;padding:16px;" id="as-att-content">
+      <div style="color:#888;text-align:center;padding:40px;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PARENT REGISTRATION PORTAL -->
+<div id="reg-portal" class="page">
+  <div style="min-height:100vh;background:#0d0d1a;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);"></div>
+    <div style="padding:16px 20px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.07);">
+      <button onclick="SP('landing')" style="background:none;border:none;color:#66cccc;font-size:14px;font-weight:600;cursor:pointer;">← Back</button>
+      <div>
+        <p style="color:#fff;font-size:15px;font-weight:800;margin:0;">AngelStreet Programs</p>
+        <p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">2026–2027 registration</p>
+      </div>
+    </div>
+    <div style="max-width:480px;margin:0 auto;padding:20px;" id="reg-content"></div>
+  </div>
+</div>
+
 
 <!-- PAYROLL ADMIN PAGE -->
 <div id="payrolladmin" class="page">
@@ -732,7 +901,7 @@ else if(id==='lead')loadLead();
 else if(id==='parentupdate'){showPostParentUpdate();return;}
 else if(id==='shiftchecklist')loadShiftChecklist();
 else if(id==='overview')loadOverview();
-else if(id==='parent-portal'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var pp=document.getElementById('parent-portal');if(pp)pp.classList.add('active');window.scrollTo(0,0);loadParentPortal();return;}
+else if(id==='parent-portal'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var pp=document.getElementById('parent-portal');if(pp)pp.classList.add('active');window.scrollTo(0,0);loadParentPortal();return;}else if(id==='reg-portal'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var rp=document.getElementById('reg-portal');if(rp)rp.classList.add('active');window.scrollTo(0,0);return;}else if(id==='as-registrations'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-registrations').classList.add('active');window.scrollTo(0,0);loadASRegistrations();return;}else if(id==='as-programs'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-programs').classList.add('active');window.scrollTo(0,0);loadASPrograms();return;}else if(id==='as-participants'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-participants').classList.add('active');window.scrollTo(0,0);loadASParticipants();return;}else if(id==='as-attendance'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-attendance').classList.add('active');window.scrollTo(0,0);return;}else if(id==='program-selector'||id==='afterschool-home'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');window.scrollTo(0,0);return;}
 else if(id==='invoice')loadInvoice();
 else if(id==='invoiceadmin')loadInvoiceAdmin();else if(id==='payrolladmin')loadPayrollAdmin();else if(id==='mygroup')loadMyGroup();else if(id==='groupassignments')loadGA();else if(id==='taview')loadTAView();}
 document.getElementById('so-btn').onclick=function(){signOut();};document.getElementById('sched-back').onclick=function(){SP('home');};document.getElementById('spdf').onclick=function(){exportSchedPDF();};document.getElementById('sref').onclick=function(){loadSched();};document.getElementById('sref2').onclick=function(){loadSched();};document.getElementById('tc-back').onclick=function(){SP('home');};document.getElementById('ci-back').onclick=function(){SP('home');};document.getElementById('ci-ref').onclick=function(){loadCI();};document.getElementById('ci-week').onchange=function(){loadCI();};document.getElementById('comm-back').onclick=function(){SP('home');};document.getElementById('cs-back').onclick=function(){CU?SP('home'):SP('landing');};document.getElementById('upd-back').onclick=function(){SP('home');};document.getElementById('upd-send').onclick=function(){postUpd();};document.getElementById('grp-back').onclick=function(){SP('home');};document.getElementById('grp-save-btn').onclick=function(){saveGrp();};document.getElementById('adm-back').onclick=function(){SP('home');};document.getElementById('em-back').onclick=function(){SP('home');};document.getElementById('act-back').onclick=function(){SP('home');};document.getElementById('mg-back').onclick=function(){SP('home');};document.getElementById('ga-back').onclick=function(){SP('home');};document.getElementById('tv-back').onclick=function(){SP('home');};
@@ -765,7 +934,7 @@ else if(LP.length<4){LP+=key;buildPD();var hp=LUR.find(function(r){return r.fiel
 async function subLP(){if(!LU){document.getElementById('lm').textContent='Select your name.';return;}
 if(LP.length!==4){document.getElementById('lm').textContent='Enter 4 digits.';return;}
 var rec=LUR.find(function(r){return r.fields.Name===LU.n;});if(rec&&rec.fields.PIN){if(rec.fields.PIN!==LP){document.getElementById('lm').textContent='Wrong PIN. Try again.';LP='';buildPD();return;}}else{try{if(rec)await AP(TU,rec.id,{PIN:LP});else await AC(TU,{Name:LU.n,PIN:LP,Program:LU.p,HoursLimit:LU.eh?String(LU.eh):''});clearCache(TU);LUR=await AFC(TU);}catch(e){document.getElementById('lm').textContent='Error saving PIN.';return;}}
-CU=LU;buildHome();SP('home');}
+CU=LU;buildHome();if(CU.r==='admin'||CU.r==='staff'){SP('program-selector');loadProgramSelector();}else{SP('home');}}
 function signOut(){CU=null;LU=null;LP='';document.getElementById('pinsec').style.display='none';document.getElementById('ns').value='';buildNL('');SP('login');}
 var SPIRIT_DAYS=[{date:'6/11/2026',name:'Crazy Sock Day',emoji:'🧦',desc:'Wear your craziest, brightest, or most creative socks! Mismatched, bold patterns, fun designs — this day is all about personality and self-expression.',week:'Week1'},{date:'6/15/2026',name:'AngelStreet Colors Day',emoji:'💜',desc:'Wear AngelStreet signature colors: pink, purple, or aquamarine. This day represents unity, pride, and celebrating our camp identity together.',week:'Week2'},{date:'6/18/2026',name:'Character Day',emoji:'🎭',desc:'Dress as a character that inspires you — superhero, princess, athlete, or positive role model. Celebrate creativity and confidence in expressing your identity.',week:'Week2'},{date:'6/25/2026',name:'Throwback Day',emoji:'🕰️',desc:"Dress like your favorite era — 80s, 90s, or Y2K! Think Run DMC, TLC, Destiny's Child. Music, culture, and style all in one.",week:'Week3'},{date:'6/26/2026',name:'Twin Day',emoji:'👯',desc:'Find a friend or your group and dress alike! Matching colors, outfits, hairstyles, or accessories. Twin Day is all about sisterhood and connection.',week:'Week3'},{date:'7/3/2026',name:'Color Wars Day',emoji:'🎨',desc:'Each group is assigned a color. Dress in your group color and compete in friendly challenges all day. Teamwork, group pride, and healthy competition!',week:'Week4'}];function getTodaySpirit(){var today=tstr();return SPIRIT_DAYS.find(function(s){return s.date===today;});}
 function getUpcomingSpirit(){var now=new Date();for(var i=1;i<=3;i++){var d=new Date(now);d.setDate(now.getDate()+i);var ds=(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();var found=SPIRIT_DAYS.find(function(s){return s.date===ds;});if(found)return{spirit:found,daysAway:i};}
@@ -1510,6 +1679,468 @@ async function renderSubmissionLog(filterName){
   html+='</tbody></table></div>';
   logDiv.innerHTML=html;
 }
+
+
+// ── AFTER-SCHOOL REGISTRATION SYSTEM ─────────────────────────────────────
+var AF2_BASE = '/.netlify/functions/airtable2';
+var REG_SESSION = null; // logged-in parent session
+
+// Programs data (hardcoded, update when days confirmed)
+var AS_PROGRAMS = [
+  {id:'choir',name:'Choir',day:'Monday',grades:'All grades',gradeMin:3,gradeMax:8,cap:null,status:'open',desc:'Vocal performance and music theory every Monday.'},
+  {id:'flock',name:'FLOCK',day:'Wednesday',grades:'All grades',gradeMin:3,gradeMax:8,cap:25,status:'open',desc:'Group mentoring focused on leadership, identity, and community.',
+    dates:['9/16','9/23','9/30','10/7','10/21','10/28','11/4','11/18','12/2','12/9']},
+  {id:'djlab',name:'DJ Lab',day:'TBD',grades:'5th grade and up',gradeMin:5,gradeMax:8,cap:10,status:'coming-soon',desc:'Music production and DJ technique.'},
+  {id:'photography',name:'Photography & Graphic Design',day:'TBD',grades:'7th grade and up',gradeMin:7,gradeMax:8,cap:10,status:'coming-soon',desc:'Photography fundamentals paired with digital design.'},
+  {id:'step',name:'Step',day:'TBD',grades:'All grades',gradeMin:3,gradeMax:8,cap:25,status:'coming-soon',desc:'Step dance performance and choreography.'}
+];
+
+function gradeToNum(grade) {
+  var g = parseInt(String(grade).replace(/[^0-9]/g,''));
+  return isNaN(g) ? 3 : g;
+}
+
+async function af2Fetch(table, opts) {
+  opts = opts || {};
+  var url = AF2_BASE + '/' + table + '?pageSize=100';
+  var r = await fetch(url);
+  if (!r.ok) throw new Error('Error ' + r.status);
+  return r.json();
+}
+
+async function af2Post(table, fields) {
+  var r = await fetch(AF2_BASE + '/' + table, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({fields: fields})
+  });
+  return r.json();
+}
+
+async function af2Patch(table, id, fields) {
+  var r = await fetch(AF2_BASE + '/' + table + '/' + id, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({fields: fields})
+  });
+  return r.json();
+}
+
+async function af2Delete(table, id) {
+  var r = await fetch(AF2_BASE + '/' + table + '/' + id, {method:'DELETE'});
+  return r.json();
+}
+
+// ── PROGRAM SELECTOR (team login) ────────────────────────────────────────
+function loadProgramSelector() {
+  if (!CU) return;
+  document.getElementById('ps-name').textContent = CU.n;
+  var initials = CU.n.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+  document.getElementById('ps-avatar').textContent = initials;
+}
+
+// ── PARENT REGISTRATION PORTAL ───────────────────────────────────────────
+function loadRegPortal() {
+  var c = document.getElementById('reg-content');
+  if (!c) return;
+  if (REG_SESSION) {
+    renderParentDashboard();
+  } else {
+    renderRegLanding();
+  }
+}
+
+function renderRegLanding() {
+  var c = document.getElementById('reg-content');
+  c.innerHTML = '<div style="text-align:center;padding:32px 0 24px;">'
+    + '<div style="font-size:48px;margin-bottom:12px;">😇</div>'
+    + '<p style="color:#fff;font-size:20px;font-weight:800;margin:0 0 4px;letter-spacing:-0.3px;">AngelStreet Programs</p>'
+    + '<p style="color:rgba(255,255,255,0.45);font-size:13px;margin:0 0 32px;">Register your child for fall programs</p>'
+    + '<button onclick="renderCreateAccount()" style="width:100%;padding:16px;background:#fff;color:#0a0a0a;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;font-family:inherit;">Create account</button>'
+    + '<button onclick="renderSignIn()" style="width:100%;padding:16px;background:#ca3092;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Sign in</button>'
+    + '<p style="color:rgba(255,255,255,0.25);font-size:11px;margin-top:24px;">All programs are free. Registration opens August 1, 2026.</p>'
+    + '</div>';
+}
+
+function renderSignIn() {
+  var c = document.getElementById('reg-content');
+  c.innerHTML = '<p style="color:#fff;font-size:18px;font-weight:800;margin:0 0 4px;">Sign in</p>'
+    + '<p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0 0 24px;">Use your email and password</p>'
+    + '<div style="margin-bottom:14px;"><label style="font-size:11px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">Email address</label>'
+    + '<input id="si-email" type="email" placeholder="your@email.com" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:14px;box-sizing:border-box;font-family:inherit;"></div>'
+    + '<div style="margin-bottom:24px;"><label style="font-size:11px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">Password</label>'
+    + '<input id="si-pass" type="password" placeholder="••••••••" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:14px;box-sizing:border-box;font-family:inherit;"></div>'
+    + '<p id="si-err" style="color:#ca3092;font-size:13px;margin:0 0 14px;display:none;"></p>'
+    + '<button onclick="doSignIn()" style="width:100%;padding:16px;background:#ca3092;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Sign in</button>'
+    + '<button onclick="renderRegLanding()" style="width:100%;padding:12px;background:none;border:none;color:rgba(255,255,255,0.35);font-size:13px;cursor:pointer;margin-top:10px;font-family:inherit;">← Back</button>';
+}
+
+async function doSignIn() {
+  var email = (document.getElementById('si-email').value||'').trim().toLowerCase();
+  var pass = document.getElementById('si-pass').value||'';
+  var err = document.getElementById('si-err');
+  if (!email || !pass) { err.textContent='Please enter your email and password.'; err.style.display='block'; return; }
+  err.style.display='none';
+  try {
+    var data = await af2Fetch('Families');
+    var rec = (data.records||[]).find(function(r){
+      return (r.fields.Email||'').toLowerCase()===email && r.fields.Password===pass;
+    });
+    if (!rec) { err.textContent='Email or password is incorrect.'; err.style.display='block'; return; }
+    REG_SESSION = {id: rec.id, fields: rec.fields};
+    renderParentDashboard();
+  } catch(e) { err.textContent='Error: '+e.message; err.style.display='block'; }
+}
+
+function renderCreateAccount() {
+  var c = document.getElementById('reg-content');
+  c.innerHTML = '<p style="color:#fff;font-size:18px;font-weight:800;margin:0 0 4px;">Create account</p>'
+    + '<p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0 0 20px;">Parent or guardian information</p>'
+    + renderField('ca-pname','Your full name','text','Toni Wade')
+    + renderField('ca-email','Email address','email','your@email.com')
+    + renderField('ca-phone','Cell phone','tel','901-555-0100')
+    + renderField('ca-rel','Relationship to child','text','Mother / Guardian')
+    + renderField('ca-pass','Create password','password','Min 6 characters')
+    + '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;margin-bottom:20px;">'
+    + '<p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 16px;">Your child&#39;s information</p>'
+    + renderField('ca-cname','Child full name','text','First Last')
+    + renderField('ca-dob','Date of birth','date','')
+    + '<div style="margin-bottom:14px;"><label style="font-size:11px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">Current grade</label>'
+    + '<select id="ca-grade" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:14px;box-sizing:border-box;font-family:inherit;">'
+    + '<option value="">Select grade</option>'
+    + '<option value="3">3rd grade</option><option value="4">4th grade</option><option value="5">5th grade</option>'
+    + '<option value="6">6th grade</option><option value="7">7th grade</option><option value="8">8th grade</option>'
+    + '</select></div>'
+    + renderField('ca-school','School name','text','')
+    + renderField('ca-dismissal','School dismissal time','time','')
+    + renderField('ca-address','Home address','text','')
+    + renderField('ca-allergies','Allergies or medical conditions','text','None')
+    + '</div>'
+    + '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;margin-bottom:20px;">'
+    + '<p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 16px;">Emergency contact</p>'
+    + renderField('ca-ecname','Emergency contact name','text','')
+    + renderField('ca-ecphone','Emergency contact phone','tel','')
+    + renderField('ca-ecrel','Relationship','text','Grandmother, Uncle, etc.')
+    + '</div>'
+    + '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;margin-bottom:20px;">'
+    + '<p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 16px;">Waivers</p>'
+    + renderWaiver('ca-w1','Media Release','By selecting Yes, I grant AngelStreet Memphis permission to use my child image, likeness, voice, and/or work to promote AngelStreet mission through social media, websites, printed materials, and press coverage. Materials may be edited and distributed publicly. I waive the right to inspect or approve final materials.')
+    + renderWaiver('ca-w2','First Aid & EMS Consent','I give permission for AngelStreet Memphis staff or volunteers to provide basic first aid. If necessary, I authorize AngelStreet Memphis to contact emergency medical services (EMS) and arrange hospital transport. I understand I am responsible for any medical expenses.')
+    + renderWaiver('ca-w3','Transportation Permission','AngelStreet Memphis may provide transportation for students to/from school, program activities, rehearsals, performances, and special events. All drivers follow safety guidelines. By selecting Yes, I give permission for my child to be transported for official program activities.')
+    + '</div>'
+    + '<p id="ca-err" style="color:#ca3092;font-size:13px;margin:0 0 14px;display:none;"></p>'
+    + '<button onclick="doCreateAccount()" style="width:100%;padding:16px;background:#ca3092;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;">Create account</button>'
+    + '<button onclick="renderRegLanding()" style="width:100%;padding:12px;background:none;border:none;color:rgba(255,255,255,0.35);font-size:13px;cursor:pointer;font-family:inherit;">← Back</button>';
+}
+
+function renderField(id, label, type, placeholder) {
+  return '<div style="margin-bottom:14px;"><label style="font-size:11px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">'+label+'</label>'
+    +'<input id="'+id+'" type="'+type+'" placeholder="'+placeholder+'" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;font-size:14px;box-sizing:border-box;font-family:inherit;"></div>';
+}
+
+function renderWaiver(id, title, text) {
+  return '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;margin-bottom:12px;">'
+    +'<p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 8px;">'+title+'</p>'
+    +'<p style="color:rgba(255,255,255,0.45);font-size:11px;line-height:1.6;margin:0 0 12px;">'+text+'</p>'
+    +'<div style="display:flex;gap:10px;">'
+    +'<button id="'+id+'-yes" onclick="setWaiver(\''+id+'\',true)" style="flex:1;padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Yes</button>'
+    +'<button id="'+id+'-no" onclick="setWaiver(\''+id+'\',false)" style="flex:1;padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">No</button>'
+    +'</div></div>';
+}
+
+var WAIVERS = {};
+function setWaiver(id, val) {
+  WAIVERS[id] = val;
+  var yBtn = document.getElementById(id+'-yes');
+  var nBtn = document.getElementById(id+'-no');
+  if (yBtn) { yBtn.style.background = val ? '#34d399' : 'rgba(255,255,255,0.05)'; yBtn.style.color = val ? '#0a0a0a' : 'rgba(255,255,255,0.6)'; yBtn.style.border = val ? '1px solid #34d399' : '1px solid rgba(255,255,255,0.15)'; }
+  if (nBtn) { nBtn.style.background = !val ? '#ca3092' : 'rgba(255,255,255,0.05)'; nBtn.style.color = !val ? '#fff' : 'rgba(255,255,255,0.6)'; nBtn.style.border = !val ? '1px solid #ca3092' : '1px solid rgba(255,255,255,0.15)'; }
+}
+
+function gv(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+async function doCreateAccount() {
+  var err = document.getElementById('ca-err');
+  var required = ['ca-pname','ca-email','ca-phone','ca-rel','ca-pass','ca-cname','ca-dob','ca-grade','ca-school','ca-dismissal','ca-address','ca-ecname','ca-ecphone','ca-ecrel'];
+  for (var i = 0; i < required.length; i++) {
+    if (!gv(required[i])) { err.textContent = 'Please fill in all required fields.'; err.style.display='block'; return; }
+  }
+  if (gv('ca-pass').length < 6) { err.textContent = 'Password must be at least 6 characters.'; err.style.display='block'; return; }
+  if (WAIVERS['ca-w2'] !== true) { err.textContent = 'First Aid consent is required to participate.'; err.style.display='block'; return; }
+  err.style.display='none';
+
+  try {
+    // Check email not already in use
+    var existing = await af2Fetch('Families');
+    var dup = (existing.records||[]).find(function(r){ return (r.fields.Email||'').toLowerCase() === gv('ca-email').toLowerCase(); });
+    if (dup) { err.textContent = 'An account with that email already exists. Please sign in.'; err.style.display='block'; return; }
+
+    var fields = {
+      ParentName: gv('ca-pname'),
+      Email: gv('ca-email').toLowerCase(),
+      Phone: gv('ca-phone'),
+      Relationship: gv('ca-rel'),
+      Password: gv('ca-pass'),
+      ChildName: gv('ca-cname'),
+      DateOfBirth: gv('ca-dob'),
+      Grade: gv('ca-grade'),
+      School: gv('ca-school'),
+      DismissalTime: gv('ca-dismissal'),
+      HomeAddress: gv('ca-address'),
+      Allergies: gv('ca-allergies') || 'None',
+      EmergencyContactName: gv('ca-ecname'),
+      EmergencyContactPhone: gv('ca-ecphone'),
+      EmergencyContactRel: gv('ca-ecrel'),
+      MediaRelease: WAIVERS['ca-w1'] ? 'Yes' : 'No',
+      FirstAidConsent: WAIVERS['ca-w2'] ? 'Yes' : 'No',
+      TransportConsent: WAIVERS['ca-w3'] ? 'Yes' : 'No',
+      CreatedAt: new Date().toISOString()
+    };
+
+    var rec = await af2Post('Families', fields);
+    if (rec.error) { err.textContent = 'Error: ' + rec.error; err.style.display='block'; return; }
+
+    REG_SESSION = {id: rec.id, fields: fields};
+
+    // Send confirmation emails
+    sendRegConfirmationEmail(fields);
+
+    WAIVERS = {};
+    renderParentDashboard();
+  } catch(e) { err.textContent = 'Error: ' + e.message; err.style.display='block'; }
+}
+
+async function sendRegConfirmationEmail(f) {
+  try {
+    await fetch('/.netlify/functions/send-reg-confirmation', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        parentName: f.ParentName,
+        parentEmail: f.Email,
+        childName: f.ChildName,
+        grade: f.Grade,
+        school: f.School
+      })
+    });
+  } catch(e) {}
+}
+
+async function renderParentDashboard() {
+  var c = document.getElementById('reg-content');
+  if (!REG_SESSION) { renderRegLanding(); return; }
+  var f = REG_SESSION.fields;
+
+  // Load existing registrations
+  var regsData = await af2Fetch('Registrations');
+  var myRegs = (regsData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
+  var enrolledIds = myRegs.map(function(r){ return r.fields.ProgramId; });
+
+  var grade = gradeToNum(f.Grade);
+  var initials = (f.ParentName||'').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+
+  var html = '<div style="background:rgba(255,255,255,0.04);border-radius:16px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">'
+    +'<div style="width:44px;height:44px;border-radius:50%;background:#ca3092;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;">'+initials+'</div>'
+    +'<div style="flex:1;">'
+    +'<p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 2px;">'+(f.ParentName||'')+'</p>'
+    +'<p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0;">'+(f.ChildName||'')+' · '+(f.Grade||'')+'th grade · '+(f.School||'')+'</p>'
+    +'</div>'
+    +'<button onclick="addChild()" style="background:rgba(102,204,204,0.15);border:1px solid rgba(102,204,204,0.3);border-radius:8px;padding:6px 10px;color:#66cccc;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">+ Child</button>'
+    +'</div>';
+
+  if (enrolledIds.length > 0) {
+    html += '<p style="color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px;">Enrolled programs</p>';
+    myRegs.forEach(function(reg) {
+      var prog = AS_PROGRAMS.find(function(p){ return p.id === reg.fields.ProgramId; });
+      if (!prog) return;
+      html += '<div style="background:rgba(102,204,204,0.08);border:1px solid rgba(102,204,204,0.25);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">'
+        +'<div><p style="color:#66cccc;font-size:14px;font-weight:700;margin:0 0 2px;">'+prog.name+'</p>'
+        +'<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+prog.day+(prog.dates?' · '+prog.dates.length+' sessions':'')+'</p></div>'
+        +'<div style="display:flex;align-items:center;gap:8px;">'
+        +'<span style="background:rgba(102,204,204,0.2);color:#66cccc;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Enrolled</span>'
+        +'<button onclick="unenroll(\''+reg.id+'\',\''+prog.name+'\')" style="background:rgba(202,48,146,0.15);border:1px solid rgba(202,48,146,0.3);border-radius:8px;padding:4px 10px;color:#ca3092;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">Remove</button>'
+        +'</div></div>';
+    });
+  }
+
+  html += '<p style="color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 10px;">Available programs</p>';
+
+  AS_PROGRAMS.forEach(function(prog) {
+    var eligible = grade >= prog.gradeMin && grade <= prog.gradeMax;
+    var enrolled = enrolledIds.indexOf(prog.id) >= 0;
+    var comingSoon = prog.status === 'coming-soon';
+
+    var opacity = (!eligible || enrolled) ? '0.5' : '1';
+    html += '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;margin-bottom:10px;opacity:'+opacity+';">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
+    html += '<div><p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 2px;">'+prog.name+'</p>';
+    html += '<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+prog.day+' · '+prog.grades+'</p></div>';
+
+    if (comingSoon) {
+      html += '<span style="background:rgba(251,191,36,0.15);color:#fbbf24;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;">Coming soon</span>';
+    } else if (!eligible) {
+      html += '<span style="background:rgba(202,48,146,0.15);color:#ca3092;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;">'+prog.grades+'</span>';
+    } else if (enrolled) {
+      html += '<span style="background:rgba(102,204,204,0.15);color:#66cccc;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Enrolled</span>';
+    } else if (prog.cap) {
+      html += '<span style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Max '+prog.cap+'</span>';
+    }
+    html += '</div>';
+
+    if (prog.dates && prog.dates.length) {
+      html += '<p style="color:rgba(255,255,255,0.3);font-size:10px;margin:0 0 10px;">Dates: '+prog.dates.join(', ')+'</p>';
+    }
+
+    if (!comingSoon && eligible && !enrolled) {
+      html += '<button onclick="enrollInProgram(\''+prog.id+'\')" style="width:100%;padding:10px;background:#ca3092;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Register</button>';
+    } else if (!eligible) {
+      html += '<p style="color:rgba(255,255,255,0.25);font-size:11px;margin:0;">Not eligible — requires '+prog.grades+'</p>';
+    }
+    html += '</div>';
+  });
+
+  html += '<div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.07);text-align:center;">'
+    +'<button onclick="REG_SESSION=null;renderRegLanding()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;font-family:inherit;">Sign out</button></div>';
+
+  c.innerHTML = html;
+}
+
+async function enrollInProgram(progId) {
+  if (!REG_SESSION) return;
+  var prog = AS_PROGRAMS.find(function(p){ return p.id === progId; });
+  if (!prog) return;
+
+  // Check cap
+  if (prog.cap) {
+    var regsData = await af2Fetch('Registrations');
+    var count = (regsData.records||[]).filter(function(r){ return r.fields.ProgramId === progId; }).length;
+    if (count >= prog.cap) { alert(prog.name + ' is full ('+prog.cap+' spots max).'); return; }
+  }
+
+  var fields = {
+    FamilyId: REG_SESSION.id,
+    ChildName: REG_SESSION.fields.ChildName,
+    ProgramId: progId,
+    ProgramName: prog.name,
+    Grade: REG_SESSION.fields.Grade,
+    RegisteredAt: new Date().toISOString(),
+    Status: 'Active'
+  };
+
+  var rec = await af2Post('Registrations', fields);
+  if (rec.error) { alert('Error: ' + rec.error); return; }
+  renderParentDashboard();
+}
+
+async function unenroll(regId, progName) {
+  if (!confirm('Remove registration for ' + progName + '?')) return;
+  await af2Delete('Registrations', regId);
+  renderParentDashboard();
+}
+
+// ── ADMIN: REGISTRATIONS VIEW ─────────────────────────────────────────────
+async function loadASRegistrations() {
+  var c = document.getElementById('as-reg-content');
+  if (!c) return;
+  c.innerHTML = '<div style="color:#888;text-align:center;padding:40px;">Loading...</div>';
+  try {
+    var [famData, regData] = await Promise.all([af2Fetch('Families'), af2Fetch('Registrations')]);
+    var fams = famData.records || [];
+    var regs = regData.records || [];
+
+    if (!regs.length) { c.innerHTML = '<div style="color:#555;text-align:center;padding:40px;font-size:13px;">No registrations yet.</div>'; return; }
+
+    // Group by program
+    var byProg = {};
+    AS_PROGRAMS.forEach(function(p){ byProg[p.id] = []; });
+    regs.forEach(function(r){ var pid = r.fields.ProgramId; if (!byProg[pid]) byProg[pid]=[]; byProg[pid].push(r); });
+
+    var html = '';
+    AS_PROGRAMS.forEach(function(prog) {
+      var list = byProg[prog.id] || [];
+      html += '<div style="margin-bottom:20px;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+        +'<p style="color:#fff;font-size:14px;font-weight:700;margin:0;">'+prog.name+'</p>'
+        +'<span style="background:rgba(102,204,204,0.15);color:#66cccc;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">'+list.length+(prog.cap?'/'+prog.cap:'')+'</span>'
+        +'</div>';
+
+      if (!list.length) {
+        html += '<p style="color:#555;font-size:12px;padding:10px 0;">No registrations yet.</p>';
+      } else {
+        list.forEach(function(r) {
+          var fam = fams.find(function(f){ return f.id === r.fields.FamilyId; });
+          html += '<div style="background:#111;border:1px solid #222;border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">'
+            +'<div>'
+            +'<p style="color:#fff;font-size:13px;font-weight:600;margin:0 0 2px;">'+(r.fields.ChildName||'')+'</p>'
+            +'<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+(fam?fam.fields.ParentName:'')+' · '+(fam?fam.fields.Phone:'')+' · Grade '+(r.fields.Grade||'')+'</p>'
+            +'</div>'
+            +'<button onclick="adminRemoveReg(\''+r.id+'\',\''+prog.name+'\')" style="background:rgba(202,48,146,0.15);border:1px solid rgba(202,48,146,0.3);border-radius:8px;padding:5px 10px;color:#ca3092;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">Remove</button>'
+            +'</div>';
+        });
+      }
+      html += '</div>';
+    });
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = '<div style="color:#ca3092;font-size:13px;padding:20px;">Error: '+e.message+'</div>'; }
+}
+
+async function adminRemoveReg(id, progName) {
+  if (!confirm('Remove this registration from '+progName+'?')) return;
+  await af2Delete('Registrations', id);
+  loadASRegistrations();
+}
+
+async function loadASParticipants() {
+  var c = document.getElementById('as-part-content');
+  if (!c) return;
+  c.innerHTML = '<div style="color:#888;text-align:center;padding:40px;">Loading...</div>';
+  try {
+    var [famData, regData] = await Promise.all([af2Fetch('Families'), af2Fetch('Registrations')]);
+    var fams = famData.records || [];
+    var regs = regData.records || [];
+
+    if (!fams.length) { c.innerHTML = '<div style="color:#555;text-align:center;padding:40px;font-size:13px;">No families registered yet.</div>'; return; }
+
+    var html = '<p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0 0 14px;">'+fams.length+' registered famil'+(fams.length===1?'y':'ies')+'</p>';
+    fams.forEach(function(fam) {
+      var f = fam.fields;
+      var myRegs = regs.filter(function(r){ return r.fields.FamilyId === fam.id; });
+      html += '<div style="background:#111;border:1px solid #222;border-radius:12px;padding:14px 16px;margin-bottom:10px;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+        +'<div><p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">'+(f.ChildName||'')+'</p>'
+        +'<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+(f.ParentName||'')+' · '+(f.Phone||'')+' · '+(f.School||'')+'</p></div>'
+        +'<span style="background:rgba(141,77,158,0.15);color:#c9a0d6;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Grade '+(f.Grade||'')+'</span>'
+        +'</div>'
+        +(myRegs.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+myRegs.map(function(r){ return '<span style="background:rgba(102,204,204,0.1);color:#66cccc;font-size:10px;font-weight:600;padding:2px 8px;border-radius:16px;">'+r.fields.ProgramName+'</span>'; }).join('')+'</div>' : '<p style="color:#555;font-size:11px;margin:0;">No programs enrolled</p>')
+        +'</div>';
+    });
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = '<div style="color:#ca3092;font-size:13px;padding:20px;">Error: '+e.message+'</div>'; }
+}
+
+async function loadASPrograms() {
+  var c = document.getElementById('as-prog-content');
+  if (!c) return;
+  var [regData] = await Promise.all([af2Fetch('Registrations')]);
+  var regs = regData.records || [];
+
+  var html = '';
+  AS_PROGRAMS.forEach(function(prog) {
+    var count = regs.filter(function(r){ return r.fields.ProgramId === prog.id; }).length;
+    var pct = prog.cap ? Math.round(count/prog.cap*100) : null;
+    html += '<div style="background:#111;border:1px solid #222;border-radius:14px;padding:16px;margin-bottom:12px;">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
+      +'<p style="color:#fff;font-size:14px;font-weight:700;margin:0;">'+prog.name+'</p>'
+      +'<span style="background:'+(prog.status==='open'?'rgba(52,211,153,0.15)':'rgba(251,191,36,0.15)')+';color:'+(prog.status==='open'?'#34d399':'#fbbf24')+';font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">'+(prog.status==='open'?'Open':'Coming soon')+'</span>'
+      +'</div>'
+      +'<p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0 0 4px;">'+prog.day+' · '+prog.grades+'</p>'
+      +'<p style="color:#ca3092;font-size:13px;font-weight:700;margin:0 0 8px;">'+count+(prog.cap?' / '+prog.cap+' spots':' registered')+'</p>'
+      +(pct!==null?'<div style="background:rgba(255,255,255,0.08);border-radius:20px;height:6px;overflow:hidden;"><div style="background:#ca3092;height:100%;width:'+Math.min(pct,100)+'%;border-radius:20px;"></div></div>':'')
+      +'</div>';
+  });
+  c.innerHTML = html;
+}
+// ── END REGISTRATION SYSTEM ───────────────────────────────────────────────
 
 var ADM_TC=[],ADM_U=[];
 
