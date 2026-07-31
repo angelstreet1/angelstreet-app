@@ -1919,8 +1919,8 @@ async function renderParentDashboard() {
   var [childData, regsData] = await Promise.all([af2Fetch('Children'), af2Fetch('Registrations')]);
   var extraChildren = (childData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
 
-  // Build full children list: primary child + extra children
-  var allChildren = [{id: REG_SESSION.id + '_primary', name: f.ChildName, grade: f.Grade, school: f.School, isPrimary: true}];
+  // All children come from Children table now
+  var allChildren = [];
   extraChildren.forEach(function(r){
     allChildren.push({id: r.id, name: r.fields.ChildName, grade: r.fields.Grade, school: r.fields.School, isPrimary: false, recId: r.id});
   });
@@ -1931,8 +1931,7 @@ async function renderParentDashboard() {
 
   // Get regs for active child
   var myRegs = (regsData.records||[]).filter(function(r){
-    if (activeChild.isPrimary) return r.fields.FamilyId === REG_SESSION.id && !r.fields.ChildRecordId;
-    return r.fields.ChildRecordId === activeChild.recId;
+    return r.fields.ChildRecordId === activeChild.id;
   });
   var enrolledIds = myRegs.map(function(r){ return r.fields.ProgramId; });
   var grade = gradeToNum(activeChild.grade);
@@ -2122,28 +2121,21 @@ async function enrollInProgram(progId) {
     if (count >= prog.cap) { alert(prog.name + ' is full ('+prog.cap+' spots max).'); return; }
   }
 
-  // Get active child info
-  var allCh = [{id:REG_SESSION.id+'_primary',name:REG_SESSION.fields.ChildName,grade:REG_SESSION.fields.Grade,isPrimary:true}];
+  // Get active child from Children table
+  var childData2 = await af2Fetch('Children');
+  var myKids = (childData2.records||[]).filter(function(r){return r.fields.FamilyId===REG_SESSION.id;});
+  var activeKid = myKids[ACTIVE_CHILD_IDX] || myKids[0];
+  if (!activeKid) { alert('Please add a child first.'); return; }
   var fields = {
     FamilyId: REG_SESSION.id,
-    ChildName: allCh[ACTIVE_CHILD_IDX] ? allCh[ACTIVE_CHILD_IDX].name : REG_SESSION.fields.ChildName,
+    ChildName: activeKid.fields.ChildName,
     ProgramId: progId,
     ProgramName: prog.name,
-    Grade: allCh[ACTIVE_CHILD_IDX] ? allCh[ACTIVE_CHILD_IDX].grade : REG_SESSION.fields.Grade,
+    Grade: activeKid.fields.Grade,
+    ChildRecordId: activeKid.id,
     RegisteredAt: new Date().toISOString(),
     Status: 'Active'
   };
-  // Tag extra children
-  if (ACTIVE_CHILD_IDX > 0) {
-    var childData2 = await af2Fetch('Children');
-    var extraKids = (childData2.records||[]).filter(function(r){return r.fields.FamilyId===REG_SESSION.id;});
-    var kid = extraKids[ACTIVE_CHILD_IDX-1];
-    if (kid) {
-      fields.ChildName = kid.fields.ChildName;
-      fields.Grade = kid.fields.Grade;
-      fields.ChildRecordId = kid.id;
-    }
-  }
 
   var rec = await af2Post('Registrations', fields);
   if (rec.error) { alert('Error: ' + rec.error); return; }
