@@ -2221,20 +2221,21 @@ async function doAddChild() {
   };
   TRANSPORT = {};
 
-  var rec = await af2Post('Children', fields);
-  if (rec.error) { err.textContent = 'Error: ' + rec.error; err.style.display='block'; return; }
-
-  // Reload dashboard
-  WAIVERS = {};
-  ACTIVE_CHILD_IDX = 0;
-  // Send confirmation email now that we have child info
-  sendRegConfirmationEmail({
+  // Capture values before any DOM changes
+  var emailData = {
     ParentName: REG_SESSION.fields.ParentName,
     Email: REG_SESSION.fields.Email,
     ChildName: fields.ChildName,
     Grade: fields.Grade,
     School: fields.School
-  });
+  };
+
+  var rec = await af2Post('Children', fields);
+  if (rec.error) { err.textContent = 'Error: ' + rec.error; err.style.display='block'; return; }
+
+  sendRegConfirmationEmail(emailData);
+  WAIVERS = {};
+  ACTIVE_CHILD_IDX = 0;
   renderParentDashboard();
 }
 
