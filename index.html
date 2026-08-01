@@ -2204,6 +2204,11 @@ async function doAddChild() {
   // Store additional child as a new record in Children table
   if (WAIVERS['ac-w2'] !== true) { err.textContent = 'First Aid consent is required to participate.'; err.style.display='block'; return; }
 
+  // Capture form values NOW before any async operations or DOM changes
+  var capturedChildName = gv('ac-cname');
+  var capturedGrade = gv('ac-grade');
+  var capturedSchool = gv('ac-school');
+
   var fields = {
     FamilyId: REG_SESSION.id,
     ParentName: REG_SESSION.fields.ParentName,
@@ -2231,9 +2236,9 @@ async function doAddChild() {
   var emailData = {
     ParentName: REG_SESSION.fields.ParentName,
     Email: REG_SESSION.fields.Email,
-    ChildName: fields.ChildName,
-    Grade: fields.Grade,
-    School: fields.School
+    ChildName: capturedChildName,
+    Grade: capturedGrade,
+    School: capturedSchool
   };
 
   var rec = await af2Post('Children', fields);
