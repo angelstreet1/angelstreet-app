@@ -1774,7 +1774,7 @@ function showRegScreen(type) {
   if (type === 'create') renderCreateAccount();
   else if (type === 'signin') renderSignIn();
   else if (type === 'dashboard') renderParentDashboard();
-  // _noswitch = just show dynamic screen, content already set
+  // _noswitch or any other value = just show the dynamic screen
 }
 
 function loadRegPortal() {
@@ -1792,6 +1792,8 @@ function renderRegLanding() {
 
 
 function renderSignIn() {
+  document.getElementById('reg-landing-screen').style.display = 'none';
+  document.getElementById('reg-dynamic-screen').style.display = 'block';
   var c = document.getElementById('reg-content');
   c.innerHTML = '<p style="color:#fff;font-size:18px;font-weight:800;margin:0 0 4px;">Sign in</p>'
     + '<p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0 0 24px;">Use your email and password</p>'
@@ -1830,9 +1832,9 @@ async function doSignIn() {
 }
 
 function renderCreateAccount() {
-  showRegScreen('_noswitch');
+  document.getElementById('reg-landing-screen').style.display = 'none';
+  document.getElementById('reg-dynamic-screen').style.display = 'block';
   var c = document.getElementById('reg-content');
-  c.innerHTML = '';
   c.innerHTML = '<p style="color:#fff;font-size:18px;font-weight:800;margin:0 0 4px;">Create account</p>'
     + '<p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0 0 20px;">Your information as a parent or guardian</p>'
     + renderField('ca-pname','Your full name','text','Toni Wade')
@@ -1927,15 +1929,16 @@ async function renderParentDashboard() {
   if (!REG_SESSION) { showRegLanding(); return; }
   var f = REG_SESSION.fields;
 
-  // Load children and registrations with error handling
-  var childData, regsData;
+  // Load children and registrations - gracefully handle failures
+  var childData = {records:[]}, regsData = {records:[]};
   try {
     var results = await Promise.all([af2Fetch('Children'), af2Fetch('Registrations')]);
-    childData = results[0];
-    regsData = results[1];
+    childData = results[0] || {records:[]};
+    regsData = results[1] || {records:[]};
   } catch(e) {
-    c.innerHTML = '<div style="color:#ca3092;text-align:center;padding:40px;font-size:13px;">Error loading data: '+e.message+'<br><br><button onclick="renderParentDashboard()" style="padding:10px 20px;background:#ca3092;color:#fff;border:none;border-radius:10px;cursor:pointer;">Try Again</button></div>';
-    return;
+    // Continue with empty data - will show add child prompt
+    childData = {records:[]};
+    regsData = {records:[]};
   }
   var extraChildren = (childData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
 
