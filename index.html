@@ -2055,8 +2055,22 @@ async function renderParentDashboard() {
     var eligible = grade >= prog.gradeMin && grade <= prog.gradeMax;
     var enrolled = enrolledIds.indexOf(prog.id) >= 0;
     var comingSoon = prog.status === 'coming-soon';
+    // Check day conflict
+    var dayConflict = false;
+    var conflictName = '';
+    if (prog.day && prog.day !== 'TBD' && !enrolled) {
+      AS_PROGRAMS.forEach(function(other){
+        if (other.id !== prog.id && other.day === prog.day) {
+          var otherEnrolled = enrolledIds.indexOf(other.id) >= 0;
+          if (!otherEnrolled && other.sessions) {
+            otherEnrolled = other.sessions.some(function(s){ return enrolledIds.indexOf(s.id) >= 0; });
+          }
+          if (otherEnrolled) { dayConflict = true; conflictName = other.name; }
+        }
+      });
+    }
 
-    var opacity = (!eligible || enrolled) ? '0.5' : '1';
+    var opacity = (!eligible || enrolled || dayConflict) ? '0.5' : '1';
     html += '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;margin-bottom:10px;opacity:'+opacity+';">';
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
     html += '<div><p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 2px;">'+prog.name+'</p>';
@@ -2095,10 +2109,10 @@ async function renderParentDashboard() {
       } else {
         html += '<button onclick="enrollInProgram(\''+prog.id+'\')" style="width:100%;padding:10px;background:#ca3092;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Register</button>';
       }
+    } else if (dayConflict) {
+      html += '<p style="color:#fbbf24;font-size:11px;margin:0;">⚠️ Conflicts with '+conflictName+' (also on '+prog.day+'s)</p>';
     } else if (!eligible) {
       html += '<p style="color:rgba(255,255,255,0.25);font-size:11px;margin:0;">Not eligible — requires '+prog.grades+'</p>';
-    } else if (enrolled && !prog.sessions) {
-      // Already enrolled non-session program - show remove button
     }
     html += '</div>';
   });
@@ -2203,6 +2217,25 @@ async function enrollInProgram(progId, parentProgId) {
     }
   }
   if (!prog) return;
+
+  // Check day conflict — can't register for two programs on the same day
+  if (prog.day && prog.day !== 'TBD') {
+    var regsData0 = await af2Fetch('Registrations');
+    var myRegs0 = (regsData0.records||[]).filter(function(r){ return r.fields.ChildRecordId === activeKid.id; });
+    var conflictProg = myRegs0.find(function(r){
+      var existingProg = AS_PROGRAMS.find(function(p){
+        return p.id === r.fields.ProgramId || (p.sessions && p.sessions.some(function(s){ return s.id === r.fields.ProgramId; }));
+      });
+      return existingProg && existingProg.day === prog.day && existingProg.id !== prog.id;
+    });
+    if (conflictProg) {
+      var existProg = AS_PROGRAMS.find(function(p){
+        return p.id === conflictProg.fields.ProgramId || (p.sessions && p.sessions.some(function(s){ return s.id === conflictProg.fields.ProgramId; }));
+      });
+      alert('Schedule conflict! ' + (existProg?existProg.name:'A program') + ' is already on ' + prog.day + 's. Your child can only register for one program per day.');
+      return;
+    }
+  }
 
   // Check cap
   var capToCheck = sess ? sess.cap : prog.cap;
