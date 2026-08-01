@@ -1933,7 +1933,6 @@ async function doCreateAccount() {
     if (rec.error) { err.textContent = 'Error: ' + rec.error; err.style.display='block'; return; }
 
     REG_SESSION = {id: rec.id, fields: fields};
-    sendRegConfirmationEmail(fields);
     document.getElementById('reg-landing-screen').style.display = 'none';
     document.getElementById('reg-dynamic-screen').style.display = 'block';
     addChild(true);
@@ -2228,6 +2227,14 @@ async function doAddChild() {
   // Reload dashboard
   WAIVERS = {};
   ACTIVE_CHILD_IDX = 0;
+  // Send confirmation email now that we have child info
+  sendRegConfirmationEmail({
+    ParentName: REG_SESSION.fields.ParentName,
+    Email: REG_SESSION.fields.Email,
+    ChildName: fields.ChildName,
+    Grade: fields.Grade,
+    School: fields.School
+  });
   renderParentDashboard();
 }
 
