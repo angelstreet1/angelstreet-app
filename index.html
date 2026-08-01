@@ -1834,7 +1834,19 @@ async function doSignIn() {
     }
     REG_SESSION = {id: rec.id, fields: rec.fields};
     err.style.display='none';
-    renderParentDashboard();
+    // Check if this account has children before loading dashboard
+    var hasChildren = false;
+    try {
+      var cd = await af2Fetch('Children');
+      hasChildren = (cd.records||[]).some(function(r){return r.fields.FamilyId===rec.id;});
+    } catch(e){}
+    if (!hasChildren) {
+      document.getElementById('reg-landing-screen').style.display = 'none';
+      document.getElementById('reg-dynamic-screen').style.display = 'block';
+      addChild(true);
+    } else {
+      renderParentDashboard();
+    }
   } catch(e) { err.textContent='Error: '+e.message; err.style.color='#ca3092'; err.style.display='block'; }
 }
 
@@ -1907,7 +1919,9 @@ async function doCreateAccount() {
 
     REG_SESSION = {id: rec.id, fields: fields};
     sendRegConfirmationEmail(fields);
-    renderParentDashboard();
+    document.getElementById('reg-landing-screen').style.display = 'none';
+    document.getElementById('reg-dynamic-screen').style.display = 'block';
+    addChild(true);
   } catch(e) { err.textContent = 'Error: ' + e.message; err.style.display='block'; }
 }
 
