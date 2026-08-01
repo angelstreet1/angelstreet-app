@@ -2188,11 +2188,17 @@ function addChild(isFirst) {
 
 async function doAddChild() {
   var err = document.getElementById('ac-err');
-  if (!gv('ac-cname') || !gv('ac-grade') || !gv('ac-school')) {
-    err.textContent = 'Please fill in all required fields.';
-    err.style.display = 'block';
-    return;
+  var requiredFields = [
+    ['ac-cname','Child full name'],['ac-dob','Date of birth'],['ac-grade','Grade'],
+    ['ac-school','School name'],['ac-dismissal','School dismissal time'],
+    ['ac-address','Home address'],['ac-ecname','Emergency contact name'],
+    ['ac-ecphone','Emergency contact phone'],['ac-ecrel','Emergency contact relationship'],
+    ['ac-neighborhood','Neighborhood or area']
+  ];
+  for (var ri=0;ri<requiredFields.length;ri++){
+    if(!gv(requiredFields[ri][0])){ err.textContent=requiredFields[ri][1]+' is required.'; err.style.display='block'; return; }
   }
+  if(!TRANSPORT['ac-ts']||!TRANSPORT['ac-th']){ err.textContent='Please answer both transportation questions.'; err.style.display='block'; return; }
   err.style.display = 'none';
 
   // Store additional child as a new record in Children table
@@ -2366,6 +2372,36 @@ async function adminRemoveReg(id, progName) {
   loadASRegistrations();
 }
 
+async function exportParticipants() {
+  try {
+    var results = await Promise.all([af2Fetch('Families'), af2Fetch('Children'), af2Fetch('Registrations')]);
+    var fams = results[0].records || [];
+    var kids = results[1].records || [];
+    var regs = results[2].records || [];
+    var header = 'Parent Name,Email,Phone,Child Name,Grade,School,Dismissal Time,Home Address,Neighborhood,Transport To AS,Transport From AS,Allergies,EC Name,EC Phone,EC Relationship,Programs Enrolled,Media Release,First Aid,Transport Consent';
+    var lines = [header];
+    fams.forEach(function(fam){
+      var f = fam.fields;
+      var famKids = kids.filter(function(k){ return k.fields.FamilyId === fam.id; });
+      if (!famKids.length) {
+        lines.push([f.ParentName,f.Email,f.Phone,'','','','','','','','','','','','','','','',''].map(function(v){return '"'+(v||'')+'"';}).join(','));
+      } else {
+        famKids.forEach(function(k){
+          var kf = k.fields;
+          var kRegs = regs.filter(function(r){ return r.fields.ChildRecordId === k.id; }).map(function(r){ return r.fields.ProgramName; }).join('; ');
+          lines.push([f.ParentName,f.Email,f.Phone,kf.ChildName,kf.Grade,kf.School,kf.DismissalTime,kf.HomeAddress,kf.Neighborhood,kf.TransportToAngelStreet,kf.TransportFromAngelStreet,kf.Allergies,kf.EmergencyContactName,kf.EmergencyContactPhone,kf.EmergencyContactRel,kRegs,kf.MediaRelease,kf.FirstAidConsent,kf.TransportConsent].map(function(v){return '"'+(v||'')+'"';}).join(','));
+        });
+      }
+    });
+    var csv = lines.join('\n');
+    var blob = new Blob([csv], {type:'text/csv'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'AngelStreet_Participants_2026-2027.csv';
+    a.click();
+  } catch(e) { alert('Export error: '+e.message); }
+}
+
 async function loadASParticipants() {
   var c = document.getElementById('as-part-content');
   if (!c) return;
@@ -2377,7 +2413,10 @@ async function loadASParticipants() {
 
     if (!fams.length) { c.innerHTML = '<div style="color:#555;text-align:center;padding:40px;font-size:13px;">No families registered yet.</div>'; return; }
 
-    var html = '<p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0 0 14px;">'+fams.length+' registered famil'+(fams.length===1?'y':'ies')+'</p>';
+    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+      +'<p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0;">'+fams.length+' registered famil'+(fams.length===1?'y':'ies')+'</p>'
+      +'<button onclick="exportParticipants()" style="padding:8px 14px;background:#66cccc;color:#0a0a0a;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📥 Export CSV</button>'
+      +'</div>';
     fams.forEach(function(fam) {
       var f = fam.fields;
       // Get children for this family
