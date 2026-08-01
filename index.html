@@ -368,6 +368,7 @@
 </div>
 <div class="admsec"><h3>Today's Attendance</h3><div id="adm-today" style="overflow-x:auto"></div></div>
     <div class="admsec"><h3>📊 Weekly Attendance</h3>
+      <button id="export-att-btn" onclick="exportSummerAttendance()" style="margin-bottom:12px;padding:9px 16px;background:#66cccc;color:#0a0a0a;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">📥 Export Summer Attendance</button>
       <div id="adm-att-week-sel" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;"></div>
       <div id="adm-att-grid"></div>
     </div>
@@ -1614,6 +1615,56 @@ var SHIFT_STAFF_KEYS=[
   {name:'Tanaya Adams',key:'Tanaya'},
   {name:'Michayia Bills',key:'Michayia'}
 ];
+
+async function exportSummerAttendance() {
+  try {
+    var btn = document.getElementById('export-att-btn');
+    if (btn) { btn.textContent = '⏳ Exporting...'; btn.disabled = true; }
+    var [attData, rosterData] = await Promise.all([AFC(TAT), AFC(TR)]);
+    var atts = attData || [];
+    var roster = rosterData || [];
+
+    // Build parent lookup from roster
+    var parentMap = {};
+    roster.forEach(function(r){
+      var n = r.fields.CamperName;
+      if (n && !parentMap[n]) {
+        parentMap[n] = {
+          parent: r.fields.Parent1Name || '',
+          phone: r.fields.Parent1Phone || '',
+          email: r.fields.Parent1Email || '',
+          grade: r.fields.Grade || '',
+          week: r.fields.Week || ''
+        };
+      }
+    });
+
+    var header = 'Camper Name,Date,Status,Week,Parent Name,Parent Phone,Parent Email,Grade';
+    var rows = [header];
+    atts.slice().sort(function(a,b){
+      return new Date(a.fields.Date||0) - new Date(b.fields.Date||0);
+    }).forEach(function(r){
+      var f = r.fields;
+      var p = parentMap[f.CamperName] || {};
+      rows.push([
+        f.CamperName||'', f.Date||'', f.Status||'', f.Week||'',
+        p.parent||'', p.phone||'', p.email||'', p.grade||''
+      ].map(function(v){ return '"'+(v||'')+'"'; }).join(','));
+    });
+
+    var csv = rows.join('\n');
+    var blob = new Blob([csv], {type:'text/csv'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'AngelStreet_Summer_Attendance_2026.csv';
+    a.click();
+    if (btn) { btn.textContent = '📥 Export Summer Attendance'; btn.disabled = false; }
+  } catch(e) {
+    alert('Export error: '+e.message);
+    var btn = document.getElementById('export-att-btn');
+    if (btn) { btn.textContent = '📥 Export Summer Attendance'; btn.disabled = false; }
+  }
+}
 
 async function renderSubmissionLog(filterName){
   var logDiv=document.getElementById('adm-sublog');
