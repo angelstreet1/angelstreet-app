@@ -1700,12 +1700,17 @@ function gradeToNum(grade) {
   return isNaN(g) ? 3 : g;
 }
 
-async function af2Fetch(table, opts) {
-  opts = opts || {};
-  var url = AF2_BASE + '/' + table + '?pageSize=100';
-  var r = await fetch(url);
-  if (!r.ok) throw new Error('Error ' + r.status);
-  return r.json();
+async function af2Fetch(table) {
+  var all = [], offset = null;
+  do {
+    var url = AF2_BASE + '/' + encodeURIComponent(table) + '?pageSize=100' + (offset ? '&offset=' + encodeURIComponent(offset) : '');
+    var r = await fetch(url);
+    if (!r.ok) throw new Error('af2 Error ' + r.status);
+    var d = await r.json();
+    all = all.concat(d.records || []);
+    offset = d.offset || null;
+  } while(offset);
+  return {records: all};
 }
 
 async function af2Post(table, fields) {
@@ -1743,6 +1748,8 @@ function loadProgramSelector() {
 function loadRegPortal() {
   var c = document.getElementById('reg-content');
   if (!c) return;
+  // Always reset ACTIVE_CHILD_IDX on fresh load
+  ACTIVE_CHILD_IDX = 0;
   if (REG_SESSION) {
     renderParentDashboard();
   } else {
@@ -1800,19 +1807,27 @@ function renderSignIn() {
 
 async function doSignIn() {
   var email = (document.getElementById('si-email').value||'').trim().toLowerCase();
-  var pass = document.getElementById('si-pass').value||'';
+  var pass = (document.getElementById('si-pass').value||'').trim();
   var err = document.getElementById('si-err');
   if (!email || !pass) { err.textContent='Please enter your email and password.'; err.style.display='block'; return; }
   err.style.display='none';
+  err.textContent='Signing in...'; err.style.color='#66cccc'; err.style.display='block';
   try {
     var data = await af2Fetch('Families');
-    var rec = (data.records||[]).find(function(r){
-      return (r.fields.Email||'').toLowerCase()===email && r.fields.Password===pass;
+    var recs = data.records||[];
+    var rec = recs.find(function(r){
+      return (r.fields.Email||'').toLowerCase().trim()===email && (r.fields.Password||'').trim()===pass;
     });
-    if (!rec) { err.textContent='Email or password is incorrect.'; err.style.display='block'; return; }
+    if (!rec) {
+      err.textContent='Email or password is incorrect.';
+      err.style.color='#ca3092';
+      err.style.display='block';
+      return;
+    }
     REG_SESSION = {id: rec.id, fields: rec.fields};
+    err.style.display='none';
     renderParentDashboard();
-  } catch(e) { err.textContent='Error: '+e.message; err.style.display='block'; }
+  } catch(e) { err.textContent='Error: '+e.message; err.style.color='#ca3092'; err.style.display='block'; }
 }
 
 function renderCreateAccount() {
@@ -2112,7 +2127,8 @@ async function doAddChild() {
   if (rec.error) { err.textContent = 'Error: ' + rec.error; err.style.display='block'; return; }
 
   // Reload dashboard
-  ACTIVE_CHILD_IDX = -1; // will be set to new child
+  WAIVERS = {};
+  ACTIVE_CHILD_IDX = 0;
   renderParentDashboard();
 }
 
@@ -2212,7 +2228,7 @@ async function loadASParticipants() {
   if (!c) return;
   c.innerHTML = '<div style="color:#888;text-align:center;padding:40px;">Loading...</div>';
   try {
-    var [famData, regData] = await Promise.all([af2Fetch('Families'), af2Fetch('Registrations')]);
+    var [famData, regData, childData] = await Promise.all([af2Fetch('Families'), af2Fetch('Registrations'), af2Fetch('Children')]);
     var fams = famData.records || [];
     var regs = regData.records || [];
 
@@ -2221,14 +2237,21 @@ async function loadASParticipants() {
     var html = '<p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0 0 14px;">'+fams.length+' registered famil'+(fams.length===1?'y':'ies')+'</p>';
     fams.forEach(function(fam) {
       var f = fam.fields;
+      // Get children for this family
+      var famChildren = childData ? (childData.records||[]).filter(function(c){ return c.fields.FamilyId === fam.id; }) : [];
       var myRegs = regs.filter(function(r){ return r.fields.FamilyId === fam.id; });
       html += '<div style="background:#111;border:1px solid #222;border-radius:12px;padding:14px 16px;margin-bottom:10px;">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-        +'<div><p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">'+(f.ChildName||'')+'</p>'
-        +'<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+(f.ParentName||'')+' · '+(f.Phone||'')+' · '+(f.School||'')+'</p></div>'
-        +'<span style="background:rgba(141,77,158,0.15);color:#c9a0d6;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;">Grade '+(f.Grade||'')+'</span>'
+        +'<div><p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">'+(f.ParentName||'Unknown')+'</p>'
+        +'<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+(f.Email||'')+' · '+(f.Phone||'')+'</p></div>'
         +'</div>'
-        +(myRegs.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+myRegs.map(function(r){ return '<span style="background:rgba(102,204,204,0.1);color:#66cccc;font-size:10px;font-weight:600;padding:2px 8px;border-radius:16px;">'+r.fields.ProgramName+'</span>'; }).join('')+'</div>' : '<p style="color:#555;font-size:11px;margin:0;">No programs enrolled</p>')
+        +(famChildren.length ? famChildren.map(function(ch){ 
+          var chRegs = myRegs.filter(function(r){return r.fields.ChildRecordId===ch.id;});
+          return '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">'
+            +'<p style="color:#fff;font-size:12px;font-weight:600;margin:0 0 4px;">'+ch.fields.ChildName+' · Grade '+ch.fields.Grade+'</p>'
+            +(chRegs.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+chRegs.map(function(r){ return '<span style="background:rgba(102,204,204,0.1);color:#66cccc;font-size:10px;font-weight:600;padding:2px 8px;border-radius:16px;">'+r.fields.ProgramName+'</span>'; }).join('')+'</div>' : '<p style="color:#555;font-size:11px;margin:0;">No programs enrolled</p>')
+            +'</div>';
+        }).join('') : '<p style="color:#555;font-size:11px;margin:4px 0 0;">No children added yet</p>')
         +'</div>';
     });
     c.innerHTML = html;
