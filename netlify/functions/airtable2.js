@@ -13,19 +13,26 @@ const CORS = {
 
 function makeRequest(method, urlPath, body) {
   return new Promise((resolve, reject) => {
-    const url = new URL(BASE_URL + urlPath);
+    let url;
+    try { url = new URL(BASE_URL + urlPath); } catch(e) { return reject(e); }
+
     const options = {
       hostname: url.hostname,
       path: url.pathname + url.search,
       method,
-      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }
+      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      timeout: 8000
     };
+
     const req = https.request(options, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
       res.on('end', () => resolve({ status: res.statusCode, body: data }));
     });
+
+    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });
     req.on('error', reject);
+
     if (body) req.write(JSON.stringify(body));
     req.end();
   });
@@ -33,7 +40,7 @@ function makeRequest(method, urlPath, body) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers: CORS, body: '' };
-  if (!TOKEN || !BASE_ID) return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Missing env vars' }) };
+  if (!TOKEN || !BASE_ID) return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Missing env vars AIRTABLE_TOKEN_2 or AIRTABLE_BASE_ID_2' }) };
 
   const parts = event.path.replace('/.netlify/functions/airtable2', '').split('/').filter(Boolean);
   const table = parts[0];
@@ -54,6 +61,10 @@ exports.handler = async (event) => {
     try { body = JSON.parse(event.body); } catch (e) {}
   }
 
-  const result = await makeRequest(event.httpMethod, path, body);
-  return { statusCode: result.status, headers: { ...CORS, 'Content-Type': 'application/json' }, body: result.body };
+  try {
+    const result = await makeRequest(event.httpMethod, path, body);
+    return { statusCode: result.status, headers: { ...CORS, 'Content-Type': 'application/json' }, body: result.body };
+  } catch(e) {
+    return { statusCode: 503, headers: { ...CORS, 'Content-Type': 'application/json' }, body: JSON.stringify({ error: e.message }) };
+  }
 };

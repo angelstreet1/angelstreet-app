@@ -1717,11 +1717,18 @@ function gradeToNum(grade) {
   return isNaN(g) ? 3 : g;
 }
 
+function af2FetchWithTimeout(url, ms) {
+  return Promise.race([
+    fetch(url),
+    new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout')); }, ms); })
+  ]);
+}
+
 async function af2Fetch(table) {
   var all = [], offset = null;
   do {
     var url = AF2_BASE + '/' + encodeURIComponent(table) + '?pageSize=100' + (offset ? '&offset=' + encodeURIComponent(offset) : '');
-    var r = await fetch(url);
+    var r = await af2FetchWithTimeout(url, 8000);
     if (!r.ok) throw new Error('af2 Error ' + r.status);
     var d = await r.json();
     all = all.concat(d.records || []);
@@ -1929,16 +1936,19 @@ async function renderParentDashboard() {
   if (!REG_SESSION) { showRegLanding(); return; }
   var f = REG_SESSION.fields;
 
-  // Load children and registrations - gracefully handle failures
+  // Load children and registrations with timeout fallback
   var childData = {records:[]}, regsData = {records:[]};
   try {
-    var results = await Promise.all([af2Fetch('Children'), af2Fetch('Registrations')]);
-    childData = results[0] || {records:[]};
-    regsData = results[1] || {records:[]};
-  } catch(e) {
-    // Continue with empty data - will show add child prompt
-    childData = {records:[]};
-    regsData = {records:[]};
+    var cResult = await af2Fetch('Children');
+    childData = cResult || {records:[]};
+  } catch(e) { childData = {records:[]}; }
+  // Only fetch registrations if there are children
+  var extraChildren = (childData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
+  if (extraChildren.length > 0) {
+    try {
+      var rResult = await af2Fetch('Registrations');
+      regsData = rResult || {records:[]};
+    } catch(e) { regsData = {records:[]}; }
   }
   var extraChildren = (childData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
 
