@@ -1816,15 +1816,13 @@ async function doSignIn() {
 }
 
 function renderCreateAccount() {
-  // Reset page styles from landing
   var c = document.getElementById('reg-content');
   c.innerHTML = '';
-  c.style.padding = '20px';
-  c.style.margin = '0 auto';
-  c.style.maxWidth = '480px';
+  c.style.cssText = 'padding:20px;margin:0 auto;max-width:480px;';
   var page = document.getElementById('reg-portal');
   page.style.overflow = '';
-  var inner = page.querySelector('[style*="padding:0"]');
+  var fixed = page.querySelectorAll('div[style*="position:fixed"]');
+  fixed.forEach(function(el){el.remove();});
   c.innerHTML = '<p style="color:#fff;font-size:18px;font-weight:800;margin:0 0 4px;">Create account</p>'
     + '<p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0 0 20px;">Your information as a parent or guardian</p>'
     + renderField('ca-pname','Your full name','text','Toni Wade')
@@ -1911,7 +1909,16 @@ async function sendRegConfirmationEmail(f) {
 }
 
 async function renderParentDashboard() {
+  // Reset page from landing page fullscreen mode
   var c = document.getElementById('reg-content');
+  c.innerHTML = '';
+  c.style.cssText = 'padding:20px;margin:0 auto;max-width:480px;';
+  var page = document.getElementById('reg-portal');
+  page.style.overflow = '';
+  // Remove any fixed position wrappers from landing
+  var fixed = page.querySelectorAll('div[style*="position:fixed"]');
+  fixed.forEach(function(el){el.remove();});
+
   if (!REG_SESSION) { renderRegLanding(); return; }
   var f = REG_SESSION.fields;
 
