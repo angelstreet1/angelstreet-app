@@ -1889,6 +1889,14 @@ function renderWaiver(id, title, text) {
 }
 
 var WAIVERS = {};
+var TRANSPORT = {};
+function setTransport(id, val) {
+  TRANSPORT[id] = val;
+  var yBtn = document.getElementById(id+'-yes');
+  var nBtn = document.getElementById(id+'-no');
+  if (yBtn) { yBtn.style.background = val==='Yes' ? '#66cccc' : 'rgba(255,255,255,0.05)'; yBtn.style.color = val==='Yes' ? '#0a0a0a' : 'rgba(255,255,255,0.6)'; yBtn.style.border = val==='Yes' ? '1px solid #66cccc' : '1px solid rgba(255,255,255,0.15)'; }
+  if (nBtn) { nBtn.style.background = val==='No' ? '#ca3092' : 'rgba(255,255,255,0.05)'; nBtn.style.color = val==='No' ? '#fff' : 'rgba(255,255,255,0.6)'; nBtn.style.border = val==='No' ? '1px solid #ca3092' : '1px solid rgba(255,255,255,0.15)'; }
+}
 function setWaiver(id, val) {
   WAIVERS[id] = val;
   var yBtn = document.getElementById(id+'-yes');
@@ -2148,6 +2156,21 @@ function addChild(isFirst) {
     + renderField('ac-address','Home address','text','')
     + renderField('ac-allergies','Allergies or medical conditions','text','None')
     + '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;margin:4px 0 16px;">'
+    + '<p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 6px;">Transportation</p>'
+    + '<p style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.6;margin:0 0 14px;">AngelStreet works with transportation partners to help with pickup and drop-off. This is not guaranteed, but we will do our best. Drop-offs are in generalized neighborhood areas — for example, if you live in Raleigh, drop-off may be at the Raleigh Public Library.</p>'
+    + '<div style="margin-bottom:14px;"><label style="font-size:11px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">Do you need transportation from school to AngelStreet?</label>'
+    + '<div style="display:flex;gap:10px;">'
+    + '<button id="ac-ts-yes" onclick="setTransport(\'ac-ts\',\'Yes\')" type="button" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Yes</button>'
+    + '<button id="ac-ts-no" onclick="setTransport(\'ac-ts\',\'No\')" type="button" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">No</button>'
+    + '</div></div>'
+    + '<div style="margin-bottom:14px;"><label style="font-size:11px;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;">Do you need transportation from AngelStreet home?</label>'
+    + '<div style="display:flex;gap:10px;">'
+    + '<button id="ac-th-yes" onclick="setTransport(\'ac-th\',\'Yes\')" type="button" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Yes</button>'
+    + '<button id="ac-th-no" onclick="setTransport(\'ac-th\',\'No\')" type="button" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">No</button>'
+    + '</div></div>'
+    + renderField('ac-neighborhood','What neighborhood or area of Memphis do you live in?','text','e.g. Raleigh, Frayser, Whitehaven...')
+    + '</div>'
+    + '<div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;margin:4px 0 16px;">'
     + '<p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 16px;">Emergency contact</p>'
     + renderField('ac-ecname','Emergency contact name','text','')
     + renderField('ac-ecphone','Emergency contact phone','tel','')
@@ -2192,8 +2215,12 @@ async function doAddChild() {
     MediaRelease: WAIVERS['ac-w1'] ? 'Yes' : 'No',
     FirstAidConsent: WAIVERS['ac-w2'] ? 'Yes' : 'No',
     TransportConsent: WAIVERS['ac-w3'] ? 'Yes' : 'No',
+    TransportToAngelStreet: TRANSPORT['ac-ts'] || 'Not specified',
+    TransportFromAngelStreet: TRANSPORT['ac-th'] || 'Not specified',
+    Neighborhood: gv('ac-neighborhood'),
     CreatedAt: new Date().toISOString()
   };
+  TRANSPORT = {};
 
   var rec = await af2Post('Children', fields);
   if (rec.error) { err.textContent = 'Error: ' + rec.error; err.style.display='block'; return; }
