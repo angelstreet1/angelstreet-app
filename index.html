@@ -1705,11 +1705,18 @@ var REG_SESSION = null; // logged-in parent session
 // Programs data (hardcoded, update when days confirmed)
 var AS_PROGRAMS = [
   {id:'choir',name:'Choir',day:'Monday',grades:'All grades',gradeMin:3,gradeMax:12,cap:null,status:'open',desc:'Vocal performance and music theory every Monday.'},
-  {id:'flock',name:'FLOCK',day:'Wednesday',grades:'All grades',gradeMin:3,gradeMax:12,cap:25,status:'open',desc:'Group mentoring focused on leadership, identity, and community.',
-    dates:['9/16','9/23','9/30','10/7','10/21','10/28','11/4','11/18','12/2','12/9']},
-  {id:'djlab',name:'DJ Lab',day:'TBD',grades:'5th grade and up',gradeMin:5,gradeMax:12,cap:10,status:'coming-soon',desc:'Music production and DJ technique.'},
-  {id:'photography',name:'Photography & Graphic Design',day:'TBD',grades:'7th grade and up',gradeMin:7,gradeMax:12,cap:10,status:'coming-soon',desc:'Photography fundamentals paired with digital design.'},
-  {id:'step',name:'Step',day:'TBD',grades:'All grades',gradeMin:3,gradeMax:12,cap:25,status:'coming-soon',desc:'Step dance performance and choreography.'}
+  {id:'flock',name:'FLOCK',day:'Wednesday',grades:'All grades',gradeMin:3,gradeMax:12,cap:25,status:'open',desc:'Group mentoring — sign up for individual sessions below.',
+    sessions:[
+      {id:'flock-0916',label:'Wed, Sep 16, 2026',date:'9/16/2026',cap:25},
+      {id:'flock-0923',label:'Wed, Sep 23, 2026',date:'9/23/2026',cap:25},
+      {id:'flock-0930',label:'Wed, Sep 30, 2026',date:'9/30/2026',cap:25},
+      {id:'flock-1007',label:'Wed, Oct 7, 2026',date:'10/7/2026',cap:25},
+      {id:'flock-1021',label:'Wed, Oct 21, 2026',date:'10/21/2026',cap:25}
+    ]},
+  {id:'djlab',name:'DJ Lab',day:'Monday',grades:'5th grade and up',gradeMin:5,gradeMax:12,cap:10,status:'open',desc:'Music production and DJ technique every Monday.'},
+  {id:'stepdance',name:'Step & Dance',day:'Tuesday',grades:'All grades',gradeMin:3,gradeMax:12,cap:25,status:'open',desc:'Step dance performance and choreography every Tuesday.'},
+  {id:'graphicsphoto',name:'Graphic Design & Photography',day:'Thursday',grades:'7th grade and up',gradeMin:7,gradeMax:12,cap:10,status:'open',desc:'Digital design and photography fundamentals every Thursday.'},
+  {id:'hairbraiding',name:'Hair Braiding',day:'TBD',grades:'All grades',gradeMin:3,gradeMax:12,cap:10,status:'open',desc:'Hair braiding techniques. Days TBD — limited to 10 spots.'}
 ];
 
 function gradeToNum(grade) {
@@ -1981,6 +1988,12 @@ async function renderParentDashboard() {
     return r.fields.ChildRecordId === activeChild.id;
   });
   var enrolledIds = myRegs.map(function(r){ return r.fields.ProgramId; });
+  // Also include session IDs from FLOCK
+  AS_PROGRAMS.forEach(function(p){
+    if(p.sessions) p.sessions.forEach(function(s){
+      if(enrolledIds.indexOf(s.id)>=0 && enrolledIds.indexOf(p.id)<0) enrolledIds.push(p.id);
+    });
+  });
   var grade = gradeToNum(activeChild.grade);
 
   var initials = (f.ParentName||'').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
@@ -2065,9 +2078,27 @@ async function renderParentDashboard() {
     }
 
     if (!comingSoon && eligible && !enrolled) {
-      html += '<button onclick="enrollInProgram(\''+prog.id+'\')" style="width:100%;padding:10px;background:#ca3092;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Register</button>';
+      if (prog.sessions) {
+        // FLOCK - individual session signup
+        html += '<p style="color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.3px;">Select sessions to register:</p>';
+        prog.sessions.forEach(function(sess) {
+          var sessEnrolled = enrolledIds.indexOf(sess.id) >= 0;
+          html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
+          html += '<span style="color:rgba(255,255,255,0.7);font-size:12px;">'+sess.label+'</span>';
+          if (sessEnrolled) {
+            html += '<span style="background:rgba(102,204,204,0.2);color:#66cccc;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;">✓ Registered</span>';
+          } else {
+            html += '<button onclick="enrollInProgram(\''+sess.id+'\',\''+prog.id+'\')" style="padding:6px 14px;background:#ca3092;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Register</button>';
+          }
+          html += '</div>';
+        });
+      } else {
+        html += '<button onclick="enrollInProgram(\''+prog.id+'\')" style="width:100%;padding:10px;background:#ca3092;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Register</button>';
+      }
     } else if (!eligible) {
       html += '<p style="color:rgba(255,255,255,0.25);font-size:11px;margin:0;">Not eligible — requires '+prog.grades+'</p>';
+    } else if (enrolled && !prog.sessions) {
+      // Already enrolled non-session program - show remove button
     }
     html += '</div>';
   });
@@ -2159,16 +2190,27 @@ async function doAddChild() {
   renderParentDashboard();
 }
 
-async function enrollInProgram(progId) {
+async function enrollInProgram(progId, parentProgId) {
   if (!REG_SESSION) return;
+  // For FLOCK sessions, find parent program then session
   var prog = AS_PROGRAMS.find(function(p){ return p.id === progId; });
+  var sess = null;
+  if (!prog && parentProgId) {
+    var parentProg = AS_PROGRAMS.find(function(p){ return p.id === parentProgId; });
+    if (parentProg && parentProg.sessions) {
+      sess = parentProg.sessions.find(function(s){ return s.id === progId; });
+      if (sess) { prog = parentProg; }
+    }
+  }
   if (!prog) return;
 
   // Check cap
-  if (prog.cap) {
-    var regsData = await af2Fetch('Registrations');
-    var count = (regsData.records||[]).filter(function(r){ return r.fields.ProgramId === progId; }).length;
-    if (count >= prog.cap) { alert(prog.name + ' is full ('+prog.cap+' spots max).'); return; }
+  var capToCheck = sess ? sess.cap : prog.cap;
+  var idToCheck = sess ? sess.id : progId;
+  if (capToCheck) {
+    var regsData2 = await af2Fetch('Registrations');
+    var count = (regsData2.records||[]).filter(function(r){ return r.fields.ProgramId === idToCheck; }).length;
+    if (count >= capToCheck) { alert((sess?sess.label:prog.name) + ' is full ('+capToCheck+' spots max).'); return; }
   }
 
   // Get active child from Children table
@@ -2176,11 +2218,13 @@ async function enrollInProgram(progId) {
   var myKids = (childData2.records||[]).filter(function(r){return r.fields.FamilyId===REG_SESSION.id;});
   var activeKid = myKids[ACTIVE_CHILD_IDX] || myKids[0];
   if (!activeKid) { alert('Please add a child first.'); return; }
+  var regId = sess ? sess.id : progId;
+  var regName = sess ? (prog.name + ' — ' + sess.label) : prog.name;
   var fields = {
     FamilyId: REG_SESSION.id,
     ChildName: activeKid.fields.ChildName,
-    ProgramId: progId,
-    ProgramName: prog.name,
+    ProgramId: regId,
+    ProgramName: regName,
     Grade: activeKid.fields.Grade,
     ChildRecordId: activeKid.id,
     RegisteredAt: new Date().toISOString(),
