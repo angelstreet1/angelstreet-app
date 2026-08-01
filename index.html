@@ -1924,11 +1924,19 @@ async function renderParentDashboard() {
   var c = document.getElementById('reg-content');
   c.innerHTML = '<div style="color:#888;text-align:center;padding:40px;font-size:13px;">Loading...</div>';
 
-  if (!REG_SESSION) { renderRegLanding(); return; }
+  if (!REG_SESSION) { showRegLanding(); return; }
   var f = REG_SESSION.fields;
 
-  // Load children and registrations
-  var [childData, regsData] = await Promise.all([af2Fetch('Children'), af2Fetch('Registrations')]);
+  // Load children and registrations with error handling
+  var childData, regsData;
+  try {
+    var results = await Promise.all([af2Fetch('Children'), af2Fetch('Registrations')]);
+    childData = results[0];
+    regsData = results[1];
+  } catch(e) {
+    c.innerHTML = '<div style="color:#ca3092;text-align:center;padding:40px;font-size:13px;">Error loading data: '+e.message+'<br><br><button onclick="renderParentDashboard()" style="padding:10px 20px;background:#ca3092;color:#fff;border:none;border-radius:10px;cursor:pointer;">Try Again</button></div>';
+    return;
+  }
   var extraChildren = (childData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
 
   // All children come from Children table now
