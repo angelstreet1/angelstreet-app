@@ -1947,10 +1947,7 @@ async function sendRegConfirmationEmail(f) {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         parentName: f.ParentName,
-        parentEmail: f.Email,
-        childName: f.ChildName,
-        grade: f.Grade,
-        school: f.School
+        parentEmail: f.Email
       })
     });
   } catch(e) {}
@@ -2105,9 +2102,12 @@ async function renderParentDashboard() {
         html += '<p style="color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.3px;">Select sessions to register:</p>';
         prog.sessions.forEach(function(sess) {
           var sessEnrolled = enrolledIds.indexOf(sess.id) >= 0;
+          var sessWaitlist = myRegs.some(function(r){return r.fields.ProgramId===sess.id&&r.fields.Status==='Waitlist';});
           html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">';
           html += '<span style="color:rgba(255,255,255,0.7);font-size:12px;">'+sess.label+'</span>';
-          if (sessEnrolled) {
+          if (sessWaitlist) {
+            html += '<span style="background:rgba(251,191,36,0.2);color:#fbbf24;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;">⏳ Waitlisted</span>';
+          } else if (sessEnrolled) {
             html += '<span style="background:rgba(102,204,204,0.2);color:#66cccc;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;">✓ Registered</span>';
           } else {
             html += '<button onclick="enrollInProgram(\''+sess.id+'\',\''+prog.id+'\')" style="padding:6px 14px;background:#ca3092;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Register</button>';
@@ -2267,10 +2267,11 @@ async function enrollInProgram(progId, parentProgId) {
   // Check cap
   var capToCheck = sess ? sess.cap : prog.cap;
   var idToCheck = sess ? sess.id : progId;
+  var isWaitlist = false;
   if (capToCheck) {
     var regsData2 = await af2Fetch('Registrations');
-    var count = (regsData2.records||[]).filter(function(r){ return r.fields.ProgramId === idToCheck; }).length;
-    if (count >= capToCheck) { alert((sess?sess.label:prog.name) + ' is full ('+capToCheck+' spots max).'); return; }
+    var activeCount = (regsData2.records||[]).filter(function(r){ return r.fields.ProgramId === idToCheck && r.fields.Status !== 'Waitlist'; }).length;
+    if (activeCount >= capToCheck) { isWaitlist = true; }
   }
 
   // Get active child from Children table
@@ -2288,11 +2289,14 @@ async function enrollInProgram(progId, parentProgId) {
     Grade: activeKid.fields.Grade,
     ChildRecordId: activeKid.id,
     RegisteredAt: new Date().toISOString(),
-    Status: 'Active'
+    Status: isWaitlist ? 'Waitlist' : 'Active'
   };
 
   var rec = await af2Post('Registrations', fields);
   if (rec.error) { alert('Error: ' + rec.error); return; }
+  if (isWaitlist) {
+    alert('This program is currently full. You have been added to the waitlist for ' + regName + '. We will contact you if a spot becomes available.');
+  }
   renderParentDashboard();
 }
 
