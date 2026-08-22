@@ -1771,8 +1771,9 @@ var AS_PROGRAMS = [
 ];
 
 function gradeToNum(grade) {
+  if (!grade) return 0;
   var g = parseInt(String(grade).replace(/[^0-9]/g,''));
-  return isNaN(g) ? 3 : g;
+  return isNaN(g) ? 0 : g;
 }
 
 function af2FetchWithTimeout(url, ms) {
@@ -2012,20 +2013,17 @@ async function renderParentDashboard() {
   if (!REG_SESSION) { showRegLanding(); return; }
   var f = REG_SESSION.fields;
 
-  // Load children and registrations with timeout fallback
+  // Load children and registrations
   var childData = {records:[]}, regsData = {records:[]};
   try {
     var cResult = await af2Fetch('Children');
     childData = cResult || {records:[]};
   } catch(e) { childData = {records:[]}; }
-  // Only fetch registrations if there are children
+  try {
+    var rResult = await af2Fetch('Registrations');
+    regsData = rResult || {records:[]};
+  } catch(e) { regsData = {records:[]}; }
   var extraChildren = (childData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
-  if (extraChildren.length > 0) {
-    try {
-      var rResult = await af2Fetch('Registrations');
-      regsData = rResult || {records:[]};
-    } catch(e) { regsData = {records:[]}; }
-  }
   var extraChildren = (childData.records||[]).filter(function(r){ return r.fields.FamilyId === REG_SESSION.id; });
 
   // All children come from Children table now
@@ -2107,7 +2105,7 @@ async function renderParentDashboard() {
   html += '<p style="color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 10px;">Available programs</p>';
 
   AS_PROGRAMS.forEach(function(prog) {
-    var eligible = grade >= prog.gradeMin && grade <= prog.gradeMax;
+    var eligible = grade === 0 ? true : (grade >= prog.gradeMin && grade <= prog.gradeMax);
     var enrolled = enrolledIds.indexOf(prog.id) >= 0;
     var comingSoon = prog.status === 'coming-soon';
     // Check day conflict
