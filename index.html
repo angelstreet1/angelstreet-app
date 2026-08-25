@@ -599,6 +599,27 @@
         </div>
         <span style="font-size:20px;">💬</span>
       </div>
+      <div style="background:rgba(141,77,158,0.1);border:1px solid rgba(141,77,158,0.25);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-top:10px;" onclick="SP('as-crew-interest');loadCrewInterest();">
+        <div>
+          <p style="color:#fff;font-size:13px;font-weight:700;margin:0 0 2px;">Crew University</p>
+          <p style="color:rgba(255,255,255,0.35);font-size:10px;margin:0;">Interest form submissions</p>
+        </div>
+        <span style="font-size:20px;">🎓</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREW INTEREST PAGE -->
+<div id="as-crew-interest" class="page">
+  <div style="background:#0d0d1a;min-height:100vh;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);"></div>
+    <div class="nav-bar" style="background:#0d0d1a;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <button onclick="SP('afterschool-home')" style="background:none;border:none;color:#66cccc;font-size:14px;font-weight:600;cursor:pointer;">← Back</button>
+      <div><div style="font-size:15px;font-weight:700;color:#fff;">Crew University</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">Interest form submissions</div></div>
+    </div>
+    <div style="max-width:700px;margin:0 auto;padding:16px;" id="crew-interest-content">
+      <div style="color:#888;text-align:center;padding:40px;">Loading...</div>
     </div>
   </div>
 </div>
@@ -654,6 +675,20 @@
       <div><div style="font-size:15px;font-weight:700;color:#fff;">Attendance</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">After-school programs</div></div>
     </div>
     <div style="max-width:700px;margin:0 auto;padding:16px;" id="as-att-content">
+      <div style="color:#888;text-align:center;padding:40px;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- CREW INTEREST PAGE -->
+<div id="crew-interest" class="page">
+  <div style="background:#0d0d1a;min-height:100vh;">
+    <div style="height:4px;background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e);"></div>
+    <div class="nav-bar" style="background:#0d0d1a;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <button onclick="SP('afterschool-home')" style="background:none;border:none;color:#66cccc;font-size:14px;font-weight:600;cursor:pointer;">← Back</button>
+      <div><div style="font-size:15px;font-weight:700;color:#fff;">Crew University</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">Interest form submissions</div></div>
+    </div>
+    <div style="max-width:700px;margin:0 auto;padding:16px;" id="crew-interest-content">
       <div style="color:#888;text-align:center;padding:40px;">Loading...</div>
     </div>
   </div>
@@ -919,7 +954,7 @@ else if(id==='lead')loadLead();
 else if(id==='parentupdate'){showPostParentUpdate();return;}
 else if(id==='shiftchecklist')loadShiftChecklist();
 else if(id==='overview')loadOverview();
-else if(id==='parent-portal'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var pp=document.getElementById('parent-portal');if(pp)pp.classList.add('active');window.scrollTo(0,0);loadParentPortal();return;}else if(id==='reg-portal'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var rp=document.getElementById('reg-portal');if(rp)rp.classList.add('active');window.scrollTo(0,0);return;}else if(id==='as-registrations'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-registrations').classList.add('active');window.scrollTo(0,0);loadASRegistrations();return;}else if(id==='as-programs'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-programs').classList.add('active');window.scrollTo(0,0);loadASPrograms();return;}else if(id==='as-participants'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-participants').classList.add('active');window.scrollTo(0,0);loadASParticipants();return;}else if(id==='as-attendance'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-attendance').classList.add('active');window.scrollTo(0,0);return;}else if(id==='program-selector'||id==='afterschool-home'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');window.scrollTo(0,0);return;}
+else if(id==='parent-portal'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var pp=document.getElementById('parent-portal');if(pp)pp.classList.add('active');window.scrollTo(0,0);loadParentPortal();return;}else if(id==='reg-portal'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});var rp=document.getElementById('reg-portal');if(rp)rp.classList.add('active');window.scrollTo(0,0);return;}else if(id==='as-registrations'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-registrations').classList.add('active');window.scrollTo(0,0);loadASRegistrations();return;}else if(id==='as-programs'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-programs').classList.add('active');window.scrollTo(0,0);loadASPrograms();return;}else if(id==='as-participants'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-participants').classList.add('active');window.scrollTo(0,0);loadASParticipants();return;}else if(id==='as-attendance'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('as-attendance').classList.add('active');window.scrollTo(0,0);return;}else if(id==='crew-interest'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById('crew-interest').classList.add('active');window.scrollTo(0,0);loadCrewInterest();return;}else if(id==='program-selector'||id==='afterschool-home'){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');window.scrollTo(0,0);return;}
 else if(id==='invoice')loadInvoice();
 else if(id==='invoiceadmin')loadInvoiceAdmin();else if(id==='payrolladmin')loadPayrollAdmin();else if(id==='mygroup')loadMyGroup();else if(id==='groupassignments')loadGA();else if(id==='taview')loadTAView();}
 document.getElementById('so-btn').onclick=function(){signOut();};document.getElementById('sched-back').onclick=function(){SP('home');};document.getElementById('spdf').onclick=function(){exportSchedPDF();};document.getElementById('sref').onclick=function(){loadSched();};document.getElementById('sref2').onclick=function(){loadSched();};document.getElementById('tc-back').onclick=function(){SP('home');};document.getElementById('ci-back').onclick=function(){SP('home');};document.getElementById('ci-ref').onclick=function(){loadCI();};document.getElementById('ci-week').onchange=function(){loadCI();};document.getElementById('comm-back').onclick=function(){SP('home');};document.getElementById('cs-back').onclick=function(){CU?SP('home'):SP('landing');};document.getElementById('upd-back').onclick=function(){SP('home');};document.getElementById('upd-send').onclick=function(){postUpd();};document.getElementById('grp-back').onclick=function(){SP('home');};document.getElementById('grp-save-btn').onclick=function(){saveGrp();};document.getElementById('adm-back').onclick=function(){SP('home');};document.getElementById('em-back').onclick=function(){SP('home');};document.getElementById('act-back').onclick=function(){SP('home');};document.getElementById('mg-back').onclick=function(){SP('home');};document.getElementById('ga-back').onclick=function(){SP('home');};document.getElementById('tv-back').onclick=function(){SP('home');};
@@ -2517,6 +2552,56 @@ async function loadASPrograms() {
   c.innerHTML = html;
 }
 // ── END REGISTRATION SYSTEM ───────────────────────────────────────────────
+
+async function loadCrewInterest() {
+  var c = document.getElementById('crew-interest-content');
+  if (!c) return;
+  c.innerHTML = '<div style="color:#888;text-align:center;padding:40px;">Loading...</div>';
+  try {
+    var data = await af2Fetch('CrewInterest');
+    var recs = (data.records || []).sort(function(a,b){ return new Date(b.createdTime) - new Date(a.createdTime); });
+    if (!recs.length) { c.innerHTML = '<div style="color:#555;text-align:center;padding:40px;font-size:13px;">No submissions yet.</div>'; return; }
+
+    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+      + '<p style="color:rgba(255,255,255,0.4);font-size:12px;margin:0;">'+recs.length+' submission'+(recs.length===1?'':'s')+'</p>'
+      + '<button onclick="exportCrewInterest()" style="padding:7px 14px;background:#8d4d9e;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📥 Export CSV</button>'
+      + '</div>';
+
+    recs.forEach(function(r, i) {
+      var f = r.fields;
+      var dt = new Date(r.createdTime);
+      var dateStr = dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      var timeStr = dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+      html += '<div style="background:#111;border:1px solid #222;border-radius:12px;padding:14px 16px;margin-bottom:10px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'
+        + '<div><p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 2px;">'+(f.StudentName||'')+'</p>'
+        + '<p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0;">'+(f.Grade||'')+' · '+(f.School||'')+'</p></div>'
+        + '<span style="color:rgba(255,255,255,0.25);font-size:10px;">'+dateStr+'</span>'
+        + '</div>'
+        + '<p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0 0 6px;"><strong style="color:#66cccc;">Parent:</strong> '+(f.ParentName||'')+' · '+(f.ParentPhone||'')+' · '+(f.Email||'')+'</p>'
+        + (f.WhyInterested ? '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:8px 10px;margin-top:6px;"><p style="color:rgba(255,255,255,0.55);font-size:11px;line-height:1.6;margin:0;">'+f.WhyInterested+'</p></div>' : '')
+        + '</div>';
+    });
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = '<div style="color:#ca3092;font-size:13px;padding:20px;">Error: '+e.message+'</div>'; }
+}
+
+async function exportCrewInterest() {
+  try {
+    var data = await af2Fetch('CrewInterest');
+    var recs = data.records || [];
+    var rows = ['"Student Name","Grade","School","Parent Name","Parent Phone","Email","Why Interested","Submitted"'];
+    recs.forEach(function(r){
+      var f = r.fields;
+      var dt = new Date(r.createdTime).toLocaleDateString('en-US');
+      rows.push([f.StudentName,f.Grade,f.School,f.ParentName,f.ParentPhone,f.Email,f.WhyInterested,dt].map(function(v){ return '"'+(v||'')+'"'; }).join(','));
+    });
+    var csv = rows.join('\n');
+    var blob = new Blob([csv],{type:'text/csv'});
+    var a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='CrewUniversity_Interest_'+new Date().getFullYear()+'.csv'; a.click();
+  } catch(e){ alert('Export error: '+e.message); }
+}
 
 var ADM_TC=[],ADM_U=[];
 
