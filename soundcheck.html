@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ca3092">
+<title>AngelStreet Sound Check — Registration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:#0a0a0a; color:#fff; min-height:100vh; }
+  .bar { height:4px; background:linear-gradient(90deg,#66cccc,#ca3092,#8d4d9e); }
+  .hero {
+    background:linear-gradient(160deg,#1a0530 0%,#2d0a5c 50%,#8d4d9e 100%);
+    padding:40px 24px 32px; text-align:center; position:relative; overflow:hidden;
+  }
+  .hero::before { content:''; position:absolute; top:-60px; right:-60px; width:200px; height:200px; border-radius:50%; background:rgba(202,48,146,0.2); }
+  .eyebrow { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:#66cccc; margin-bottom:10px; position:relative; z-index:1; }
+  .hero h1 { font-family:'Bebas Neue',sans-serif; font-size:58px; line-height:0.9; color:#fff; position:relative; z-index:1; }
+  .hero h1 span { color:#ca3092; }
+  .event-info {
+    display:inline-flex; flex-direction:column; gap:4px;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+    border-radius:12px; padding:12px 20px; margin-top:16px;
+    position:relative; z-index:1; text-align:left;
+  }
+  .event-info p { font-size:12px; color:rgba(255,255,255,0.8); font-weight:600; }
+  .event-info p span { color:#66cccc; }
+
+  .form-wrap { max-width:520px; margin:0 auto; padding:28px 20px 60px; }
+  .form-title { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .form-sub { font-size:12px; color:rgba(255,255,255,0.4); margin:0 0 24px; line-height:1.6; }
+
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:rgba(255,255,255,0.5); margin-bottom:5px; }
+  .field label .req { color:#ca3092; }
+  .field input, .field select { width:100%; padding:13px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:#fff; font-size:14px; font-family:'Inter',sans-serif; outline:none; }
+  .field input:focus, .field select:focus { border-color:#ca3092; }
+  .field select option { background:#1a1a1a; }
+
+  .section-divider { border-top:1px solid rgba(255,255,255,0.08); padding-top:20px; margin-top:8px 0 16px; }
+  .section-label { font-size:13px; font-weight:700; color:#fff; margin:0 0 14px; }
+
+  .transport-btns { display:flex; gap:10px; }
+  .transport-btn { flex:1; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.6); font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
+  .transport-btn.active-yes { background:#66cccc; border-color:#66cccc; color:#0a0a0a; }
+  .transport-btn.active-no  { background:#ca3092; border-color:#ca3092; color:#fff; }
+
+  .waiver-box { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; margin-bottom:16px; }
+  .waiver-box h4 { font-size:12px; font-weight:700; color:#fff; margin:0 0 8px; }
+  .waiver-box p { font-size:11px; color:rgba(255,255,255,0.45); line-height:1.7; margin:0 0 12px; }
+  .waiver-check { display:flex; align-items:flex-start; gap:10px; cursor:pointer; }
+  .waiver-check input[type=checkbox] { width:18px; height:18px; accent-color:#ca3092; flex-shrink:0; margin-top:1px; }
+  .waiver-check span { font-size:12px; color:rgba(255,255,255,0.7); line-height:1.5; font-weight:600; }
+
+  .submit-btn { width:100%; padding:17px; background:linear-gradient(135deg,#ca3092,#8d4d9e); color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:800; cursor:pointer; font-family:'Inter',sans-serif; margin-top:8px; }
+  .submit-btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+  .msg { text-align:center; padding:14px; border-radius:12px; font-size:13px; font-weight:600; margin-top:14px; display:none; }
+  .msg.error { background:rgba(202,48,146,0.15); color:#ca3092; border:1px solid rgba(202,48,146,0.3); }
+
+  .success-screen { display:none; text-align:center; padding:60px 24px; max-width:440px; margin:0 auto; }
+  .success-screen .icon { font-size:60px; margin-bottom:16px; }
+  .success-screen h2 { font-size:24px; font-weight:800; margin-bottom:10px; }
+  .success-screen p { font-size:13px; color:rgba(255,255,255,0.5); line-height:1.7; }
+  .event-detail { background:rgba(102,204,204,0.08); border:1px solid rgba(102,204,204,0.2); border-radius:12px; padding:14px 16px; margin:16px 0; text-align:left; }
+  .event-detail p { font-size:12px; color:rgba(255,255,255,0.7); margin:0 0 4px; }
+  .event-detail p:last-child { margin:0; }
+  .event-detail strong { color:#66cccc; }
+
+  .footer { text-align:center; padding:20px; font-size:10px; color:rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+<div class="bar"></div>
+
+<div class="hero">
+  <div class="eyebrow">AngelStreet Memphis · One Night Only</div>
+  <h1>ANGELSTREET<br><span>SOUND CHECK</span></h1>
+  <div class="event-info">
+    <p><span>📅</span> Wednesday, September 23, 2026</p>
+    <p><span>🕐</span> 3:30 PM – 6:30 PM</p>
+    <p><span>📍</span> 686 N 7th St, Memphis, TN 38107</p>
+  </div>
+</div>
+
+<div class="form-wrap">
+  <div id="form-section">
+    <p class="form-title">Register Now</p>
+    <p class="form-sub">All fields are required. A confirmation email will be sent after you register.</p>
+
+    <!-- Student Info -->
+    <div class="field">
+      <label>Student's full name <span class="req">*</span></label>
+      <input id="f-student" type="text" placeholder="First Last">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label>Grade <span class="req">*</span></label>
+        <select id="f-grade">
+          <option value="">Select</option>
+          <option>3rd</option><option>4th</option><option>5th</option>
+          <option>6th</option><option>7th</option><option>8th</option>
+          <option>9th</option><option>10th</option><option>11th</option><option>12th</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Age <span class="req">*</span></label>
+        <input id="f-age" type="number" placeholder="e.g. 12" min="5" max="19">
+      </div>
+    </div>
+    <div class="field">
+      <label>School <span class="req">*</span></label>
+      <input id="f-school" type="text" placeholder="School name">
+    </div>
+    <div class="field">
+      <label>What time does school let out? <span class="req">*</span></label>
+      <input id="f-dismissal" type="text" placeholder="e.g. 3:00 PM">
+    </div>
+
+    <!-- Parent Info -->
+    <div class="section-divider">
+      <p class="section-label">Parent / Guardian Information</p>
+    </div>
+    <div class="field">
+      <label>Parent / Guardian name <span class="req">*</span></label>
+      <input id="f-parent" type="text" placeholder="Full name">
+    </div>
+    <div class="field">
+      <label>Cell phone number <span class="req">*</span></label>
+      <input id="f-phone" type="tel" placeholder="901-555-0100">
+    </div>
+    <div class="field">
+      <label>Email address <span class="req">*</span></label>
+      <input id="f-email" type="email" placeholder="your@email.com">
+    </div>
+
+    <!-- Program Interest -->
+    <div class="section-divider">
+      <p class="section-label">Program Interest</p>
+    </div>
+    <div class="field">
+      <label>Which program area are you most interested in? <span class="req">*</span></label>
+      <select id="f-program">
+        <option value="">Select a program</option>
+        <option>Choir</option>
+        <option>FLOCK Mentoring</option>
+        <option>DJ Lab</option>
+        <option>Step & Dance</option>
+        <option>Graphic Design & Photography</option>
+        <option>Hair Braiding</option>
+        <option>Crew University</option>
+        <option>Not sure yet</option>
+      </select>
+    </div>
+
+    <!-- Transportation -->
+    <div class="section-divider">
+      <p class="section-label">Transportation</p>
+    </div>
+    <div class="field">
+      <label>Does your child need transportation from school to AngelStreet? <span class="req">*</span></label>
+      <div class="transport-btns">
+        <button type="button" class="transport-btn" id="t-yes" onclick="setTransport('yes')">Yes</button>
+        <button type="button" class="transport-btn" id="t-no" onclick="setTransport('no')">No</button>
+      </div>
+    </div>
+
+    <!-- Waiver -->
+    <div class="waiver-box">
+      <h4>Transportation Waiver & Liability</h4>
+      <p>AngelStreet Memphis works with transportation partners to help with pickup. Transportation is not guaranteed — we will do our best based on availability. Drop-offs are made in generalized neighborhood areas (for example, if you live in Raleigh, drop-off may be at the Raleigh Public Library or a nearby community location). Pick-up and drop-off locations will be communicated in advance. All drivers follow safety guidelines and students are expected to wear seatbelts at all times.</p>
+      <p>By checking the box below, I give permission for my child to be transported by AngelStreet Memphis for this event and understand that AngelStreet Memphis, its staff, and volunteers are not responsible for circumstances beyond their control.</p>
+      <label class="waiver-check">
+        <input type="checkbox" id="f-waiver">
+        <span>I have read and agree to the transportation waiver above. <span class="req">*</span></span>
+      </label>
+    </div>
+
+    <div id="form-msg" class="msg"></div>
+    <button class="submit-btn" id="submit-btn" onclick="submitForm()">Complete Registration</button>
+  </div>
+
+  <div class="success-screen" id="success-screen">
+    <div class="icon">🎵</div>
+    <h2>You're registered!</h2>
+    <p>A confirmation email has been sent to your inbox. We can't wait to see you at Sound Check!</p>
+    <div class="event-detail">
+      <p><strong>📅 Date:</strong> Wednesday, September 23, 2026</p>
+      <p><strong>🕐 Time:</strong> 3:30 PM – 6:30 PM</p>
+      <p><strong>📍 Location:</strong> 686 N 7th St, Memphis, TN 38107</p>
+    </div>
+    <p>Questions? Contact Ms. Sa'Sha at 901-236-3737</p>
+  </div>
+</div>
+
+<div class="footer">AngelStreet Memphis · 686 N. 7th St, Memphis, TN 38107 · angelstreetmemphis.com</div>
+
+<script>
+var PROXY = 'https://app.angelstreetmemphis.com/.netlify/functions/airtable3';
+var EMAIL_FN = 'https://app.angelstreetmemphis.com/.netlify/functions/send-soundcheck-confirmation';
+var transportVal = '';
+
+function setTransport(val) {
+  transportVal = val;
+  document.getElementById('t-yes').className = 'transport-btn' + (val==='yes'?' active-yes':'');
+  document.getElementById('t-no').className  = 'transport-btn' + (val==='no'?' active-no':'');
+}
+
+function gv(id) { var el=document.getElementById(id); return el?el.value.trim():''; }
+
+async function submitForm() {
+  var msg = document.getElementById('form-msg');
+  msg.style.display = 'none';
+
+  var student  = gv('f-student');
+  var grade    = gv('f-grade');
+  var age      = gv('f-age');
+  var school   = gv('f-school');
+  var dismissal= gv('f-dismissal');
+  var parent   = gv('f-parent');
+  var phone    = gv('f-phone');
+  var email    = gv('f-email');
+  var program  = gv('f-program');
+  var waiver   = document.getElementById('f-waiver').checked;
+
+  if (!student)   { showErr('Student name is required.'); return; }
+  if (!grade)     { showErr('Grade is required.'); return; }
+  if (!age)       { showErr('Age is required.'); return; }
+  if (!school)    { showErr('School name is required.'); return; }
+  if (!dismissal) { showErr('School dismissal time is required.'); return; }
+  if (!parent)    { showErr('Parent/Guardian name is required.'); return; }
+  if (!phone)     { showErr('Phone number is required.'); return; }
+  if (!email)     { showErr('Email address is required.'); return; }
+  if (!program)   { showErr('Please select a program area.'); return; }
+  if (!transportVal) { showErr('Please answer the transportation question.'); return; }
+  if (!waiver)    { showErr('You must agree to the transportation waiver to complete registration.'); return; }
+
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Registering...';
+
+  try {
+    var r = await fetch(PROXY + '/SoundCheckRegistrations', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({fields:{
+        StudentName: student,
+        Grade: grade,
+        Age: age,
+        School: school,
+        DismissalTime: dismissal,
+        ParentName: parent,
+        Phone: phone,
+        Email: email,
+        ProgramInterest: program,
+        TransportFromSchool: transportVal === 'yes' ? 'Yes' : 'No',
+        TransportWaiverAgreed: 'Yes',
+        SubmittedAt: new Date().toISOString()
+      }})
+    });
+    var d = await r.json();
+    if (!d.id) throw new Error(d.error || 'Submission failed');
+
+    // Send confirmation emails
+    await fetch(EMAIL_FN, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ studentName:student, parentName:parent, parentEmail:email, grade, school, programInterest:program })
+    }).catch(function(){});
+
+    document.getElementById('form-section').style.display = 'none';
+    document.getElementById('success-screen').style.display = 'block';
+  } catch(e) {
+    showErr('Error submitting: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Complete Registration';
+  }
+}
+
+function showErr(msg) {
+  var el = document.getElementById('form-msg');
+  el.textContent = msg; el.className = 'msg error'; el.style.display = 'block';
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+}
+</script>
+</body>
+</html>
