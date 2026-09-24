@@ -3,7 +3,7 @@
 
 const https = require("https");
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = "creativehub@angelstreetmemphis.com";
 const FROM_NAME = "AngelStreet Memphis";
 const TO_EMAIL = "vbrookeking@gmail.com";
@@ -167,34 +167,16 @@ exports.handler = async (event) => {
   <p style="font-size:14px;">Thank you,<br/><strong>${senderName}</strong><br/>AngelStreet Memphis</p>
 </div>`;
 
-  const sgPayload = {
-    personalizations: [{
-      to: [{ email: TO_EMAIL, name: TO_NAME }],
-      cc: senderEmail ? [{ email: senderEmail, name: senderName }] : undefined,
-    }],
-    from: { email: FROM_EMAIL, name: FROM_NAME },
-    reply_to: { email: senderEmail || FROM_EMAIL, name: senderName || FROM_NAME },
+  const resendPayload = {
+    from: FROM_EMAIL,
+    to: [TO_EMAIL],
+    cc: senderEmail ? [senderEmail] : undefined,
+    reply_to: senderEmail || FROM_EMAIL,
     subject: `AngelStreet Creative Arts Camp 2026 — Teaching Artist Invoices (${invoices.length} invoice${invoices.length > 1 ? "s" : ""})`,
-    content: [
-      { type: "text/plain", value: `Hi Brooke,\n\nPlease find the attached Teaching Artist invoices.\n\n${invoiceList}\n\nTotal: $${total.toFixed(0)}\n\nThank you,\n${senderName}\nAngelStreet Memphis` },
-      { type: "text/html", value: htmlBody },
-    ],
-    attachments,
+    html: emailHtml,
+    attachments: pdfAttachments.map(function(a) { return { filename: a.filename, content: a.content }; })
   };
-
-  try {
-    const result = await httpsPost(
-      "https://api.sendgrid.com/v3/mail/send",
-      { Authorization: `Bearer ${SENDGRID_API_KEY}` },
-      sgPayload
-    );
-
-    if (result.status === 202) {
-      return { statusCode: 200, headers, body: JSON.stringify({ success: true, count: invoices.length }) };
-    } else {
-      return { statusCode: result.status, headers, body: JSON.stringify({ error: "SendGrid error", detail: result.body }) };
-    }
-  } catch (err) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
-  }
-};
+  const sendResult = await httpsPost('https://api.resend.com/emails', {
+    'Authorization': `Bearer ${RESEND_API_KEY}`,
+    'Content-Type': 'application/json'
+  }, JSON.stringify(resendPayload));
