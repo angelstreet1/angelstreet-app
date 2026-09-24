@@ -27,7 +27,7 @@ exports.handler = async (event) => {
         <p>Hi ${parentName},</p>
         <p><strong>${studentName}</strong> (Grade ${grade} at ${school}) is registered for <strong>AngelStreet Sound Check</strong>!</p>
         <div style="background:#f9f9f9;border-left:4px solid #ca3092;padding:16px;margin:20px 0;border-radius:4px;">
-          <p style="margin:0 0 8px;"><strong>📅 Date:</strong> Wednesday, September 23, 2026</p>
+          <p style="margin:0 0 8px;"><strong>📅 Date:</strong> Wednesday, September 30, 2026</p>
           <p style="margin:0 0 8px;"><strong>🕐 Time:</strong> 3:30 PM – 6:30 PM</p>
           <p style="margin:0;"><strong>📍 Location:</strong> 686 N 7th St, Memphis, TN 38107</p>
         </div>
